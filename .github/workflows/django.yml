@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Django tests
         env:
-          DJANGO_SETTINGS_MODULE: config.settings
+          DJANGO_SETTINGS_MODULE: base.settings
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/myproject
         run: |
           source .venv/bin/activate
