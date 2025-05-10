@@ -1,0 +1,14 @@
+[env]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+_.python.venv = { path = ".venv", create = true }
+
+[tools]
+python = "3.12"
+
+[tasks.lint]
+description = "Run all code linters"
+run = [
+  "black . --check",
+  "isort . --check-only",
+  "flake8 ."
+]
