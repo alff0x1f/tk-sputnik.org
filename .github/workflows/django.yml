@@ -1,0 +1,64 @@
+name: Django CI
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: myproject
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports: [ "6379:6379" ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run linters
+        run: |
+          source .venv/bin/activate
+          pip install -r requirements-dev.txt
+          ruff check .
+          black . --check
+          isort . --check
+          flake8
+
+      - name: Run Django tests
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/myproject
+        run: |
+          source .venv/bin/activate
+          python manage.py test
