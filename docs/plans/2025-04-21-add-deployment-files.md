@@ -1,4 +1,4 @@
-# Plan: Add CI/deployment files from scratch/
+# Plan: Add deployment files from scratch/
 
 ## Context
 The scratch/ directory contains deployment files borrowed from the kolco24 project. They need to be adapted and added to this project (tk-sputnik.org Django app). Key differences: this project uses `uv` (not pip/requirements.txt), Python 3.14, `config.wsgi:application` (not `kolco24.wsgi`), and has no custom management commands (backup_db, runmailer, vtb_checker).
@@ -39,29 +39,37 @@ RUN DJANGO_SECRET_KEY=build uv run python manage.py collectstatic --noinput
 CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application", "--access-logfile", "-", "--log-level", "info"]
 ```
 
-### 2. `docker-compose.yml`
+### 2. `deploy/docker-compose.yml`
 Adapted from `scratch/docker-compose.yml`:
 - Rename all `kolco24_*` → `sputnik_*` (services, containers, networks)
 - Rename `KOLCO24_IMAGE` → `SPUTNIK_IMAGE`
-- Update env_file: `./deploy/kolco24.env` → `./deploy/sputnik.env`
+- Move the compose file under `deploy/` so deployment config is isolated from local development config
+- Update `env_file`: `./deploy/kolco24.env` → `./sputnik.env`
+- Update mounted nginx config path to `./nginx.conf`
 - Fix gunicorn WSGI: `config.wsgi:application`
 - Remove project-specific services: `sputnik_backup`, `sputnik_runmailer`, `sputnik_vtb_checker`
 - Keep: `sputnik_migrate`, `sputnik_web`, `sputnik_nginx`, `sputnik_db`
 - Static dir: `/app/staticfiles` (matches STATIC_ROOT to be added in settings.py)
 
-### 3. `Makefile`
+### 3. `deploy/.env.example`
+New file for docker compose variables:
+- `SPUTNIK_IMAGE` for the pre-built application image
+- `DATA_LOCATION` for bind-mounted deployment data
+- Lives next to `deploy/docker-compose.yml` so compose no longer relies on the repo-root `.env`
+
+### 4. `Makefile`
 Adapted from `scratch/Makefile`:
 - Change `IMAGE ?= kolco24` → `IMAGE ?= sputnik`
-- Update docker compose file reference: `docker-compose.yml` (no `_v2` suffix)
 - Remove `backup` and `restore` targets (no backup_db command in this project)
 
-### 4. `deploy/sputnik.env.example`
+### 5. `deploy/sputnik.env.example`
 Adapted from `scratch/deploy/kolco24.env.example`:
 - Strip kolco24-specific vars: email, payment (Yandex, Sberbank, SBP, VTB), Google Docs, Backup
 - Keep: Django (SECRET_KEY, DEBUG, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS) + DB (DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, POSTGRES_*)
 - Update example hosts to `tk-sputnik.org`
+- Keep it separate from `deploy/.env` because this file is injected into containers, while `deploy/.env` configures compose itself
 
-### 5. `deploy/nginx.conf`
+### 6. `deploy/nginx.conf`
 Copy from `scratch/deploy/nginx.conf` with one change:
 - Update upstream name: `kolco24_django` → `sputnik_django`
 
@@ -86,9 +94,10 @@ DATABASES = {
 STATIC_ROOT = BASE_DIR / "staticfiles"
 ```
 
-Also update `.env.example` to include DB vars for local dev (pointing to localhost).
+Also update `.env.example` to include DB vars for local dev (pointing to localhost), and keep it separate from the deployment env files.
 
 ## Verification
 1. `docker build .` — image builds successfully
-2. `uv run pytest` — existing tests still pass
-3. `uv run ruff check .` — no lint errors
+2. `docker compose -f deploy/docker-compose.yml config` — deployment compose file resolves correctly with `deploy/.env` and `deploy/sputnik.env`
+3. `uv run pytest` — existing tests still pass
+4. `uv run ruff check .` — no lint errors
