@@ -1,7 +1,8 @@
 FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    UV_PROJECT_ENVIRONMENT=/venv
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
