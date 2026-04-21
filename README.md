@@ -40,3 +40,22 @@ uv run python manage.py runserver
 ```
 
 Приложение будет доступно по адресу `http://127.0.0.1:8000/`.
+
+## Наименование веток
+
+- feat/ — новая функциональность
+- fix/ — исправление бага
+- chore/ — техработы, зависимости, конфиги
+- refactor/ — рефакторинг без изменения поведения
+- docs/ — документация
+- test/ — тесты
+
+Примеры:
+
+```
+feat/4-add-demo-app
+fix/7-correct-password-reset
+chore/9-add-pre-commit-hooks
+refactor/15-split-settings-module
+docs/22-update-readme
+```
