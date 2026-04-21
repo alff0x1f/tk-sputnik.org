@@ -41,6 +41,21 @@ uv run python manage.py runserver
 
 Приложение будет доступно по адресу `http://127.0.0.1:8000/`.
 
+## Деплой
+
+Файлы деплоя лежат в `deploy/`.
+
+Первый запуск:
+
+```bash
+cp deploy/.env.example deploy/.env
+cp deploy/sputnik.env.example deploy/sputnik.env
+cd deploy
+docker compose up -d
+```
+
+В `deploy/.env` задаются переменные самого compose (`SPUTNIK_IMAGE`, `DATA_LOCATION`), а в `deploy/sputnik.env` лежит окружение контейнеров Django/PostgreSQL.
+
 ## Наименование веток
 
 - feat/ — новая функциональность
