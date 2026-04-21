@@ -9,6 +9,8 @@ wheels/
 # Virtual environments
 .venv
 .env
+deploy/.env
+deploy/sputnik.env
 
 # Other
 .idea

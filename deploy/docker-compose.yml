@@ -2,9 +2,8 @@
 # Uses pre-built image from registry (built via: make build-push)
 #
 # Quick start:
-#   cp deploy/sputnik.env.example deploy/sputnik.env  # заполни переменные
-#   echo "SPUTNIK_IMAGE=registry.lab.tk-sputnik.org/sputnik:latest" > .env
-#   echo "DATA_LOCATION=./data" >> .env
+#   cp .env.example .env
+#   cp sputnik.env.example sputnik.env
 #   docker compose up -d
 
 services:
@@ -19,7 +18,7 @@ services:
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput
     env_file:
-      - ./deploy/sputnik.env
+      - ./sputnik.env
     volumes:
       - ${DATA_LOCATION}/static:/app/staticfiles
     depends_on:
@@ -35,7 +34,7 @@ services:
     restart: unless-stopped
     command: ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application", "--access-logfile", "-", "--log-level", "info"]
     env_file:
-      - ./deploy/sputnik.env
+      - ./sputnik.env
     volumes:
       - ${DATA_LOCATION}/media:/app/media
     depends_on:
@@ -51,7 +50,7 @@ services:
     volumes:
       - ${DATA_LOCATION}/static:/app/staticfiles:ro
       - ${DATA_LOCATION}/media:/app/media:ro
-      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       sputnik_migrate:
         condition: service_completed_successfully
@@ -64,7 +63,7 @@ services:
     container_name: sputnik_db
     restart: unless-stopped
     env_file:
-      - ./deploy/sputnik.env
+      - ./sputnik.env
     volumes:
       - ${DATA_LOCATION}/postgres-data:/var/lib/postgresql/data
     healthcheck:
