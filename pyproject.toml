@@ -1,0 +1,18 @@
+[project]
+name = "tk-sputnik-org"
+version = "0.1.0"
+description = "Сайт турклуба, from scratch with Django"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=5.2,<5.3",
+    "gunicorn>=25.3.0",
+    "psycopg[binary]>=3.3.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-django>=4.12.0",
+    "ruff>=0.15.11",
+]
