@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Форум — Турклуб Спутник</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#ffffff;
+    --surface:#ffffff;
+    --surface-2:#f7f8fb;
+    --ink:#13244a;              /* тёмно-синий вместо чёрного */
+    --ink-2:#495976;
+    --muted:#8e95a8;
+    --line:#ebedf2;
+    --line-strong:#d4d8e2;
+
+    --accent:#1e3a7a;           /* фирменный синий «Спутника» */
+    --accent-deep:#122557;
+    --accent-soft:#e4e9f5;
+
+    --orange:#e8671b;           /* фирменный оранжевый */
+    --orange-deep:#c4520e;
+    --orange-soft:#fdece0;
+
+    /* Категорийные тона — гармонируют с фирменными синим и оранжевым */
+    --earth:#8a5a2b;            /* охра — отчёты */
+    --earth-soft:#f3e6d3;
+    --steel:#4a6680;            /* сталь — снаряжение */
+    --steel-soft:#dee5ed;
+    --wine:#8a3346;             /* бордо — школа */
+    --wine-soft:#f0dde2;
+
+    --chip-bg:#eef1f7;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit; text-decoration:none}
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:16px;
+    padding:14px 28px;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:18px; letter-spacing:-0.01em;
+  }
+  .brand .mark{
+    width:28px; height:28px; border-radius:50%;
+    background:var(--orange); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700;
+  }
+  .topbar .sub{
+    font-size:13px; color:var(--muted);
+  }
+  .top-actions{
+    margin-left:auto;
+    display:flex; align-items:center; gap:10px;
+  }
+  .search{
+    border:1px solid var(--line-strong); border-radius:999px;
+    padding:7px 14px; font-size:13px; color:var(--ink-2); background:var(--surface-2);
+    width:220px; outline:none;
+  }
+  .search::placeholder{ color:var(--muted); }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px; border-radius:999px;
+    font-size:13px; font-weight:600; cursor:pointer;
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);
+  }
+  .btn.primary{ background:var(--orange); color:#fff; border-color:var(--orange); }
+  .btn.primary:hover{ background:var(--orange-deep); border-color:var(--orange-deep); }
+  .btn.ghost{ background:transparent; }
+
+  /* Layout — без правой колонки */
+  .wrap{
+    display:grid;
+    grid-template-columns: 240px minmax(0,1fr);
+    gap:0;
+    max-width:1280px; margin:0 auto;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    padding:22px 16px 40px;
+    border-right:1px solid var(--line);
+    position:sticky; top:60px; align-self:start;
+    height:calc(100vh - 60px); overflow:auto;
+  }
+  .nav-group{ margin-bottom:22px; }
+  .nav-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--muted); margin:0 10px 8px; font-weight:600;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 12px; border-radius:10px;
+    font-size:14px; color:var(--ink); cursor:pointer;
+    font-weight:500;
+  }
+  .nav-item:hover{ background:var(--surface-2); }
+  .nav-item.active{
+    background:var(--accent-soft); font-weight:600; color:var(--accent-deep);
+  }
+  .nav-item.active .ico{ color:var(--accent); }
+  .nav-item .ico{
+    width:18px; height:18px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    color:var(--ink-2);
+  }
+  .nav-item .ico svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.6; }
+  .nav-item .count{
+    margin-left:auto; font-size:12px; color:var(--muted); font-weight:500;
+  }
+
+  /* Feed area (форум занимает центральную колонку) */
+  .feed{ padding:22px 28px 60px; min-width:0; }
+  .feed-head{
+    display:flex; align-items:center; gap:10px; margin-bottom:6px;
+  }
+  .feed-title{ font-size:22px; font-weight:700; letter-spacing:-0.01em; }
+  .feed-sub{
+    color:var(--muted); font-size:13px; margin-bottom:18px;
+  }
+
+  /* Breadcrumbs */
+  .crumbs{
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+    font-size:13px; color:var(--muted); margin-bottom:14px;
+  }
+  .crumbs a{ color:var(--ink-2); }
+  .crumbs a:hover{ color:var(--ink); }
+  .crumbs .sep{ color:var(--line-strong); }
+
+  /* Forum category (top-level) */
+  .forum-cat{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:22px;
+    background:var(--surface);
+    overflow:hidden;
+    position:relative;
+  }
+  .forum-cat::before{
+    content:""; position:absolute; left:0; top:0; bottom:0;
+    width:3px; background:var(--line-strong);
+  }
+  .forum-cat.cat-sky::before{ background:var(--accent); }
+  .forum-cat.cat-earth::before{ background:var(--earth); }
+  .forum-cat.cat-steel::before{ background:var(--steel); }
+  .forum-cat.cat-wine::before{ background:var(--wine); }
+  .forum-cat-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+  }
+  .forum-cat-head h2{
+    margin:0; font-size:14px; font-weight:700;
+    letter-spacing:0.02em; text-transform:uppercase;
+  }
+  .forum-cat-head .meta{
+    margin-left:auto; font-size:12px; color:var(--muted); font-weight:500;
+  }
+
+  /* Subforums list */
+  .subforum{
+    display:grid;
+    grid-template-columns: 44px minmax(0,1fr) 120px 180px;
+    gap:14px; align-items:center;
+    padding:14px 16px;
+    border-top:1px solid var(--line);
+  }
+  .subforum:first-of-type{ border-top:none; }
+  .subforum:hover{ background:var(--surface-2); cursor:pointer; }
+
+  .sf-ico{
+    width:40px; height:40px; border-radius:10px;
+    background:var(--accent-soft);
+    border:1px solid #d4dcee;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--accent);
+    flex-shrink:0;
+  }
+  .sf-ico svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.6; }
+  .sf-ico.unread{
+    background:var(--accent); color:#fff; border-color:var(--accent);
+  }
+  /* Категорийные тона — соответствуют левой полоске у .forum-cat */
+  .sf-ico.tone-sky{ background:var(--accent-soft); border-color:#d4dcee; color:var(--accent); }
+  .sf-ico.tone-sky.unread{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .sf-ico.tone-earth{ background:var(--earth-soft); border-color:#e3d2b8; color:#6b441f; }
+  .sf-ico.tone-earth.unread{ background:var(--earth); border-color:var(--earth); color:#fff; }
+  .sf-ico.tone-steel{ background:var(--steel-soft); border-color:#c8d2dc; color:#36536b; }
+  .sf-ico.tone-steel.unread{ background:var(--steel); border-color:var(--steel); color:#fff; }
+  .sf-ico.tone-wine{ background:var(--wine-soft); border-color:#e0c6cc; color:#6d2836; }
+  .sf-ico.tone-wine.unread{ background:var(--wine); border-color:var(--wine); color:#fff; }
+
+  .sf-body{ min-width:0; }
+  .sf-title{
+    font-size:15px; font-weight:600; color:var(--ink);
+    margin-bottom:2px; letter-spacing:-0.005em;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .sf-title .new-badge{
+    font-size:11px; font-weight:700;
+    padding:2px 8px; border-radius:999px;
+    background:var(--orange); color:#fff;
+    letter-spacing:0.02em;
+  }
+  .sf-desc{
+    font-size:13px; color:var(--muted); line-height:1.4;
+  }
+
+  .sf-stats{
+    font-size:12px; color:var(--muted);
+    display:flex; flex-direction:column; gap:2px;
+    font-variant-numeric:tabular-nums;
+  }
+  .sf-stats b{
+    color:var(--ink); font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .sf-last{
+    font-size:12px; color:var(--muted); min-width:0;
+  }
+  .sf-last .tt{
+    display:block; color:var(--ink); font-weight:500; font-size:13px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    margin-bottom:2px;
+  }
+  .sf-last .meta{
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sf-last .meta a{ color:var(--ink-2); font-weight:500; }
+
+  /* Topics list (в подразделе) */
+  .topics-block{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:22px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .topics-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+  }
+  .topics-head h3{
+    margin:0; font-size:13px; font-weight:600; color:var(--ink-2);
+    text-transform:uppercase; letter-spacing:0.06em;
+  }
+  .topic{
+    display:grid;
+    grid-template-columns: 40px minmax(0,1fr) 90px 160px;
+    gap:12px; align-items:center;
+    padding:12px 16px;
+    border-top:1px solid var(--line);
+  }
+  .topic:first-of-type{ border-top:none; }
+  .topic:hover{ background:var(--surface-2); cursor:pointer; }
+  .topic-ico{
+    width:32px; height:32px; border-radius:8px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--muted); flex-shrink:0;
+  }
+  .topic-ico svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; }
+  .topic-ico.unread{
+    background:var(--accent); color:#fff; border-color:var(--accent);
+  }
+  .topic-body{ min-width:0; }
+  .topic-title{
+    font-size:14px; font-weight:600; color:var(--ink);
+    line-height:1.35; letter-spacing:-0.005em;
+    margin-bottom:2px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .topic-title.unread{ font-weight:700; }
+  .topic-title .pin{
+    font-size:10px; font-weight:700;
+    padding:2px 6px; border-radius:4px;
+    background:var(--chip-bg); color:var(--ink-2);
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .topic-meta{
+    font-size:12px; color:var(--muted);
+  }
+  .topic-meta a{ color:var(--ink-2); font-weight:500; }
+  .topic-stats{
+    font-size:12px; color:var(--muted);
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .topic-stats b{ color:var(--ink); font-weight:600; display:block; }
+  .topic-last{
+    font-size:12px; color:var(--muted);
+    min-width:0;
+  }
+  .topic-last .when{
+    color:var(--ink-2); font-weight:500; display:block;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .topic-last .who{
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* Footer */
+  .footer{
+    max-width:1280px; margin:0 auto;
+    padding:30px 28px 50px;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between;
+    font-size:12px; color:var(--muted);
+  }
+
+  /* Burger button — hidden on desktop */
+  .burger{
+    display:none;
+    width:40px; height:40px; flex-shrink:0;
+    align-items:center; justify-content:center;
+    border:1px solid var(--line-strong); border-radius:10px;
+    background:var(--surface); color:var(--ink); cursor:pointer;
+    padding:0;
+  }
+  .burger svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+  .burger:hover{ background:var(--surface-2); }
+
+  .backdrop{
+    display:none;
+    position:fixed; inset:0; background:rgba(0,0,0,.35);
+    z-index:30; opacity:0; transition:opacity .2s ease;
+  }
+  .backdrop.open{ display:block; opacity:1; }
+
+  /* Responsive */
+  @media (max-width: 1000px){
+    .subforum{
+      grid-template-columns: 40px minmax(0,1fr) 110px;
+    }
+    .subforum .sf-last{ display:none; }
+    .topic{
+      grid-template-columns: 32px minmax(0,1fr) 140px;
+    }
+    .topic .topic-stats{ display:none; }
+  }
+  @media (max-width: 720px){
+    .wrap{ grid-template-columns: 1fr; }
+    .topbar{ padding:12px 16px; gap:10px; }
+    .topbar .sub{ display:none; }
+    .search{ display:none; }
+    .feed{ padding:16px; }
+
+    .burger{ display:inline-flex; }
+
+    /* Sidebar becomes a slide-in drawer */
+    .sidebar{
+      display:block;
+      position:fixed; top:0; left:0;
+      width:82%; max-width:320px; height:100vh;
+      background:var(--bg);
+      border-right:1px solid var(--line);
+      padding:20px 14px 40px;
+      z-index:40;
+      transform:translateX(-100%);
+      transition:transform .25s ease;
+      box-shadow:2px 0 20px rgba(0,0,0,.08);
+      overflow-y:auto;
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .sidebar-head{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:-4px 4px 14px;
+    }
+    .sidebar-head .brand{ font-size:17px; }
+    .sidebar-close{
+      width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+      border:1px solid var(--line-strong); border-radius:10px;
+      background:var(--surface); cursor:pointer; padding:0;
+    }
+    .sidebar-close svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+
+    /* Форум — плотная компоновка под мобильные */
+    .forum-cat-head{ padding:10px 12px; }
+    .forum-cat-head h2{ font-size:12px; }
+    .forum-cat-head .meta{ display:none; }
+
+    .subforum{
+      grid-template-columns: 36px minmax(0,1fr) auto;
+      gap:10px;
+      padding:12px;
+    }
+    .subforum .sf-last{ display:none; }
+    .sf-ico{ width:36px; height:36px; }
+    .sf-ico svg{ width:18px; height:18px; }
+    .sf-title{ font-size:14px; }
+    .sf-desc{ font-size:12px; }
+    .sf-stats{ font-size:11px; text-align:right; }
+
+    .topics-head{ padding:10px 12px; }
+    .topics-head h3{ font-size:12px; }
+
+    .topic{
+      grid-template-columns: 28px minmax(0,1fr);
+      gap:10px;
+      padding:10px 12px;
+    }
+    .topic .topic-stats,
+    .topic .topic-last{ display:none; }
+    .topic-ico{ width:28px; height:28px; }
+    .topic-ico svg{ width:14px; height:14px; }
+    .topic-title{ font-size:13px; }
+    .topic-meta{ font-size:11px; }
+
+    .feed-title{ font-size:19px; }
+  }
+  @media (min-width: 721px){
+    .sidebar-head{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="sidebar">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <div class="brand">
+    <span class="mark">С</span>
+    Спутник
+  </div>
+  <div class="sub">турклуб · с 1959</div>
+  <div class="top-actions">
+    <input class="search" placeholder="Поиск по клубу">
+    <button class="btn ghost" aria-label="Уведомления">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+    </button>
+    <button class="btn primary">+ Тема</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand"><span class="mark">С</span>Спутник</div>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Закрыть меню">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav class="nav-group">
+      <div class="nav-title">Лента</div>
+      <a class="nav-item" href="{% url 'demo-index' %}">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg></span>
+        Главная
+      </a>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
+        Популярное
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        Свежее <span class="count">24</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 2.9 6 6.6.6-5 4.6 1.5 6.5L12 17.3 5.9 20.7l1.5-6.5-5-4.6 6.6-.6z"/></svg></span>
+        Сохранённое
+      </div>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-title">Разделы</div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="m3 20 6-10 4 6 3-4 5 8z"/></svg></span>
+        Походы <span class="count">12</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>
+        Отчёты <span class="count">48</span>
+      </div>
+      <a class="nav-item active" href="{% url 'demo-forum' %}">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>
+        Форум <span class="count">17</span>
+      </a>
+      <a class="nav-item" href="{% url 'demo-members' %}">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2 2-4 5-4"/></svg></span>
+        Участники <span class="count">32</span>
+      </a>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+        Календарь
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19V7l8-4 8 4v12"/><path d="M9 19v-6h6v6"/></svg></span>
+        Школа
+      </div>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-title">Темы</div>
+      <div class="nav-item">горный</div>
+      <div class="nav-item">вело</div>
+      <div class="nav-item">лыжный</div>
+      <div class="nav-item">водный</div>
+      <div class="nav-item">снаряжение</div>
+    </nav>
+  </aside>
+
+  <!-- Forum -->
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'demo-index' %}">Спутник</a>
+      <span class="sep">›</span>
+      <span>Форум</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">Форум клуба</h1>
+    </div>
+    <div class="feed-sub">17 непрочитанных сообщений · 248 участников онлайн сегодня</div>
+
+    <!-- =============================================== -->
+    <!-- КАТЕГОРИЯ 1: ПОХОДЫ -->
+    <!-- =============================================== -->
+    <section class="forum-cat cat-sky">
+      <div class="forum-cat-head">
+        <h2>Походы и маршруты</h2>
+        <span class="meta">3 подраздела</span>
+      </div>
+
+      <!-- Подраздел 1.1 -->
+      <div class="subforum">
+        <div class="sf-ico tone-sky unread">
+          <svg viewBox="0 0 24 24"><path d="m3 20 6-10 4 6 3-4 5 8z"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">
+            Горные походы
+            <span class="new-badge">7 новых</span>
+          </div>
+          <div class="sf-desc">Кавказ, Памир, Тянь-Шань, Алтай. Наборы, отчёты, разборы ошибок.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>48</b> тем</span>
+          <span><b>612</b> сообщений</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Эльбрус с севера, 15–25 июля…</span>
+          <span class="meta">2 ч · <a>alexey_kostrov</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 1.2 -->
+      <div class="subforum">
+        <div class="sf-ico tone-sky unread">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">
+            ПВД и выходные маршруты
+            <span class="new-badge">3 новых</span>
+          </div>
+          <div class="sf-desc">Однодневки и двухдневки в радиусе 300 км от города.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>92</b> темы</span>
+          <span><b>1 104</b> сообщения</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">ПВД Ладога по льду — фото и трек</span>
+          <span class="meta">вчера · <a>sergey_ilin</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 1.3 -->
+      <div class="subforum">
+        <div class="sf-ico tone-sky">
+          <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 1 16 0 8 8 0 0 1-16 0z"/><path d="M12 4v8l5 3"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">Планы на сезон</div>
+          <div class="sf-desc">Идеи и обсуждение маршрутов на следующие 6–12 месяцев.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>26</b> тем</span>
+          <span><b>318</b> сообщений</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Куда поедем в октябре?</span>
+          <span class="meta">3 дня · <a>marina.belyh</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================== -->
+    <!-- КАТЕГОРИЯ 2: ОТЧЁТЫ И ОПЫТ -->
+    <!-- =============================================== -->
+    <section class="forum-cat cat-earth">
+      <div class="forum-cat-head">
+        <h2>Отчёты и опыт</h2>
+        <span class="meta">2 подраздела</span>
+      </div>
+
+      <!-- Подраздел 2.1 -->
+      <div class="subforum">
+        <div class="sf-ico tone-earth unread">
+          <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">
+            Отчёты с маршрутов
+            <span class="new-badge">4 новых</span>
+          </div>
+          <div class="sf-desc">Фото, GPX-треки, раскладки, хронометраж, выводы.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>73</b> темы</span>
+          <span><b>894</b> сообщения</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Кавказ 2026: траверс Джан-Туган…</span>
+          <span class="meta">5 ч · <a>marina.belyh</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 2.2 -->
+      <div class="subforum">
+        <div class="sf-ico tone-earth">
+          <svg viewBox="0 0 24 24"><path d="M12 2 4 7v10l8 5 8-5V7z"/><path d="M12 12 4 7M12 12l8-5M12 12v10"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">Разбор ошибок и безопасность</div>
+          <div class="sf-desc">Что пошло не так. Честные истории, из которых можно научиться.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>34</b> темы</span>
+          <span><b>521</b> сообщение</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Как мы потеряли день на акклимухе</span>
+          <span class="meta">2 дня · <a>marina.belyh</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================== -->
+    <!-- КАТЕГОРИЯ 3: СНАРЯЖЕНИЕ -->
+    <!-- =============================================== -->
+    <section class="forum-cat cat-steel">
+      <div class="forum-cat-head">
+        <h2>Снаряжение и экипировка</h2>
+        <span class="meta">3 подраздела</span>
+      </div>
+
+      <!-- Подраздел 3.1 -->
+      <div class="subforum">
+        <div class="sf-ico tone-steel unread">
+          <svg viewBox="0 0 24 24"><path d="M12 2 3 21h18z"/><path d="M12 2v19"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">
+            Палатки и спальники
+            <span class="new-badge">2 новых</span>
+          </div>
+          <div class="sf-desc">Выбор, отзывы, сравнения моделей, опыт эксплуатации.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>57</b> тем</span>
+          <span><b>723</b> сообщения</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Какую палатку взять под межсезонье…</span>
+          <span class="meta">8 ч · <a>ivan.petrov</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 3.2 -->
+      <div class="subforum">
+        <div class="sf-ico tone-steel">
+          <svg viewBox="0 0 24 24"><path d="M5 17 L12 3 L19 17 Z"/><path d="M5 17 c0 2 14 2 14 0"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">Горелки, посуда, еда</div>
+          <div class="sf-desc">Горелки, газ, бензин, раскладки, рецепты для походов.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>41</b> тема</span>
+          <span><b>487</b> сообщений</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Газ на высоте — что работает</span>
+          <span class="meta">3 дня · <a>marina.belyh</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 3.3 -->
+      <div class="subforum">
+        <div class="sf-ico tone-steel">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">Барахолка</div>
+          <div class="sf-desc">Продажа, покупка, обмен б/у снаряги среди участников клуба.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>118</b> тем</span>
+          <span><b>402</b> сообщения</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Продам кошки Petzl Vasak</span>
+          <span class="meta">6 ч · <a>kirill.sh</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================== -->
+    <!-- КАТЕГОРИЯ 4: ШКОЛА -->
+    <!-- =============================================== -->
+    <section class="forum-cat cat-wine">
+      <div class="forum-cat-head">
+        <h2>Школа и обучение</h2>
+        <span class="meta">2 подраздела</span>
+      </div>
+
+      <!-- Подраздел 4.1 -->
+      <div class="subforum">
+        <div class="sf-ico tone-wine unread">
+          <svg viewBox="0 0 24 24"><path d="M4 19V7l8-4 8 4v12"/><path d="M9 19v-6h6v6"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">
+            Базовый горный — 2026
+            <span class="new-badge">1 новая</span>
+          </div>
+          <div class="sf-desc">Материалы курса, уроки, домашние задания, вопросы инструкторам.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>22</b> темы</span>
+          <span><b>268</b> сообщений</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">Урок 4. Страховка на льду</span>
+          <span class="meta">вчера · <a>sputnik.school</a></span>
+        </div>
+      </div>
+
+      <!-- Подраздел 4.2 -->
+      <div class="subforum">
+        <div class="sf-ico tone-wine">
+          <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">Вопросы новичков</div>
+          <div class="sf-desc">Глупых вопросов не бывает. Спрашивайте что угодно.</div>
+        </div>
+        <div class="sf-stats">
+          <span><b>64</b> темы</span>
+          <span><b>812</b> сообщений</span>
+        </div>
+        <div class="sf-last">
+          <span class="tt">С чего начать в 30 лет?</span>
+          <span class="meta">4 ч · <a>nina_k</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================== -->
+    <!-- ПОСЛЕДНИЕ ТЕМЫ — пример списка внутри подраздела -->
+    <!-- =============================================== -->
+    <section class="topics-block">
+      <div class="topics-head">
+        <h3>Последние активные темы</h3>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico unread">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title unread">
+            <span class="pin">закреп</span>
+            Эльбрус с севера, 15–25 июля. Открыта запись на 6 мест
+          </div>
+          <div class="topic-meta">в <a>Горные походы</a> · автор <a>alexey_kostrov</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>18</b>
+          <span>ответов</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">2 ч назад</span>
+          <span class="who"><a>alexey_kostrov</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico unread">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title unread">
+            Кавказ 2026: как мы прошли траверс Джан-Туган — разбор ошибок
+          </div>
+          <div class="topic-meta">в <a>Отчёты с маршрутов</a> · автор <a>marina.belyh</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>7</b>
+          <span>ответов</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">5 ч назад</span>
+          <span class="who"><a>marina.belyh</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico unread">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title unread">
+            Какую палатку взять под межсезонье в Хибинах?
+          </div>
+          <div class="topic-meta">в <a>Палатки и спальники</a> · автор <a>ivan.petrov</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>34</b>
+          <span>ответа</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">8 ч назад</span>
+          <span class="who"><a>den_hiker</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico unread">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title unread">
+            Урок 4. Организация страховки на льду — конспект и видео
+          </div>
+          <div class="topic-meta">в <a>Базовый горный — 2026</a> · автор <a>sputnik.school</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>3</b>
+          <span>ответа</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">вчера</span>
+          <span class="who"><a>sputnik.school</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title">
+            ПВД Ладога по льду — фото и трек
+          </div>
+          <div class="topic-meta">в <a>ПВД и выходные маршруты</a> · автор <a>sergey_ilin</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>14</b>
+          <span>ответов</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">вчера</span>
+          <span class="who"><a>anton.m</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title">
+            Продам кошки Petzl Vasak, размер 38–43
+          </div>
+          <div class="topic-meta">в <a>Барахолка</a> · автор <a>kirill.sh</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>2</b>
+          <span>ответа</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">6 ч назад</span>
+          <span class="who"><a>kirill.sh</a></span>
+        </div>
+      </div>
+
+      <div class="topic">
+        <div class="topic-ico">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="topic-body">
+          <div class="topic-title">
+            С чего начать в 30 лет?
+          </div>
+          <div class="topic-meta">в <a>Вопросы новичков</a> · автор <a>nina_k</a></div>
+        </div>
+        <div class="topic-stats">
+          <b>21</b>
+          <span>ответ</span>
+        </div>
+        <div class="topic-last">
+          <span class="when">4 ч назад</span>
+          <span class="who"><a>alexey_kostrov</a></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <div>Турклуб «Спутник» · tk-sputnik.org</div>
+  <div>© 2026</div>
+</footer>
+
+<script>
+(function(){
+  var burger = document.getElementById('burger');
+  var sidebar = document.getElementById('sidebar');
+  var backdrop = document.getElementById('backdrop');
+  var closeBtn = document.getElementById('sidebar-close');
+  function open(){
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    burger.setAttribute('aria-expanded','true');
+    document.body.style.overflow='hidden';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
+    document.body.style.overflow='';
+  }
+  burger.addEventListener('click', function(){
+    if (sidebar.classList.contains('open')) close(); else open();
+  });
+  backdrop.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  sidebar.querySelectorAll('.nav-item').forEach(function(el){
+    el.addEventListener('click', function(){
+      if (window.matchMedia('(max-width: 720px)').matches) close();
+    });
+  });
+  window.addEventListener('resize', function(){
+    if (!window.matchMedia('(max-width: 720px)').matches) close();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') close();
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -29,6 +29,10 @@ uv run ruff check .                     # lint
 uv run ruff format .                    # format
 ```
 
+## Testing
+
+Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproject.toml` under `[tool.pytest.ini_options]`, so no extra env setup is needed. Write tests with `django.test.TestCase` and use `self.client` for HTTP assertions. Test files can be named `tests.py` or `test_*.py` — both are discovered.
+
 ## Architecture
 
 - `config/` — Django project config (settings, urls, wsgi, asgi)

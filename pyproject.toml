@@ -11,6 +11,10 @@ dependencies = [
     "python-dotenv>=1.2.2",
 ]
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["tests.py", "test_*.py"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
