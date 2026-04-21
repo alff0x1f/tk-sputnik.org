@@ -15,8 +15,8 @@ services:
       - /bin/sh
       - -c
       - |
-        python manage.py migrate --noinput &&
-        python manage.py collectstatic --noinput
+        uv run python manage.py migrate --noinput &&
+        uv run python manage.py collectstatic --noinput
     env_file:
       - ./sputnik.env
     volumes:
