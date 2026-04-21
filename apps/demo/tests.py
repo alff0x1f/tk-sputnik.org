@@ -7,7 +7,9 @@ class IndexViewTests(TestCase):
         self.assertEqual(self.client.get(reverse("demo-index")).status_code, 200)
 
     def test_uses_correct_template(self):
-        self.assertTemplateUsed(self.client.get(reverse("demo-index")), "demo/index.html")
+        self.assertTemplateUsed(
+            self.client.get(reverse("demo-index")), "demo/index.html"
+        )
 
 
 class ForumViewTests(TestCase):
@@ -15,7 +17,9 @@ class ForumViewTests(TestCase):
         self.assertEqual(self.client.get(reverse("demo-forum")).status_code, 200)
 
     def test_uses_correct_template(self):
-        self.assertTemplateUsed(self.client.get(reverse("demo-forum")), "demo/forum.html")
+        self.assertTemplateUsed(
+            self.client.get(reverse("demo-forum")), "demo/forum.html"
+        )
 
 
 class MembersViewTests(TestCase):
@@ -23,4 +27,6 @@ class MembersViewTests(TestCase):
         self.assertEqual(self.client.get(reverse("demo-members")).status_code, 200)
 
     def test_uses_correct_template(self):
-        self.assertTemplateUsed(self.client.get(reverse("demo-members")), "demo/members.html")
+        self.assertTemplateUsed(
+            self.client.get(reverse("demo-members")), "demo/members.html"
+        )
