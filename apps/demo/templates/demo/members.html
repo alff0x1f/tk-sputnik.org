@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Участники — Турклуб Спутник</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#ffffff;
+    --surface:#ffffff;
+    --surface-2:#f7f8fb;
+    --ink:#13244a;
+    --ink-2:#495976;
+    --muted:#8e95a8;
+    --line:#ebedf2;
+    --line-strong:#d4d8e2;
+
+    --accent:#1e3a7a;           /* фирменный синий «Спутника» */
+    --accent-deep:#122557;
+    --accent-soft:#e4e9f5;
+
+    --orange:#e8671b;           /* фирменный оранжевый */
+    --orange-deep:#c4520e;
+    --orange-soft:#fdece0;
+
+    /* Категорийные тона — для школ */
+    --earth:#8a5a2b;            /* охра — пешая */
+    --earth-soft:#f3e6d3;
+    --steel:#4a6680;            /* сталь — вело */
+    --steel-soft:#dee5ed;
+    --wine:#8a3346;             /* бордо — не используется тут */
+    --wine-soft:#f0dde2;
+    --snow:#6b8a9c;             /* морозный — лыжная */
+    --snow-soft:#e1ebf1;
+
+    --chip-bg:#eef1f7;
+    --radius:14px;
+
+    /* Статусы участия — мягче, не про «деньги» */
+    --paid:#1e3a7a;             /* синий — в клубе */
+    --pending:#e8671b;          /* оранжевый — требует внимания */
+    --inactive:#e6e8ee;         /* светло-серый — не состоял */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit; text-decoration:none}
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:16px;
+    padding:14px 28px;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:18px; letter-spacing:-0.01em;
+  }
+  .brand .mark{
+    width:28px; height:28px; border-radius:50%;
+    background:var(--orange); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700;
+  }
+  .topbar .sub{
+    font-size:13px; color:var(--muted);
+  }
+  .top-actions{
+    margin-left:auto;
+    display:flex; align-items:center; gap:10px;
+  }
+  .search{
+    border:1px solid var(--line-strong); border-radius:999px;
+    padding:7px 14px; font-size:13px; color:var(--ink-2); background:var(--surface-2);
+    width:220px; outline:none;
+  }
+  .search::placeholder{ color:var(--muted); }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px; border-radius:999px;
+    font-size:13px; font-weight:600; cursor:pointer;
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);
+  }
+  .btn.primary{ background:var(--orange); color:#fff; border-color:var(--orange); }
+  .btn.primary:hover{ background:var(--orange-deep); border-color:var(--orange-deep); }
+  .btn.ghost{ background:transparent; }
+
+  /* Layout — без правой колонки */
+  .wrap{
+    display:grid;
+    grid-template-columns: 240px minmax(0,1fr);
+    gap:0;
+    max-width:1280px; margin:0 auto;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    padding:22px 16px 40px;
+    border-right:1px solid var(--line);
+    position:sticky; top:60px; align-self:start;
+    height:calc(100vh - 60px); overflow:auto;
+  }
+  .nav-group{ margin-bottom:22px; }
+  .nav-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--muted); margin:0 10px 8px; font-weight:600;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 12px; border-radius:10px;
+    font-size:14px; color:var(--ink); cursor:pointer;
+    font-weight:500;
+  }
+  .nav-item:hover{ background:var(--surface-2); }
+  .nav-item.active{
+    background:var(--accent-soft); font-weight:600; color:var(--accent-deep);
+  }
+  .nav-item.active .ico{ color:var(--accent); }
+  .nav-item .ico{
+    width:18px; height:18px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    color:var(--ink-2);
+  }
+  .nav-item .ico svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.6; }
+  .nav-item .count{
+    margin-left:auto; font-size:12px; color:var(--muted); font-weight:500;
+  }
+
+  /* Main */
+  .feed{ padding:22px 28px 60px; min-width:0; }
+  .feed-head{
+    display:flex; align-items:center; gap:10px; margin-bottom:4px;
+  }
+  .feed-title{ font-size:22px; font-weight:700; letter-spacing:-0.01em; }
+  .feed-sub{ color:var(--muted); font-size:13px; margin-bottom:16px; }
+
+  /* Crumbs */
+  .crumbs{
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+    font-size:13px; color:var(--muted); margin-bottom:12px;
+  }
+  .crumbs a{ color:var(--ink-2); }
+  .crumbs a:hover{ color:var(--ink); }
+  .crumbs .sep{ color:var(--line-strong); }
+
+  /* Stats row */
+  .stats{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .stat{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    background:var(--surface);
+  }
+  .stat .v{
+    font-size:22px; font-weight:700; letter-spacing:-0.01em;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat .l{
+    font-size:12px; color:var(--muted); margin-top:2px;
+  }
+
+  /* Toolbar */
+  .toolbar{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .chip{
+    border:1px solid var(--line-strong); border-radius:999px;
+    padding:6px 12px; font-size:13px; font-weight:500;
+    background:var(--surface); color:var(--ink-2); cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .chip.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .chip:hover:not(.on){ background:var(--surface-2); }
+  .chip .dot{
+    width:8px; height:8px; border-radius:50%; display:inline-block;
+  }
+  .toolbar .search-inline{
+    margin-left:auto;
+    border:1px solid var(--line-strong); border-radius:999px;
+    padding:6px 12px; font-size:13px; color:var(--ink-2); background:var(--surface-2);
+    width:200px; outline:none;
+  }
+
+  /* Legend */
+  .legend{
+    display:flex; flex-wrap:wrap; gap:14px;
+    font-size:12px; color:var(--muted);
+    margin-bottom:14px;
+  }
+  .legend .item{ display:inline-flex; align-items:center; gap:6px; }
+  .legend .dot{
+    width:10px; height:10px; border-radius:50%; display:inline-block;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .legend .dot.paid{ background:var(--paid); }
+  .legend .dot.pending{ background:var(--pending); }
+  .legend .dot.inactive{ background:var(--inactive); }
+
+  /* Panel that wraps the table */
+  .panel{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .panel-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+  }
+  .panel-head h2{
+    margin:0; font-size:14px; font-weight:700;
+    letter-spacing:0.02em; text-transform:uppercase;
+  }
+  .panel-head .meta{
+    margin-left:auto; font-size:12px; color:var(--muted); font-weight:500;
+  }
+
+  /* Members table */
+  .table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  table.members{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+  }
+  table.members thead th{
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    font-weight:600;
+    color:var(--ink-2);
+    text-align:left;
+    padding:10px 8px;
+    position:sticky; top:0; /* в пределах overflow-wrap не прилипает к окну, но по таблице — да */
+  }
+  table.members tbody td{
+    border-top:1px solid var(--line);
+    padding:10px 8px;
+    vertical-align:middle;
+  }
+  table.members tbody tr:hover{ background:var(--surface-2); }
+
+  /* Member cell (name + meta) */
+  .mem{
+    display:grid;
+    grid-template-columns: 36px minmax(0,1fr);
+    gap:10px;
+    align-items:center;
+    padding-left:16px;
+    min-width:200px;
+  }
+  .mem .av{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#dde4f0,#eef2f8);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:600; color:var(--accent);
+    flex-shrink:0;
+  }
+  .mem .txt{ min-width:0; }
+  .mem .nm{
+    font-weight:600; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .mem .role{
+    font-size:12px; color:var(--muted); margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:flex; align-items:center; gap:6px;
+  }
+  .mem .role .school{
+    font-size:11px; font-weight:600;
+    padding:1px 7px; border-radius:999px;
+    letter-spacing:0.01em;
+  }
+  .mem .role .school.mountain{ background:var(--accent-soft); color:var(--accent-deep); }
+  .mem .role .school.bike{     background:var(--steel-soft); color:#36536b; }
+  .mem .role .school.ski{      background:var(--snow-soft); color:#3d5f71; }
+  .mem .role .school.hike{     background:var(--earth-soft); color:#6b441f; }
+  .mem .note{
+    font-size:12px; color:var(--muted); margin-top:3px;
+    line-height:1.35;
+  }
+
+  /* Period (vertical header) */
+  th.period{
+    width:32px; min-width:32px; max-width:32px;
+    height:108px;
+    padding:0 0 8px;
+    vertical-align:bottom;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  th.period > div{
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+    white-space:nowrap;
+    display:inline-block;
+  }
+  th.period.now > div{ color:var(--ink); }
+
+  td.period{
+    width:32px; min-width:32px; max-width:32px;
+    text-align:center;
+    padding:8px 4px;
+  }
+  td.period.now{ background:rgba(30,58,122,0.03); }
+
+  /* Status cell */
+  .cell{
+    width:12px; height:12px; border-radius:50%;
+    display:inline-block;
+    border:1px solid rgba(0,0,0,0.05);
+  }
+  .cell.paid{ background:var(--paid); border-color:var(--paid); }
+  .cell.pending{ background:var(--pending); border-color:var(--pending); }
+  .cell.inactive{ background:var(--inactive); }
+
+  /* Row states */
+  tr.pending{ background:rgba(232,103,27,0.04); }
+  tr.inactive td{ color:var(--muted); }
+  tr.inactive .mem .nm{ color:var(--ink-2); font-weight:500; }
+
+  /* Trailing summary column */
+  th.summary, td.summary{
+    text-align:right;
+    padding-right:16px;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink-2);
+    font-size:13px;
+  }
+  td.summary b{ color:var(--ink); font-weight:600; }
+
+  /* Footer */
+  .footer{
+    max-width:1280px; margin:0 auto;
+    padding:30px 28px 50px;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between;
+    font-size:12px; color:var(--muted);
+  }
+
+  /* Burger */
+  .burger{
+    display:none;
+    width:40px; height:40px; flex-shrink:0;
+    align-items:center; justify-content:center;
+    border:1px solid var(--line-strong); border-radius:10px;
+    background:var(--surface); color:var(--ink); cursor:pointer;
+    padding:0;
+  }
+  .burger svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+  .burger:hover{ background:var(--surface-2); }
+
+  .backdrop{
+    display:none;
+    position:fixed; inset:0; background:rgba(0,0,0,.35);
+    z-index:30; opacity:0; transition:opacity .2s ease;
+  }
+  .backdrop.open{ display:block; opacity:1; }
+
+  /* Responsive */
+  @media (max-width: 1000px){
+    .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 720px){
+    .wrap{ grid-template-columns: 1fr; }
+    .topbar{ padding:12px 16px; gap:10px; }
+    .topbar .sub{ display:none; }
+    .search{ display:none; }
+    .feed{ padding:16px; }
+
+    .burger{ display:inline-flex; }
+
+    .sidebar{
+      display:block;
+      position:fixed; top:0; left:0;
+      width:82%; max-width:320px; height:100vh;
+      background:var(--bg);
+      border-right:1px solid var(--line);
+      padding:20px 14px 40px;
+      z-index:40;
+      transform:translateX(-100%);
+      transition:transform .25s ease;
+      box-shadow:2px 0 20px rgba(0,0,0,.08);
+      overflow-y:auto;
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .sidebar-head{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:-4px 4px 14px;
+    }
+    .sidebar-head .brand{ font-size:17px; }
+    .sidebar-close{
+      width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+      border:1px solid var(--line-strong); border-radius:10px;
+      background:var(--surface); cursor:pointer; padding:0;
+    }
+    .sidebar-close svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+
+    .feed-title{ font-size:19px; }
+    .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+    .stat{ padding:10px 12px; }
+    .stat .v{ font-size:18px; }
+
+    .toolbar .search-inline{ display:none; }
+
+    /* Таблица остаётся прокручиваемой по горизонтали */
+    th.period, td.period{ width:26px; min-width:26px; max-width:26px; }
+    th.period{ height:92px; }
+    th.period > div{ font-size:10px; }
+    .mem{ padding-left:10px; }
+    .mem .av{ width:28px; height:28px; font-size:10px; }
+    table.members{ font-size:13px; }
+    .cell{ width:10px; height:10px; }
+    th.summary, td.summary{ display:none; }
+  }
+  @media (min-width: 721px){
+    .sidebar-head{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="sidebar">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <div class="brand">
+    <span class="mark">С</span>
+    Спутник
+  </div>
+  <div class="sub">турклуб · с 1959</div>
+  <div class="top-actions">
+    <input class="search" placeholder="Поиск по клубу">
+    <button class="btn ghost" aria-label="Уведомления">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+    </button>
+    <button class="btn primary">+ Взнос</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand"><span class="mark">С</span>Спутник</div>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Закрыть меню">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav class="nav-group">
+      <div class="nav-title">Лента</div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg></span>
+        Главная
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
+        Популярное
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        Свежее <span class="count">24</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 2.9 6 6.6.6-5 4.6 1.5 6.5L12 17.3 5.9 20.7l1.5-6.5-5-4.6 6.6-.6z"/></svg></span>
+        Сохранённое
+      </div>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-title">Разделы</div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="m3 20 6-10 4 6 3-4 5 8z"/></svg></span>
+        Походы <span class="count">12</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>
+        Отчёты <span class="count">48</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>
+        Форум
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+        Календарь
+      </div>
+      <div class="nav-item active">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2 2-4 5-4"/></svg></span>
+        Участники <span class="count">32</span>
+      </div>
+      <div class="nav-item">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19V7l8-4 8 4v12"/><path d="M9 19v-6h6v6"/></svg></span>
+        Школа
+      </div>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-title">Темы</div>
+      <div class="nav-item">горный</div>
+      <div class="nav-item">вело</div>
+      <div class="nav-item">лыжный</div>
+      <div class="nav-item">водный</div>
+      <div class="nav-item">снаряжение</div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'demo-index' %}">Спутник</a>
+      <span class="sep">›</span>
+      <span>Участники</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">Участники клуба</h1>
+    </div>
+    <div class="feed-sub">32 человека · активные участники клуба</div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="v">32</div>
+        <div class="l">всего участников</div>
+      </div>
+      <div class="stat">
+        <div class="v">28</div>
+        <div class="l">активны в этом сезоне</div>
+      </div>
+      <div class="stat">
+        <div class="v">6</div>
+        <div class="l">инструкторов</div>
+      </div>
+      <div class="stat">
+        <div class="v">4</div>
+        <div class="l">школы клуба</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="chip on">Все</span>
+      <span class="chip">Горная школа</span>
+      <span class="chip">Вело школа</span>
+      <span class="chip">Лыжная школа</span>
+      <span class="chip">Пешая школа</span>
+      <input class="search-inline" placeholder="Поиск участника">
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Список участников</h2>
+        <span class="meta">период: весна 2024 — весна 2026</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="members">
+          <thead>
+            <tr>
+              <th style="padding-left:16px;">Участник</th>
+              <th class="period"><div>весна 2024</div></th>
+              <th class="period"><div>осень 2024</div></th>
+              <th class="period"><div>весна 2025</div></th>
+              <th class="period"><div>осень 2025</div></th>
+              <th class="period now"><div>весна 2026</div></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Алексей Костров — ведёт Эльбрус, платит исправно -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">АК</div>
+                  <div class="txt">
+                    <div class="nm">Алексей Костров</div>
+                    <div class="role">инструктор <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid" title="Оплатил"></span></td>
+              <td class="period"><span class="cell paid" title="Оплатил"></span></td>
+              <td class="period"><span class="cell paid" title="Оплатил"></span></td>
+              <td class="period"><span class="cell paid" title="Оплатил"></span></td>
+              <td class="period now"><span class="cell paid" title="Оплатил"></span></td>
+            </tr>
+
+            <!-- Марина Белых — автор отчётов -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">МБ</div>
+                  <div class="txt">
+                    <div class="nm">Марина Белых</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <!-- Иван Петров — автор вопроса про палатку, забыл заплатить -->
+            <tr class="pending">
+              <td>
+                <div class="mem">
+                  <div class="av">ИП</div>
+                  <div class="txt">
+                    <div class="nm">Иван Петров</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell pending" title="Не оплатил"></span></td>
+            </tr>
+
+            <!-- Сергей Ильин — ПВД Ладога -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">СИ</div>
+                  <div class="txt">
+                    <div class="nm">Сергей Ильин</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ДМ</div>
+                  <div class="txt">
+                    <div class="nm">Дмитрий Морозов</div>
+                    <div class="role">председатель клуба <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ЕС</div>
+                  <div class="txt">
+                    <div class="nm">Екатерина Соколова</div>
+                    <div class="role">завхоз <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <!-- Новичок — вступил только весной 2025 -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">КШ</div>
+                  <div class="txt">
+                    <div class="nm">Кирилл Шестаков</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">НК</div>
+                  <div class="txt">
+                    <div class="nm">Нина Кузнецова</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr class="pending">
+              <td>
+                <div class="mem">
+                  <div class="av">АМ</div>
+                  <div class="txt">
+                    <div class="nm">Антон Макаров</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell pending"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell pending"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ОВ</div>
+                  <div class="txt">
+                    <div class="nm">Ольга Власова</div>
+                    <div class="role">инструктор <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ПГ</div>
+                  <div class="txt">
+                    <div class="nm">Павел Горин</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <!-- На паузе — не состоял последние два периода -->
+            <tr class="inactive">
+              <td>
+                <div class="mem">
+                  <div class="av">ТР</div>
+                  <div class="txt">
+                    <div class="nm">Татьяна Рогова</div>
+                    <div class="role">на паузе с осени 2025 <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period now"><span class="cell inactive"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ДХ</div>
+                  <div class="txt">
+                    <div class="nm">Денис Хомяков</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr class="pending">
+              <td>
+                <div class="mem">
+                  <div class="av">ВЗ</div>
+                  <div class="txt">
+                    <div class="nm">Виктор Зайцев</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell pending"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">АН</div>
+                  <div class="txt">
+                    <div class="nm">Анна Новикова</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">РГ</div>
+                  <div class="txt">
+                    <div class="nm">Роман Гришин</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <!-- Новый со школы 2026 -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ЛК</div>
+                  <div class="txt">
+                    <div class="nm">Лев Королёв</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr class="pending">
+              <td>
+                <div class="mem">
+                  <div class="av">СВ</div>
+                  <div class="txt">
+                    <div class="nm">Светлана Волкова</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell pending"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell pending"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">МТ</div>
+                  <div class="txt">
+                    <div class="nm">Максим Титов</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ЮЛ</div>
+                  <div class="txt">
+                    <div class="nm">Юлия Лебедева</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr class="pending">
+              <td>
+                <div class="mem">
+                  <div class="av">АС</div>
+                  <div class="txt">
+                    <div class="nm">Андрей Смирнов</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell pending"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ГФ</div>
+                  <div class="txt">
+                    <div class="nm">Григорий Фомин</div>
+                    <div class="role">инструктор <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">НП</div>
+                  <div class="txt">
+                    <div class="nm">Наталья Павлова</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ЕР</div>
+                  <div class="txt">
+                    <div class="nm">Егор Рыбаков</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">КВ</div>
+                  <div class="txt">
+                    <div class="nm">Ксения Воробьёва</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <!-- Новичок осени 2024 -->
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ТВ</div>
+                  <div class="txt">
+                    <div class="nm">Тимофей Виноградов</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ИБ</div>
+                  <div class="txt">
+                    <div class="nm">Ирина Богданова</div>
+                    <div class="role">медик клуба <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">МС</div>
+                  <div class="txt">
+                    <div class="nm">Михаил Савельев</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ВП</div>
+                  <div class="txt">
+                    <div class="nm">Валерия Прохорова</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">ФЕ</div>
+                  <div class="txt">
+                    <div class="nm">Фёдор Егоров</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">АЗ</div>
+                  <div class="txt">
+                    <div class="nm">Алиса Зимина</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period"><span class="cell inactive"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="mem">
+                  <div class="av">СЖ</div>
+                  <div class="txt">
+                    <div class="nm">Степан Жуков</div>
+                    <div class="role">участник <span class="school mountain">горная школа</span></div>
+                  </div>
+                </div>
+              </td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period"><span class="cell paid"></span></td>
+              <td class="period now"><span class="cell paid"></span></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div>Турклуб «Спутник» · tk-sputnik.org</div>
+  <div>© 2026</div>
+</footer>
+
+<script>
+(function(){
+  var burger = document.getElementById('burger');
+  var sidebar = document.getElementById('sidebar');
+  var backdrop = document.getElementById('backdrop');
+  var closeBtn = document.getElementById('sidebar-close');
+  function open(){
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    burger.setAttribute('aria-expanded','true');
+    document.body.style.overflow='hidden';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
+    document.body.style.overflow='';
+  }
+  burger.addEventListener('click', function(){
+    if (sidebar.classList.contains('open')) close(); else open();
+  });
+  backdrop.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  sidebar.querySelectorAll('.nav-item').forEach(function(el){
+    el.addEventListener('click', function(){
+      if (window.matchMedia('(max-width: 720px)').matches) close();
+    });
+  });
+  window.addEventListener('resize', function(){
+    if (!window.matchMedia('(max-width: 720px)').matches) close();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') close();
+  });
+})();
+</script>
+
+</body>
+</html>
