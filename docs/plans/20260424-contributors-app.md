@@ -88,8 +88,8 @@
 **Files:**
 - Create: `apps/contributors/admin.py`
 
-- [ ] зарегистрировать все три модели в admin с полезными `list_display`
-- [ ] `uv run pytest` — должно пройти
+- [x] зарегистрировать все три модели в admin с полезными `list_display`
+- [x] `uv run pytest` — должно пройти
 
 ### Task 3: Management command `sync_contributors`
 
