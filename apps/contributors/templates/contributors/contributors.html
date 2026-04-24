@@ -1,24 +1,217 @@
 {% extends "demo/base.html" %}
+{% load static %}
+
 {% block title %}Взносы — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<style>
+  .feed-head{ margin-bottom:4px; }
+  .feed-sub{ margin-bottom:16px; }
+  .crumbs{ margin-bottom:12px; }
+
+  /* Legend */
+  .legend{
+    display:flex; flex-wrap:wrap; gap:14px;
+    font-size:12px; color:var(--muted);
+    margin-bottom:14px;
+  }
+  .legend .item{ display:inline-flex; align-items:center; gap:6px; }
+  .legend .dot{
+    width:10px; height:10px; border-radius:50%; display:inline-block;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .legend .dot.paid{ background:var(--paid); }
+  .legend .dot.pending{ background:var(--pending); }
+  .legend .dot.inactive{ background:var(--inactive); }
+
+  /* Panel */
+  .panel{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    overflow:hidden;
+    position:relative;
+  }
+  .panel::before{
+    content:""; position:absolute; left:0; top:0; bottom:0;
+    width:3px; background:var(--accent);
+  }
+  .panel-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+  }
+  .panel-head h2{
+    margin:0; font-size:14px; font-weight:700;
+    letter-spacing:0.02em; text-transform:uppercase;
+  }
+
+  /* Members table */
+  .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table.members{ width:100%; border-collapse:collapse; font-size:14px; }
+  table.members thead th{
+    border-bottom:1px solid var(--line);
+    font-weight:600; color:var(--ink-2);
+    text-align:left; padding:10px 8px;
+    position:sticky; top:0;
+  }
+  table.members tbody td{
+    border-top:1px solid var(--line);
+    padding:10px 8px; vertical-align:middle;
+  }
+  table.members tbody tr:hover{ background:var(--surface-2); }
+
+  /* Member cell */
+  .mem{
+    display:grid;
+    grid-template-columns: 36px minmax(0,1fr);
+    gap:10px; align-items:center;
+    padding-left:16px; min-width:200px;
+  }
+  .mem .av{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#dde4f0,#eef2f8);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:600; color:var(--accent);
+    flex-shrink:0;
+  }
+  .mem .txt{ min-width:0; }
+  .mem .nm{
+    font-weight:600; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .mem .role{
+    font-size:12px; color:var(--muted); margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* Period columns */
+  th.period{
+    width:32px; min-width:32px; max-width:32px;
+    height:108px;
+    padding:0 0 8px;
+    vertical-align:bottom; text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  th.period > div{
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    text-transform:uppercase; letter-spacing:0.06em;
+    font-size:11px; color:var(--muted); font-weight:600;
+    white-space:nowrap; display:inline-block;
+  }
+  th.period.now > div{ color:var(--ink); }
+  td.period{
+    width:32px; min-width:32px; max-width:32px;
+    text-align:center; padding:8px 4px;
+  }
+  td.period.now{ background:rgba(30,58,122,0.03); }
+
+  /* Status cell */
+  .cell{
+    width:12px; height:12px; border-radius:50%;
+    display:inline-block; border:1px solid rgba(0,0,0,0.05);
+  }
+  .cell.paid{ background:var(--paid); border-color:var(--paid); }
+  .cell.pending{ background:var(--pending); border-color:var(--pending); }
+  .cell.inactive{ background:var(--inactive); }
+
+  tr.pending{ background:rgba(232,103,27,0.04); }
+
+  .empty-state{
+    padding:48px 16px; text-align:center;
+    color:var(--muted); font-size:14px;
+  }
+
+  @media (max-width: 720px){
+    .feed-title{ font-size:19px; }
+    th.period, td.period{ width:26px; min-width:26px; max-width:26px; }
+    th.period{ height:92px; }
+    th.period > div{ font-size:10px; }
+    .mem{ padding-left:10px; }
+    .mem .av{ width:28px; height:28px; font-size:10px; }
+    table.members{ font-size:13px; }
+    .cell{ width:10px; height:10px; }
+  }
+</style>
+{% endblock %}
+
+{% block topbar_action %}
+  <a href="https://kolco24.ru/donate" target="_blank" rel="noopener noreferrer" class="btn primary">Взнос</a>
+{% endblock %}
+
 {% block content %}
-<div class="contributors">
-{% if donor_table %}
-<table>
-<thead><tr>
-<th>Участник</th>
-{% for period in donor_table.periods %}<th{% if forloop.counter0 == donor_table.current_period_index %} class="now"{% endif %}>{{ period.name }}</th>{% endfor %}
-</tr></thead>
-<tbody>
-{% for row in donor_table.rows %}
-<tr>
-<td>{{ row.member.name }}{% if row.member.label %} <span class="role">{{ row.member.label }}</span>{% endif %}</td>
-{% for cell in row.cells %}<td class="{% if cell %}paid{% elif cell is None %}{% else %}inactive{% endif %}"></td>{% endfor %}
-</tr>
-{% endfor %}
-</tbody>
-</table>
-{% else %}
-<p>Нет данных</p>
-{% endif %}
-</div>
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'demo-index' %}">Спутник</a>
+      <span class="sep">›</span>
+      <span>Взносы</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">Членские взносы</h1>
+    </div>
+    <div class="feed-sub">Участники турклуба Спутник</div>
+
+    {% if donor_table %}
+      <div class="legend">
+        <span class="item"><span class="dot paid"></span> Оплатил</span>
+        <span class="item"><span class="dot pending"></span> Не оплатил</span>
+        <span class="item"><span class="dot inactive"></span> Не участвовал</span>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Список участников</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table class="members">
+            <thead>
+              <tr>
+                <th style="padding-left:16px;">Участник</th>
+                {% for period in donor_table.periods %}
+                  <th class="period{% if forloop.counter0 == donor_table.current_period_index %} now{% endif %}">
+                    <div>{{ period.name }}</div>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in donor_table.rows %}
+                <tr{% if row.paid_current == False %} class="pending"{% endif %}>
+                  <td>
+                    <div class="mem">
+                      <div class="av">{{ row.member.name|slice:":2" }}</div>
+                      <div class="txt">
+                        <div class="nm">{{ row.member.name }}</div>
+                        {% if row.member.label %}
+                          <div class="role">{{ row.member.label }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </td>
+                  {% for cell in row.cells %}
+                    <td class="period{% if forloop.counter0 == donor_table.current_period_index %} now{% endif %}">
+                      {% if cell == True %}
+                        <span class="cell paid" title="Оплатил"></span>
+                      {% elif cell == False %}
+                        <span class="cell inactive" title="Не оплатил"></span>
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    {% else %}
+      <div class="panel">
+        <div class="empty-state">Нет данных</div>
+      </div>
+    {% endif %}
+  </main>
 {% endblock %}

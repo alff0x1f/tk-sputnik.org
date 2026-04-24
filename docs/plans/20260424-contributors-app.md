@@ -136,7 +136,7 @@
 **Files:**
 - Create: `apps/contributors/templates/contributors/contributors.html`
 
-- [ ] создать шаблон на основе `apps/demo/templates/demo/members.html`:
+- [x] создать шаблон на основе `apps/demo/templates/demo/members.html`:
   - `{% extends "demo/base.html" %}`
   - убрать блок `.stats` (карточки со статистикой)
   - убрать блок `.toolbar` (фильтры по школам)
@@ -145,7 +145,7 @@
   - колонки периодов рендерить из `donor_table.periods`; добавлять класс `now` для `current_period_index`
   - ячейки: `paid` / `inactive` / пусто (None) по значению `cell`
   - если `donor_table` пустой — показать заглушку "Нет данных"
-- [ ] `uv run pytest` — должно пройти (HTTP-тест из Task 4 теперь проверяет реальный шаблон)
+- [x] `uv run pytest` — должно пройти (HTTP-тест из Task 4 теперь проверяет реальный шаблон)
 
 ### Task 6: ТЗ для kolco24
 
