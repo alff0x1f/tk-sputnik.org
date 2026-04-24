@@ -12,9 +12,9 @@ def build_donor_table():
 
     period_ids = [p.id for p in periods]
 
-    donations = MemberDonation.objects.filter(
-        period_id__in=period_ids
-    ).select_related("member", "period")
+    donations = MemberDonation.objects.filter(period_id__in=period_ids).select_related(
+        "member", "period"
+    )
 
     payment_map = {}
     for d in donations:
@@ -56,4 +56,6 @@ def build_donor_table():
 
 def contributors_view(request):
     donor_table = build_donor_table()
-    return render(request, "contributors/contributors.html", {"donor_table": donor_table})
+    return render(
+        request, "contributors/contributors.html", {"donor_table": donor_table}
+    )

@@ -12,7 +12,9 @@ from .models import ClubMember, DonationPeriod, MemberDonation
 
 class ClubMemberModelTests(TestCase):
     def test_create(self):
-        member = ClubMember.objects.create(external_id=1, name="Алексей", label="Горная школа")
+        member = ClubMember.objects.create(
+            external_id=1, name="Алексей", label="Горная школа"
+        )
         self.assertEqual(member.name, "Алексей")
         self.assertEqual(member.label, "Горная школа")
 
@@ -29,7 +31,10 @@ class ClubMemberModelTests(TestCase):
 class DonationPeriodModelTests(TestCase):
     def test_create(self):
         period = DonationPeriod.objects.create(
-            external_id=1, name="весна 2024", date=datetime.date(2024, 3, 1), is_active=True
+            external_id=1,
+            name="весна 2024",
+            date=datetime.date(2024, 3, 1),
+            is_active=True,
         )
         self.assertEqual(period.name, "весна 2024")
         self.assertTrue(period.is_active)
@@ -78,7 +83,9 @@ class MemberDonationModelTests(TestCase):
 
 
 SAMPLE_API_RESPONSE = {
-    "periods": [{"id": 1, "name": "весна 2024", "date": "2024-03-01", "is_active": True}],
+    "periods": [
+        {"id": 1, "name": "весна 2024", "date": "2024-03-01", "is_active": True}
+    ],
     "members": [{"id": 5, "name": "Алексей Костров", "label": "Горная школа"}],
     "donations": [
         {
@@ -162,7 +169,9 @@ class ContributorsViewTests(TestCase):
         self.assertIsNone(response.context["donor_table"])
 
     def test_context_contains_donor_table_with_data(self):
-        member = ClubMember.objects.create(external_id=1, name="Алексей", label="Горная школа")
+        member = ClubMember.objects.create(
+            external_id=1, name="Алексей", label="Горная школа"
+        )
         period = DonationPeriod.objects.create(
             external_id=1,
             name="весна 2024",

@@ -160,12 +160,12 @@
 
 ### Task 7: Финальная проверка
 
-- [ ] убедиться что все требования из Overview реализованы
-- [ ] `uv run pytest` — все тесты проходят
-- [ ] `uv run ruff check .` — нет замечаний
-- [ ] `uv run ruff format .` — нет изменений
-- [ ] `uv run python manage.py check` — нет ошибок
-- [ ] переместить план в `docs/plans/completed/`
+- [x] убедиться что все требования из Overview реализованы
+- [x] `uv run pytest` — все тесты проходят
+- [x] `uv run ruff check .` — нет замечаний
+- [x] `uv run ruff format .` — нет изменений
+- [x] `uv run python manage.py check` — нет ошибок
+- [x] переместить план в `docs/plans/completed/`
 
 ## Post-Completion
 
