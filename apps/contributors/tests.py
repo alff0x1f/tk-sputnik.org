@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from django.db import IntegrityError
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import ClubMember, DonationPeriod, MemberDonation
 
@@ -144,3 +145,58 @@ class SyncContributorsCommandTests(TestCase):
         self.assertEqual(DonationPeriod.objects.count(), 1)
         self.assertEqual(ClubMember.objects.count(), 1)
         self.assertEqual(MemberDonation.objects.count(), 1)
+
+
+class ContributorsViewTests(TestCase):
+    def test_get_returns_200(self):
+        response = self.client.get(reverse("contributors"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_uses_correct_template(self):
+        response = self.client.get(reverse("contributors"))
+        self.assertTemplateUsed(response, "contributors/contributors.html")
+
+    def test_empty_db_renders_without_error(self):
+        response = self.client.get(reverse("contributors"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["donor_table"])
+
+    def test_context_contains_donor_table_with_data(self):
+        member = ClubMember.objects.create(external_id=1, name="Алексей", label="Горная школа")
+        period = DonationPeriod.objects.create(
+            external_id=1,
+            name="весна 2024",
+            date=datetime.date(2024, 3, 1),
+            is_active=True,
+        )
+        MemberDonation.objects.create(member=member, period=period, is_paid=True)
+
+        response = self.client.get(reverse("contributors"))
+        self.assertEqual(response.status_code, 200)
+
+        donor_table = response.context["donor_table"]
+        self.assertIsNotNone(donor_table)
+        self.assertEqual(len(donor_table["periods"]), 1)
+        self.assertEqual(len(donor_table["rows"]), 1)
+
+        row = donor_table["rows"][0]
+        self.assertEqual(row["member"], member)
+        self.assertEqual(row["cells"], [True])
+        self.assertTrue(row["paid_current"])
+
+    def test_sorting_paid_first(self):
+        period = DonationPeriod.objects.create(
+            external_id=1,
+            name="весна 2024",
+            date=datetime.date(2024, 3, 1),
+            is_active=True,
+        )
+        member_a = ClubMember.objects.create(external_id=1, name="Аня")
+        member_b = ClubMember.objects.create(external_id=2, name="Борис")
+        MemberDonation.objects.create(member=member_a, period=period, is_paid=False)
+        MemberDonation.objects.create(member=member_b, period=period, is_paid=True)
+
+        response = self.client.get(reverse("contributors"))
+        rows = response.context["donor_table"]["rows"]
+        self.assertEqual(rows[0]["member"], member_b)
+        self.assertEqual(rows[1]["member"], member_a)

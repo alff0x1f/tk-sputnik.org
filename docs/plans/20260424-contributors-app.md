@@ -118,18 +118,18 @@
 - Create: `apps/contributors/urls.py`
 - Modify: `config/urls.py`
 
-- [ ] создать `contributors_view` в `views.py`, вызывающую `build_donor_table()` и передающую результат в шаблон
-- [ ] реализовать `build_donor_table()` по образцу `scratch/kolco24/donate/views.py`:
+- [x] создать `contributors_view` в `views.py`, вызывающую `build_donor_table()` и передающую результат в шаблон
+- [x] реализовать `build_donor_table()` по образцу `scratch/kolco24/donate/views.py`:
   - периоды: только `is_active=True`, порядок по `date` (старый → новый)
   - текущий период: последний с `date <= today`
   - строки: `{member, cells: [True/False/None, ...], paid_current}`
   - сортировка: `(0 if paid_current else 1, member.name)`
-- [ ] создать `urls.py` с `path("", views.contributors_view, name="contributors")`
-- [ ] добавить `path("contributors/", include("apps.contributors.urls"))` в `config/urls.py`
-- [ ] написать тест: `GET /contributors/` → 200, правильный шаблон
-- [ ] написать тест: пустая БД → страница отображается без ошибок (пустая таблица)
-- [ ] написать тест: данные в БД → контекст содержит `donor_table` с правильной структурой
-- [ ] `uv run pytest` — должно пройти
+- [x] создать `urls.py` с `path("", views.contributors_view, name="contributors")`
+- [x] добавить `path("contributors/", include("apps.contributors.urls"))` в `config/urls.py`
+- [x] написать тест: `GET /contributors/` → 200, правильный шаблон
+- [x] написать тест: пустая БД → страница отображается без ошибок (пустая таблица)
+- [x] написать тест: данные в БД → контекст содержит `donor_table` с правильной структурой
+- [x] `uv run pytest` — должно пройти
 
 ### Task 5: Шаблон `contributors.html`
 

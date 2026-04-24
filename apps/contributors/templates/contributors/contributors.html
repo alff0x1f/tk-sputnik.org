@@ -1,0 +1,24 @@
+{% extends "demo/base.html" %}
+{% block title %}Взносы — Турклуб Спутник{% endblock %}
+{% block content %}
+<div class="contributors">
+{% if donor_table %}
+<table>
+<thead><tr>
+<th>Участник</th>
+{% for period in donor_table.periods %}<th{% if forloop.counter0 == donor_table.current_period_index %} class="now"{% endif %}>{{ period.name }}</th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for row in donor_table.rows %}
+<tr>
+<td>{{ row.member.name }}{% if row.member.label %} <span class="role">{{ row.member.label }}</span>{% endif %}</td>
+{% for cell in row.cells %}<td class="{% if cell %}paid{% elif cell is None %}{% else %}inactive{% endif %}"></td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Нет данных</p>
+{% endif %}
+</div>
+{% endblock %}
