@@ -99,17 +99,17 @@
 - Create: `apps/contributors/management/commands/sync_contributors.py`
 - Modify: `.env.example`
 
-- [ ] создать `sync_contributors` с методом `handle()`
-- [ ] читать `KOLCO24_API_URL` из `os.environ`; завершаться с ошибкой если не задан
-- [ ] GET-запрос к API через `urllib.request` (без новых зависимостей)
-- [ ] upsert `DonationPeriod` через `update_or_create(external_id=...)`
-- [ ] upsert `ClubMember` через `update_or_create(external_id=...)`
-- [ ] upsert `MemberDonation` через `update_or_create(member=..., period=...)` с маппингом `member_id`/`period_id` → локальные FK через `external_id`
-- [ ] всё в одной `transaction.atomic()`
-- [ ] добавить `KOLCO24_API_URL=` в `.env.example`
-- [ ] написать тест: mock HTTP-ответ (минимальный JSON) → проверить что объекты созданы в БД
-- [ ] написать тест: повторный запуск не создаёт дубликаты (idempotent)
-- [ ] `uv run pytest` — должно пройти
+- [x] создать `sync_contributors` с методом `handle()`
+- [x] читать `KOLCO24_API_URL` из `os.environ`; завершаться с ошибкой если не задан
+- [x] GET-запрос к API через `urllib.request` (без новых зависимостей)
+- [x] upsert `DonationPeriod` через `update_or_create(external_id=...)`
+- [x] upsert `ClubMember` через `update_or_create(external_id=...)`
+- [x] upsert `MemberDonation` через `update_or_create(member=..., period=...)` с маппингом `member_id`/`period_id` → локальные FK через `external_id`
+- [x] всё в одной `transaction.atomic()`
+- [x] добавить `KOLCO24_API_URL=` в `.env.example`
+- [x] написать тест: mock HTTP-ответ (минимальный JSON) → проверить что объекты созданы в БД
+- [x] написать тест: повторный запуск не создаёт дубликаты (idempotent)
+- [x] `uv run pytest` — должно пройти
 
 ### Task 4: View и URL
 
