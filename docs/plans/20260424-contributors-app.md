@@ -152,11 +152,11 @@
 **Files:**
 - Create: `todo_kolco24.md`
 
-- [ ] описать эндпоинт: метод GET, URL `/api/contributors/`, формат JSON
-- [ ] описать поля: `periods`, `members` (с `label` = текущее поле `notes`), `donations`
-- [ ] указать требования: без аутентификации (или с API-ключом — уточнить), Content-Type application/json
-- [ ] описать как `label` маппится на `notes` поле модели `ClubMember` на kolco24
-- [ ] `uv run pytest` — должно пройти
+- [x] описать эндпоинт: метод GET, URL `/api/contributors/`, формат JSON
+- [x] описать поля: `periods`, `members` (с `label` = текущее поле `notes`), `donations`
+- [x] указать требования: без аутентификации (или с API-ключом — уточнить), Content-Type application/json
+- [x] описать как `label` маппится на `notes` поле модели `ClubMember` на kolco24
+- [x] `uv run pytest` — должно пройти
 
 ### Task 7: Финальная проверка
 
