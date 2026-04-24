@@ -71,17 +71,17 @@
 - Create: `apps/contributors/migrations/__init__.py`
 - Modify: `config/settings.py`
 
-- [ ] создать `apps/contributors/__init__.py` (пустой)
-- [ ] создать `apps/contributors/apps.py` по образцу `apps/demo/apps.py`
-- [ ] создать `apps/contributors/models.py` с тремя моделями:
+- [x] создать `apps/contributors/__init__.py` (пустой)
+- [x] создать `apps/contributors/apps.py` по образцу `apps/demo/apps.py`
+- [x] создать `apps/contributors/models.py` с тремя моделями:
   - `ClubMember(external_id, name, label)`
   - `DonationPeriod(external_id, name, date, is_active)`
   - `MemberDonation(member FK, period FK, is_paid, amount, paid_date, recipient, note)` с `unique_together`
-- [ ] добавить `'apps.contributors'` в `INSTALLED_APPS`
-- [ ] выполнить `uv run python manage.py makemigrations contributors`
-- [ ] выполнить `uv run python manage.py migrate`
-- [ ] написать тесты: создание экземпляров всех трёх моделей, проверка `unique_together`
-- [ ] `uv run pytest` — должно пройти
+- [x] добавить `'apps.contributors'` в `INSTALLED_APPS`
+- [x] выполнить `uv run python manage.py makemigrations contributors`
+- [x] выполнить `uv run python manage.py migrate`
+- [x] написать тесты: создание экземпляров всех трёх моделей, проверка `unique_together`
+- [x] `uv run pytest` — должно пройти
 
 ### Task 2: Admin
 
