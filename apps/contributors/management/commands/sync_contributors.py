@@ -17,8 +17,17 @@ class Command(BaseCommand):
         if not api_url:
             raise CommandError("KOLCO24_API_URL environment variable is not set")
 
+        api_token = os.environ.get("KOLCO24_API_TOKEN")
+        if not api_token:
+            raise CommandError("KOLCO24_API_TOKEN environment variable is not set")
+
+        request = urllib.request.Request(
+            api_url,
+            headers={"Authorization": f"Bearer {api_token}"},
+        )
+
         try:
-            with urllib.request.urlopen(api_url) as response:
+            with urllib.request.urlopen(request) as response:
                 data = json.loads(response.read().decode())
         except URLError as e:
             raise CommandError(f"Failed to fetch data from API: {e}") from e

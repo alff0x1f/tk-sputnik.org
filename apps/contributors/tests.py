@@ -110,8 +110,14 @@ def _make_mock_urlopen(data):
     return MagicMock(return_value=mock_response)
 
 
+SYNC_ENV = {
+    "KOLCO24_API_URL": "http://fake.example/api",
+    "KOLCO24_API_TOKEN": "test-secret-token",
+}
+
+
 class SyncContributorsCommandTests(TestCase):
-    @patch.dict("os.environ", {"KOLCO24_API_URL": "http://fake.example/api"})
+    @patch.dict("os.environ", SYNC_ENV)
     @patch("urllib.request.urlopen")
     def test_creates_objects_from_api(self, mock_urlopen):
         mock_urlopen.side_effect = _make_mock_urlopen(SAMPLE_API_RESPONSE)
@@ -137,7 +143,33 @@ class SyncContributorsCommandTests(TestCase):
         self.assertEqual(str(donation.amount), "1500.00")
         self.assertEqual(donation.recipient, "sbp")
 
-    @patch.dict("os.environ", {"KOLCO24_API_URL": "http://fake.example/api"})
+    @patch.dict("os.environ", SYNC_ENV)
+    @patch("urllib.request.urlopen")
+    def test_sends_bearer_token(self, mock_urlopen):
+        mock_urlopen.side_effect = _make_mock_urlopen(SAMPLE_API_RESPONSE)
+
+        from django.core.management import call_command
+
+        call_command("sync_contributors", stdout=StringIO())
+
+        called_request = mock_urlopen.call_args[0][0]
+        self.assertEqual(
+            called_request.get_header("Authorization"),
+            "Bearer test-secret-token",
+        )
+
+    @patch.dict("os.environ", {"KOLCO24_API_URL": "http://fake.example/api"}, clear=False)
+    def test_missing_token_raises_error(self):
+        import os
+
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        os.environ.pop("KOLCO24_API_TOKEN", None)
+        with self.assertRaises(CommandError):
+            call_command("sync_contributors", stdout=StringIO())
+
+    @patch.dict("os.environ", SYNC_ENV)
     @patch("urllib.request.urlopen")
     def test_idempotent(self, mock_urlopen):
         mock_urlopen.side_effect = _make_mock_urlopen(SAMPLE_API_RESPONSE)
