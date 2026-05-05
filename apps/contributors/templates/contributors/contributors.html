@@ -1,28 +1,13 @@
 {% extends "demo/base.html" %}
 {% load static %}
 
-{% block title %}Взносы — Турклуб Спутник{% endblock %}
+{% block title %}Участники — Турклуб Спутник{% endblock %}
 
 {% block extra_css %}
 <style>
   .feed-head{ margin-bottom:4px; }
   .feed-sub{ margin-bottom:16px; }
   .crumbs{ margin-bottom:12px; }
-
-  /* Legend */
-  .legend{
-    display:flex; flex-wrap:wrap; gap:14px;
-    font-size:12px; color:var(--muted);
-    margin-bottom:14px;
-  }
-  .legend .item{ display:inline-flex; align-items:center; gap:6px; }
-  .legend .dot{
-    width:10px; height:10px; border-radius:50%; display:inline-block;
-    border:1px solid rgba(0,0,0,0.04);
-  }
-  .legend .dot.paid{ background:var(--paid); }
-  .legend .dot.pending{ background:var(--pending); }
-  .legend .dot.inactive{ background:var(--inactive); }
 
   /* Panel */
   .panel{
@@ -146,21 +131,15 @@
     <div class="crumbs">
       <a href="{% url 'demo-index' %}">Спутник</a>
       <span class="sep">›</span>
-      <span>Взносы</span>
+      <span>Участники</span>
     </div>
 
     <div class="feed-head">
-      <h1 class="feed-title">Членские взносы</h1>
+      <h1 class="feed-title">Участники</h1>
     </div>
     <div class="feed-sub">Участники турклуба Спутник</div>
 
     {% if donor_table %}
-      <div class="legend">
-        <span class="item"><span class="dot paid"></span> Оплатил</span>
-        <span class="item"><span class="dot pending"></span> Не оплатил</span>
-        <span class="item"><span class="dot inactive"></span> Не участвовал</span>
-      </div>
-
       <div class="panel">
         <div class="panel-head">
           <h2>Список участников</h2>
