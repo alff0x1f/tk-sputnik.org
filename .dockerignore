@@ -1,0 +1,15 @@
+.env
+deploy
+.git
+.venv
+scratch
+__pycache__
+*.py[oc]
+db.sqlite3
+
+# Ignore development files
+docs
+.idea
+.claude
+.ralphex
+.uv-cache
