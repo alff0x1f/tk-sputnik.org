@@ -5,7 +5,10 @@
   <meta charset="utf-8">
   <title>{% block title %}Турклуб Спутник{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/png" href="{% static 'demo/favicon.png' %}">
+  <link rel="icon" href="{% static 'demo/favicon.ico' %}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'demo/favicon-32x32.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'demo/favicon-16x16.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'demo/apple-touch-icon.png' %}">
   <link rel="stylesheet" href="{% static 'demo/css/base.css' %}">
   {% block extra_css %}{% endblock %}
 </head>

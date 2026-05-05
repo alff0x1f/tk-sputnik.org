@@ -27,7 +27,7 @@ class Command(BaseCommand):
         )
 
         try:
-            with urllib.request.urlopen(request) as response:
+            with urllib.request.urlopen(request, timeout=10) as response:
                 data = json.loads(response.read().decode())
         except URLError as e:
             raise CommandError(f"Failed to fetch data from API: {e}") from e
