@@ -12,13 +12,13 @@ def build_donor_table():
 
     period_ids = [p.id for p in periods]
 
-    donations = MemberDonation.objects.filter(period_id__in=period_ids).select_related(
-        "member", "period"
+    donations = MemberDonation.objects.filter(period_id__in=period_ids).values_list(
+        "member_id", "period_id", "is_paid"
     )
 
     payment_map = {}
-    for d in donations:
-        payment_map.setdefault(d.member_id, {})[d.period_id] = d.is_paid
+    for member_id, period_id, is_paid in donations:
+        payment_map.setdefault(member_id, {})[period_id] = is_paid
 
     members = list(
         ClubMember.objects.filter(id__in=payment_map.keys()).order_by("name")
