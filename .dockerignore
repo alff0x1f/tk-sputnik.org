@@ -1,0 +1,23 @@
+.env
+deploy
+.git
+.venv
+scratch
+__pycache__
+*.py[oc]
+db.sqlite3
+
+# Ignore development files
+docs
+.idea
+.claude
+.ralphex
+.uv-cache
+.pytest_cache
+.ruff_cache
+.DS_Store
+.gitignore
+.python-version
+CLAUDE.md
+README.md
+docker-compose.yml

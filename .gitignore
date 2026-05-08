@@ -15,3 +15,6 @@ deploy/sputnik.env
 # Other
 .idea
 scratch
+
+# MacOS-specific file
+.DS_Store
