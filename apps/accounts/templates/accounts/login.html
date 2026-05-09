@@ -16,6 +16,7 @@
       <div class="auth-body">
         <form method="post" novalidate>
           {% csrf_token %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
           {% if form.non_field_errors %}
             <ul class="auth-errors">
               {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
