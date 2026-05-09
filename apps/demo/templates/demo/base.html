@@ -26,6 +26,22 @@
   <div class="sub">турклуб · с 1959</div>
   <div class="top-actions">
     {% block topbar_action %}{% endblock %}
+    {% if user.is_authenticated %}
+      <div class="user-menu" id="user-menu">
+        <button class="user-menu-trigger" id="user-menu-trigger" aria-expanded="false" aria-haspopup="true">
+          {{ user.username }}
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="user-menu-item">Выйти</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn ghost">Войти</a>
+    {% endif %}
   </div>
 </header>
 
@@ -97,6 +113,32 @@
         });
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') close();
+        });
+    })();
+
+    (function () {
+        var trigger = document.getElementById('user-menu-trigger');
+        var dropdown = document.getElementById('user-menu-dropdown');
+        if (!trigger) return;
+
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = dropdown.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', String(open));
+        });
+
+        document.addEventListener('click', function () {
+            if (dropdown.classList.contains('open')) {
+                dropdown.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && dropdown.classList.contains('open')) {
+                dropdown.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
         });
     })();
 </script>
