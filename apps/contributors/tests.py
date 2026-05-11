@@ -158,7 +158,9 @@ class SyncContributorsCommandTests(TestCase):
             "Bearer test-secret-token",
         )
 
-    @patch.dict("os.environ", {"KOLCO24_API_URL": "http://fake.example/api"}, clear=False)
+    @patch.dict(
+        "os.environ", {"KOLCO24_API_URL": "http://fake.example/api"}, clear=False
+    )
     def test_missing_token_raises_error(self):
         import os
 
