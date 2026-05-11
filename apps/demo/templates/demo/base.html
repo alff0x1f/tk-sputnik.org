@@ -21,7 +21,7 @@
     </svg>
   </button>
   <div class="brand">
-    <img class="logo" src="{% static 'demo/sputnik.png' %}" alt="Спутник Клуб Туристов" height="32">
+    <a href="{% url 'home' %}"><img class="logo" src="{% static 'demo/sputnik.png' %}" alt="Спутник Клуб Туристов" height="32"></a>
   </div>
   <div class="sub">турклуб · с 1959</div>
   <div class="top-actions">
@@ -51,8 +51,8 @@
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="brand"><img class="logo" src="{% static 'demo/sputnik.png' %}" alt="Спутник Клуб Туристов"
-                              height="32"></div>
+      <div class="brand"><a href="{% url 'home' %}"><img class="logo" src="{% static 'demo/sputnik.png' %}" alt="Спутник Клуб Туристов"
+                              height="32"></a></div>
       <button class="sidebar-close" id="sidebar-close" aria-label="Закрыть меню">
         <svg viewBox="0 0 24 24">
           <path d="M6 6l12 12M18 6L6 18"/>
