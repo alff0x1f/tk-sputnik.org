@@ -81,11 +81,11 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 **Files:**
 - Modify: `docker-compose.yml`
 
-- [ ] добавить сервис `phpbb_db` (image: `mysql:5.7`, profiles: `[phpbb]`)
-- [ ] добавить healthcheck (`mysqladmin ping`)
-- [ ] пробросить порт `3306:3306` для доступа с хоста
-- [ ] добавить том `phpbb_data` в секцию `volumes`
-- [ ] убедиться, что `docker compose --profile phpbb up -d phpbb_db` синтаксически валиден
+- [x] добавить сервис `phpbb_db` (image: `mysql:5.7`, profiles: `[phpbb]`)
+- [x] добавить healthcheck (`mysqladmin ping`)
+- [x] пробросить порт `3306:3306` для доступа с хоста
+- [x] добавить том `phpbb_data` в секцию `volumes`
+- [x] убедиться, что `docker compose --profile phpbb up -d phpbb_db` синтаксически валиден
 
 ### Task 2: Добавить MySQL-переменные в .env.example
 
