@@ -102,10 +102,10 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 - Modify: `pyproject.toml`
 - Modify: `config/__init__.py`
 
-- [ ] добавить `pymysql` в `dependencies` в `pyproject.toml`
-- [ ] запустить `uv sync` чтобы обновить `uv.lock`
-- [ ] в `config/__init__.py` добавить `import pymysql; pymysql.install_as_MySQLdb()`
-- [ ] убедиться, что `uv run python -c "import config"` выполняется без ошибок
+- [x] добавить `pymysql` в `dependencies` в `pyproject.toml`
+- [x] запустить `uv sync` чтобы обновить `uv.lock`
+- [x] в `config/__init__.py` добавить `import pymysql; pymysql.install_as_MySQLdb()`
+- [x] убедиться, что `uv run python -c "import config"` выполняется без ошибок
 
 ### Task 4: Добавить DATABASES['phpbb'] в settings.py
 
