@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import ForumCategory, SubForum
 
@@ -50,3 +51,28 @@ class SubForumModelTests(TestCase):
             name="Горные велопоходы",
         )
         self.assertEqual(nested.category, self.category)
+
+
+class ForumIndexViewTests(TestCase):
+    def setUp(self):
+        self.cat1 = ForumCategory.objects.create(phpbb_id=1, name="Приключения", sort_order=1)
+        self.cat2 = ForumCategory.objects.create(phpbb_id=2, name="Велосипед", sort_order=2)
+        SubForum.objects.create(phpbb_id=10, phpbb_parent_id=1, category=self.cat1, name="Горные походы")
+
+    def test_forum_index_returns_200(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_forum_index_context_has_categories(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertIn("categories", response.context)
+
+    def test_forum_index_categories_count(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertEqual(len(response.context["categories"]), 2)
+
+    def test_forum_index_categories_have_subforums(self):
+        response = self.client.get(reverse("forum-index"))
+        categories = list(response.context["categories"])
+        cat1 = next(c for c in categories if c.phpbb_id == 1)
+        self.assertEqual(cat1.subforums.count(), 1)
