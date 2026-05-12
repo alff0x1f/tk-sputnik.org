@@ -92,9 +92,9 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 **Files:**
 - Modify: `.env.example`
 
-- [ ] добавить секцию `# phpBB MySQL` с переменными `MYSQL_DATABASE`, `MYSQL_USER`,
+- [x] добавить секцию `# phpBB MySQL` с переменными `MYSQL_DATABASE`, `MYSQL_USER`,
   `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`
-- [ ] добавить безопасные значения-примеры (не реальные пароли)
+- [x] добавить безопасные значения-примеры (не реальные пароли)
 
 ### Task 3: Добавить PyMySQL и настроить его как MySQLdb
 
