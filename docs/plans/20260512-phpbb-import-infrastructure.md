@@ -129,12 +129,12 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 - Create: `apps/forum_import/management/commands/__init__.py`
 - Modify: `config/settings.py`
 
-- [ ] создать `apps/forum_import/__init__.py` (пустой)
-- [ ] создать `apps/forum_import/apps.py` с `ForumImportConfig` (name=`apps.forum_import`)
-- [ ] создать пустые `__init__.py` в `management/` и `management/commands/`
-- [ ] зарегистрировать `apps.forum_import` в `INSTALLED_APPS`
-- [ ] написать тест: `apps.forum_import` присутствует в `settings.INSTALLED_APPS`
-- [ ] запустить `uv run pytest` — тесты должны проходить
+- [x] создать `apps/forum_import/__init__.py` (пустой)
+- [x] создать `apps/forum_import/apps.py` с `ForumImportConfig` (name=`apps.forum_import`)
+- [x] создать пустые `__init__.py` в `management/` и `management/commands/`
+- [x] зарегистрировать `apps.forum_import` в `INSTALLED_APPS`
+- [x] написать тест: `apps.forum_import` присутствует в `settings.INSTALLED_APPS`
+- [x] запустить `uv run pytest` — тесты должны проходить
 
 ### Task 6: Написать инструкцию по загрузке дампа
 
