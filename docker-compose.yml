@@ -31,6 +31,7 @@ services:
       - .env
     environment:
       DB_HOST: db
+      MYSQL_HOST: phpbb_db
     ports:
       - "8000:8000"
     depends_on:
@@ -48,7 +49,7 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root --password=$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5

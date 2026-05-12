@@ -19,26 +19,20 @@ docker compose ps phpbb_db
 ### 2. Залить дамп форума
 
 ```bash
-docker compose exec -T phpbb_db mysql -u phpbb -pPASSWORD phpbb < /path/to/forum_dump.sql
+docker compose exec -T phpbb_db bash -c 'mysql -u phpbb -p"$MYSQL_PASSWORD" phpbb' < /path/to/forum_dump.sql
 ```
 
 Или через файл внутри контейнера:
 
 ```bash
 docker compose cp /path/to/forum_dump.sql phpbb_db:/tmp/forum_dump.sql
-docker compose exec phpbb_db mysql -u phpbb -pPASSWORD phpbb -e "source /tmp/forum_dump.sql"
+docker compose exec phpbb_db bash -c 'mysql -u phpbb -p"$MYSQL_PASSWORD" phpbb -e "source /tmp/forum_dump.sql"'
 ```
 
-### 3. Проверить подключение из Django
+### 3. Проверить подключение через Django
 
 ```bash
-uv run python manage.py dbshell --database phpbb
-```
-
-Пример запроса для проверки:
-
-```sql
-SELECT COUNT(*) FROM phpbb_posts;
+uv run python manage.py shell -c "from django.db import connections; cursor = connections['phpbb'].cursor(); cursor.execute('SELECT COUNT(*) FROM phpbb_posts'); print(cursor.fetchone())"
 ```
 
 ### 4. Остановить сервис
