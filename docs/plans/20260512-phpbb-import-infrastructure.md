@@ -141,9 +141,9 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 **Files:**
 - Create: `apps/forum_import/README.md`
 
-- [ ] описать шаги: поднять `phpbb_db`, залить дамп, проверить подключение из Django
-- [ ] добавить команду проверки: `uv run python manage.py dbshell --database phpbb`
-- [ ] добавить пример запроса к phpBB: `SELECT COUNT(*) FROM phpbb_posts;`
+- [x] описать шаги: поднять `phpbb_db`, залить дамп, проверить подключение из Django
+- [x] добавить команду проверки: `uv run python manage.py dbshell --database phpbb`
+- [x] добавить пример запроса к phpBB: `SELECT COUNT(*) FROM phpbb_posts;`
 
 ### Task 7: Финальная проверка
 
