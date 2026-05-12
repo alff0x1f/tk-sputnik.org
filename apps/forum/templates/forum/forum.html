@@ -127,7 +127,7 @@
     <section class="forum-cat cat-{{ cat_color }}">
       <div class="forum-cat-head">
         <h2>{{ category.name }}</h2>
-        <span class="meta">{{ category.subforums.count }} подразделов</span>
+        <span class="meta">{{ category.direct_subforum_count }} подразделов</span>
       </div>
       {% for subforum in category.subforums.all %}
       {% if subforum.phpbb_parent_id == category.phpbb_id %}
