@@ -112,13 +112,13 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 **Files:**
 - Modify: `config/settings.py`
 
-- [ ] добавить запись `"phpbb"` в `DATABASES` с ENGINE `django.db.backends.mysql`
-- [ ] читать параметры из env: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`,
+- [x] добавить запись `"phpbb"` в `DATABASES` с ENGINE `django.db.backends.mysql`
+- [x] читать параметры из env: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`,
   `MYSQL_HOST`, `MYSQL_PORT`
-- [ ] добавить `OPTIONS: {"charset": "utf8mb4"}` (phpBB хранит в utf8/utf8mb4)
-- [ ] написать тест: `"phpbb" in settings.DATABASES` — должен быть True
-- [ ] написать тест: ENGINE phpbb == `django.db.backends.mysql`
-- [ ] запустить `uv run pytest` — тесты должны проходить
+- [x] добавить `OPTIONS: {"charset": "utf8mb4"}` (phpBB хранит в utf8/utf8mb4)
+- [x] написать тест: `"phpbb" in settings.DATABASES` — должен быть True
+- [x] написать тест: ENGINE phpbb == `django.db.backends.mysql`
+- [x] запустить `uv run pytest` — тесты должны проходить
 
 ### Task 5: Создать скелет приложения forum_import
 
