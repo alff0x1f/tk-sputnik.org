@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.demo",
     "apps.contributors",
     "apps.accounts",
+    "apps.forum",
 ]
 
 MIDDLEWARE = [
