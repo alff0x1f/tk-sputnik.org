@@ -147,11 +147,11 @@ Django видит его как `MySQLdb` и использует `django.db.bac
 
 ### Task 7: Финальная проверка
 
-- [ ] убедиться, что `docker compose up` (без `--profile phpbb`) поднимается без ошибок
-- [ ] убедиться, что `docker compose --profile phpbb up phpbb_db` синтаксически корректен
-- [ ] запустить полный набор тестов: `uv run pytest`
-- [ ] запустить `uv run ruff check .` — без новых ошибок
-- [ ] переместить план в `docs/plans/completed/`
+- [x] убедиться, что `docker compose up` (без `--profile phpbb`) поднимается без ошибок
+- [x] убедиться, что `docker compose --profile phpbb up phpbb_db` синтаксически корректен
+- [x] запустить полный набор тестов: `uv run pytest`
+- [x] запустить `uv run ruff check .` — без новых ошибок
+- [x] переместить план в `docs/plans/completed/`
 
 ## Post-Completion
 
