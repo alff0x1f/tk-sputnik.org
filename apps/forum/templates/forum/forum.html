@@ -45,9 +45,8 @@
     grid-template-columns: 44px minmax(0,1fr) 120px 180px;
     gap:14px; align-items:center;
     padding:14px 16px;
-    border-top:1px solid var(--line);
   }
-  .subforum:first-of-type{ border-top:none; }
+  .subforum + .subforum{ border-top:1px solid var(--line); }
   .subforum:hover{ background:var(--surface-2); cursor:pointer; }
 
   .sf-ico{
