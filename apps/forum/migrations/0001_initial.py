@@ -5,49 +5,70 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ForumCategory',
+            name="ForumCategory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(unique=True)),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('topic_count', models.IntegerField(default=0)),
-                ('post_count', models.IntegerField(default=0)),
-                ('last_post_title', models.CharField(blank=True, max_length=255)),
-                ('last_post_username', models.CharField(blank=True, max_length=255)),
-                ('last_post_at', models.DateTimeField(blank=True, null=True)),
-                ('sort_order', models.IntegerField(default=0)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("phpbb_id", models.IntegerField(unique=True)),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                ("topic_count", models.IntegerField(default=0)),
+                ("post_count", models.IntegerField(default=0)),
+                ("last_post_title", models.CharField(blank=True, max_length=255)),
+                ("last_post_username", models.CharField(blank=True, max_length=255)),
+                ("last_post_at", models.DateTimeField(blank=True, null=True)),
+                ("sort_order", models.IntegerField(default=0)),
             ],
             options={
-                'ordering': ['sort_order'],
+                "ordering": ["sort_order"],
             },
         ),
         migrations.CreateModel(
-            name='SubForum',
+            name="SubForum",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(unique=True)),
-                ('phpbb_parent_id', models.IntegerField()),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('topic_count', models.IntegerField(default=0)),
-                ('post_count', models.IntegerField(default=0)),
-                ('last_post_title', models.CharField(blank=True, max_length=255)),
-                ('last_post_username', models.CharField(blank=True, max_length=255)),
-                ('last_post_at', models.DateTimeField(blank=True, null=True)),
-                ('sort_order', models.IntegerField(default=0)),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subforums', to='forum.forumcategory')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("phpbb_id", models.IntegerField(unique=True)),
+                ("phpbb_parent_id", models.IntegerField()),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                ("topic_count", models.IntegerField(default=0)),
+                ("post_count", models.IntegerField(default=0)),
+                ("last_post_title", models.CharField(blank=True, max_length=255)),
+                ("last_post_username", models.CharField(blank=True, max_length=255)),
+                ("last_post_at", models.DateTimeField(blank=True, null=True)),
+                ("sort_order", models.IntegerField(default=0)),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subforums",
+                        to="forum.forumcategory",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order'],
+                "ordering": ["sort_order"],
             },
         ),
     ]
