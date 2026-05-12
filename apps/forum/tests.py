@@ -76,3 +76,7 @@ class ForumIndexViewTests(TestCase):
         categories = list(response.context["categories"])
         cat1 = next(c for c in categories if c.phpbb_id == 1)
         self.assertEqual(cat1.subforums.count(), 1)
+
+    def test_forum_index_uses_correct_template(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertTemplateUsed(response, "forum/forum.html")
