@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.demo",
     "apps.contributors",
     "apps.accounts",
+    "apps.forum_import",
 ]
 
 MIDDLEWARE = [
@@ -102,7 +103,16 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "localhost"),
         "PORT": os.getenv("DB_PORT", "5432"),
-    }
+    },
+    "phpbb": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.getenv("MYSQL_DATABASE", "phpbb"),
+        "USER": os.getenv("MYSQL_USER", "phpbb"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
+        "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
+        "PORT": os.getenv("MYSQL_PORT", "3306"),
+        "OPTIONS": {"charset": "utf8mb4"},
+    },
 }
 
 
