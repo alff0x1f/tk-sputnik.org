@@ -55,9 +55,15 @@ class SubForumModelTests(TestCase):
 
 class ForumIndexViewTests(TestCase):
     def setUp(self):
-        self.cat1 = ForumCategory.objects.create(phpbb_id=1, name="Приключения", sort_order=1)
-        self.cat2 = ForumCategory.objects.create(phpbb_id=2, name="Велосипед", sort_order=2)
-        SubForum.objects.create(phpbb_id=10, phpbb_parent_id=1, category=self.cat1, name="Горные походы")
+        self.cat1 = ForumCategory.objects.create(
+            phpbb_id=1, name="Приключения", sort_order=1
+        )
+        self.cat2 = ForumCategory.objects.create(
+            phpbb_id=2, name="Велосипед", sort_order=2
+        )
+        SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.cat1, name="Горные походы"
+        )
 
     def test_forum_index_returns_200(self):
         response = self.client.get(reverse("forum-index"))
