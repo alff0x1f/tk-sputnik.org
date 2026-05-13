@@ -23,6 +23,9 @@ dev = [
     "pytest-django>=4.12.0",
     "ruff>=0.15.11",
 ]
+forum-import = [
+    "mysqlclient>=2.2",
+]
 
 [tool.ruff]
 target-version = "py314"

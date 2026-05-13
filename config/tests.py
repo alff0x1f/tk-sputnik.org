@@ -9,5 +9,5 @@ class PhpbbDatabaseSettingsTests(TestCase):
     def test_phpbb_engine_is_mysql(self):
         self.assertEqual(
             settings.DATABASES["phpbb"]["ENGINE"],
-            "django.db.backends.mysql",
+            "apps.forum_import.mysql_legacy_backend",
         )

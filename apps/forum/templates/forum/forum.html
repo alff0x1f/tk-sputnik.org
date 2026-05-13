@@ -1,0 +1,73 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}Форум — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
+{% endblock %}
+
+{% block topbar_action %}{% endblock %}
+
+{% block content %}
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'home' %}">Спутник</a>
+      <span class="sep">›</span>
+      <span>Форум</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">Форум клуба</h1>
+    </div>
+    <div class="feed-sub">Архив форума 2007–2016</div>
+
+    {% for category in categories %}
+    {% cycle 'sky' 'earth' 'steel' 'wine' as cat_color silent %}
+    <section class="forum-cat cat-{{ cat_color }}">
+      <div class="forum-cat-head">
+        <h2>{{ category.name }}</h2>
+      </div>
+      {% for subforum in category.direct_subforums %}
+      <div class="subforum">
+        <div class="sf-ico tone-{{ cat_color }}">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="sf-body">
+          <div class="sf-title">{{ subforum.name }}</div>
+          {% if subforum.description %}<div class="sf-desc">{{ subforum.description }}</div>{% endif %}
+          {% if subforum.children %}
+          <div class="sf-children">
+            {% for child in subforum.children %}
+            <span class="sf-child">
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span class="sf-child-title">{{ child.name }}</span>
+              <span class="sf-child-stats">{{ child.topic_count }} тем</span>
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="sf-stats">
+          <span class="sf-stat" title="Тем">
+            <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <b>{{ subforum.topic_count }}</b>
+          </span>
+          <span class="sf-stat" title="Сообщений">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <b>{{ subforum.post_count }}</b>
+          </span>
+        </div>
+        <div class="sf-last">
+          {% if subforum.last_post_title %}
+          <span class="tt">{{ subforum.last_post_title }}</span>
+          <span class="meta">{% if subforum.last_post_at %}{{ subforum.last_post_at|date:"d.m.Y" }}{% endif %}{% if subforum.last_post_username %} · {{ subforum.last_post_username }}{% endif %}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+  </main>
+{% endblock %}

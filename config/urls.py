@@ -25,4 +25,5 @@ urlpatterns = [
     path("demo/", include("apps.demo.urls")),
     path("contributors/", include("apps.contributors.urls")),
     path("accounts/", include("apps.accounts.urls")),
+    path("forum/", include("apps.forum.urls")),
 ]
