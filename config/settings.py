@@ -106,7 +106,7 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", "5432"),
     },
     "phpbb": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": "apps.forum_import.mysql_legacy_backend",
         "NAME": os.getenv("MYSQL_DATABASE", "phpbb"),
         "USER": os.getenv("MYSQL_USER", "phpbb"),
         "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),

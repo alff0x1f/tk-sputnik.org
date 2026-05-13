@@ -1,4 +1,4 @@
-{% extends "demo/base_demo.html" %}
+{% extends "demo/base.html" %}
 {% load static %}
 
 {% block title %}Форум — Турклуб Спутник{% endblock %}
@@ -111,7 +111,7 @@
 {% block content %}
   <main class="feed">
     <div class="crumbs">
-      <a href="{% url 'demo-index' %}">Спутник</a>
+      <a href="{% url 'home' %}">Спутник</a>
       <span class="sep">›</span>
       <span>Форум</span>
     </div>
