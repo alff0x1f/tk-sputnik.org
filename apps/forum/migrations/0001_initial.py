@@ -22,17 +22,34 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("phpbb_id", models.IntegerField(unique=True)),
-                ("name", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True)),
-                ("topic_count", models.IntegerField(default=0)),
-                ("post_count", models.IntegerField(default=0)),
-                ("last_post_title", models.CharField(blank=True, max_length=255)),
-                ("last_post_username", models.CharField(blank=True, max_length=255)),
-                ("last_post_at", models.DateTimeField(blank=True, null=True)),
-                ("sort_order", models.IntegerField(default=0)),
+                ("phpbb_id", models.IntegerField("ID в phpBB", unique=True)),
+                ("name", models.CharField("Название", max_length=255)),
+                ("description", models.TextField("Описание", blank=True)),
+                ("topic_count", models.IntegerField("Количество тем", default=0)),
+                ("post_count", models.IntegerField("Количество сообщений", default=0)),
+                (
+                    "last_post_title",
+                    models.CharField(
+                        "Заголовок последнего поста", blank=True, max_length=255
+                    ),
+                ),
+                (
+                    "last_post_username",
+                    models.CharField(
+                        "Автор последнего поста", blank=True, max_length=255
+                    ),
+                ),
+                (
+                    "last_post_at",
+                    models.DateTimeField(
+                        "Дата последнего поста", blank=True, null=True
+                    ),
+                ),
+                ("sort_order", models.IntegerField("Порядок сортировки", default=0)),
             ],
             options={
+                "verbose_name": "Категория форума",
+                "verbose_name_plural": "Категории форума",
                 "ordering": ["sort_order"],
             },
         ),
@@ -48,26 +65,44 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("phpbb_id", models.IntegerField(unique=True)),
-                ("phpbb_parent_id", models.IntegerField()),
-                ("name", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True)),
-                ("topic_count", models.IntegerField(default=0)),
-                ("post_count", models.IntegerField(default=0)),
-                ("last_post_title", models.CharField(blank=True, max_length=255)),
-                ("last_post_username", models.CharField(blank=True, max_length=255)),
-                ("last_post_at", models.DateTimeField(blank=True, null=True)),
-                ("sort_order", models.IntegerField(default=0)),
+                ("phpbb_id", models.IntegerField("ID в phpBB", unique=True)),
+                ("phpbb_parent_id", models.IntegerField("ID родителя в phpBB")),
+                ("name", models.CharField("Название", max_length=255)),
+                ("description", models.TextField("Описание", blank=True)),
+                ("topic_count", models.IntegerField("Количество тем", default=0)),
+                ("post_count", models.IntegerField("Количество сообщений", default=0)),
+                (
+                    "last_post_title",
+                    models.CharField(
+                        "Заголовок последнего поста", blank=True, max_length=255
+                    ),
+                ),
+                (
+                    "last_post_username",
+                    models.CharField(
+                        "Автор последнего поста", blank=True, max_length=255
+                    ),
+                ),
+                (
+                    "last_post_at",
+                    models.DateTimeField(
+                        "Дата последнего поста", blank=True, null=True
+                    ),
+                ),
+                ("sort_order", models.IntegerField("Порядок сортировки", default=0)),
                 (
                     "category",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="subforums",
                         to="forum.forumcategory",
+                        verbose_name="Категория",
                     ),
                 ),
             ],
             options={
+                "verbose_name": "Подфорум",
+                "verbose_name_plural": "Подфорумы",
                 "ordering": ["sort_order"],
             },
         ),
