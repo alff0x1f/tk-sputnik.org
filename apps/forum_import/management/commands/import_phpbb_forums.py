@@ -37,8 +37,12 @@ class Command(BaseCommand):
                     "description": html.unescape(row["forum_desc"] or ""),
                     "topic_count": row["forum_topics"],
                     "post_count": row["forum_posts"],
-                    "last_post_title": html.unescape(row["forum_last_post_subject"] or ""),
-                    "last_post_username": html.unescape(row["forum_last_poster_name"] or ""),
+                    "last_post_title": html.unescape(
+                        row["forum_last_post_subject"] or ""
+                    ),
+                    "last_post_username": html.unescape(
+                        row["forum_last_poster_name"] or ""
+                    ),
                     "last_post_at": last_post_at,
                     "sort_order": row["left_id"],
                 },
@@ -70,8 +74,12 @@ class Command(BaseCommand):
                     "description": html.unescape(row["forum_desc"] or ""),
                     "topic_count": row["forum_topics"],
                     "post_count": row["forum_posts"],
-                    "last_post_title": html.unescape(row["forum_last_post_subject"] or ""),
-                    "last_post_username": html.unescape(row["forum_last_poster_name"] or ""),
+                    "last_post_title": html.unescape(
+                        row["forum_last_post_subject"] or ""
+                    ),
+                    "last_post_username": html.unescape(
+                        row["forum_last_poster_name"] or ""
+                    ),
                     "last_post_at": last_post_at,
                     "sort_order": row["left_id"],
                 },

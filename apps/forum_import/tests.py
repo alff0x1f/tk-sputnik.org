@@ -134,7 +134,7 @@ class ImportPhpbbForumsCommandTest(TestCase):
     @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
     def test_html_entities_unescaped(self, mock_connections):
         rows = [
-            self._make_row(1, 0, 0, 'Турклуб &quot;Спутник&quot;'),
+            self._make_row(1, 0, 0, "Турклуб &quot;Спутник&quot;"),
             self._make_row(10, 1, 1, "Походы &amp; приключения"),
         ]
         cursor = self._mock_cursor(rows)
