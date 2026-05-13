@@ -113,6 +113,7 @@ DATABASES = {
         "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
         "PORT": os.getenv("MYSQL_PORT", "3306"),
         "OPTIONS": {"charset": "utf8mb4"},
+        "TEST": {"MIRROR": "default"},
     },
 }
 
