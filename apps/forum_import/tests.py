@@ -130,3 +130,19 @@ class ImportPhpbbForumsCommandTest(TestCase):
         call_command("import_phpbb_forums", stdout=StringIO())
 
         self.assertEqual(ForumCategory.objects.count(), 1)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
+    def test_html_entities_unescaped(self, mock_connections):
+        rows = [
+            self._make_row(1, 0, 0, 'Турклуб &quot;Спутник&quot;'),
+            self._make_row(10, 1, 1, "Походы &amp; приключения"),
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_forums", stdout=StringIO())
+
+        cat = ForumCategory.objects.get(phpbb_id=1)
+        self.assertEqual(cat.name, 'Турклуб "Спутник"')
+        sub = SubForum.objects.get(phpbb_id=10)
+        self.assertEqual(sub.name, "Походы & приключения")
