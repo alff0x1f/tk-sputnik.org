@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.forum.models import ForumCategory, ForumUser, SubForum, Topic
+from apps.forum.models import ForumCategory, ForumUser, Post, SubForum, Topic
 
 
 class ForumImportAppConfigTest(TestCase):
@@ -361,3 +361,134 @@ class ImportPhpbbTopicsCommandTest(TestCase):
 
         topic = Topic.objects.get(phpbb_id=100)
         self.assertEqual(topic.post_count, 8)
+
+
+class ImportPhpbbPostsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=subforum, title="Тема"
+        )
+        self.user = ForumUser.objects.create(phpbb_id=5, username="alice")
+
+    def _make_row(
+        self,
+        post_id=200,
+        topic_id=100,
+        poster_id=5,
+        post_username="alice",
+        post_text="Hello [b]world[/b]",
+        bbcode_uid="",
+        post_time=1000000,
+    ):
+        return (post_id, topic_id, poster_id, post_username, post_text, bbcode_uid, post_time)
+
+    def _mock_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("post_id",),
+            ("topic_id",),
+            ("poster_id",),
+            ("post_username",),
+            ("post_text",),
+            ("bbcode_uid",),
+            ("post_time",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_imports_posts(self, mock_connections):
+        rows = [
+            self._make_row(200, 100),
+            self._make_row(201, 100),
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_posts", stdout=out)
+
+        self.assertEqual(Post.objects.count(), 2)
+        self.assertIn("Imported 2 posts (0 skipped)", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_skips_unknown_topic(self, mock_connections):
+        rows = [
+            self._make_row(200, 100),
+            self._make_row(201, 999),
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        err = StringIO()
+        call_command("import_phpbb_posts", stdout=out, stderr=err)
+
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertIn("Imported 1 posts (1 skipped)", out.getvalue())
+        self.assertIn("phpbb_id=999", err.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_null_author_for_missing_user(self, mock_connections):
+        rows = [self._make_row(200, 100, poster_id=9999, post_username="ghost")]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertIsNone(post.author)
+        self.assertEqual(post.author_username, "ghost")
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_idempotency(self, mock_connections):
+        rows = [self._make_row(200, 100)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        self.assertEqual(Post.objects.count(), 1)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_stripped(self, mock_connections):
+        uid = "12hsql24"
+        rows = [self._make_row(200, 100, post_text=f"[b:{uid}]bold[/b:{uid}]", bbcode_uid=uid)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertIn("bold", post.text_html)
+        self.assertNotIn(f":{uid}", post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_html_entities_unescaped(self, mock_connections):
+        # &#1087;&#1088;&#1080;&#1074;&#1077;&#1090; = привет
+        rows = [self._make_row(200, 100, post_text="&#1087;&#1088;&#1080;&#1074;&#1077;&#1090;")]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertIn("привет", post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_unix_timestamp_converted(self, mock_connections):
+        ts = 1000000
+        rows = [self._make_row(200, 100, post_time=ts)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        expected = datetime.fromtimestamp(ts, tz=UTC)
+        self.assertEqual(post.created_at, expected)

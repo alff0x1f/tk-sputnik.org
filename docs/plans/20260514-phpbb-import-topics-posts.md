@@ -155,15 +155,15 @@ def _to_html(raw: str, uid: str) -> str:
 **Files:**
 - Create: `apps/forum_import/management/commands/import_phpbb_posts.py`
 
-- [ ] Create command reading all rows from `vu2_posts` ordered by `post_id`
-- [ ] Implement `_to_html(raw, uid)` helper (regex UID strip + html.unescape + bbcode.Parser)
-- [ ] For each row:
+- [x] Create command reading all rows from `vu2_posts` ordered by `post_id`
+- [x] Implement `_to_html(raw, uid)` helper (regex UID strip + html.unescape + bbcode.Parser)
+- [x] For each row:
   - resolve `Topic` by `phpbb_id == topic_id`; skip with stderr if not found
   - resolve `ForumUser` by `phpbb_id == poster_id`; set `None` if not found
   - `author_username` = `post_username` (raw, may be empty)
   - `update_or_create(phpbb_id=post_id, defaults={...})`
-- [ ] Print `Imported N posts (M skipped)` to stdout
-- [ ] Write tests (`ImportPhpbbPostsCommandTest`):
+- [x] Print `Imported N posts (M skipped)` to stdout
+- [x] Write tests (`ImportPhpbbPostsCommandTest`):
   - `test_imports_posts` — happy path
   - `test_skips_unknown_topic` — topic not in DB → skipped
   - `test_null_author_for_missing_user` — user not in DB → author=None
@@ -171,7 +171,7 @@ def _to_html(raw: str, uid: str) -> str:
   - `test_bbcode_uid_stripped` — `[b:uid]text[/b:uid]` → `<strong>text</strong>` (or `<b>`)
   - `test_html_entities_unescaped` — `&#1087;&#1088;&#1099;&#1074;&#1077;&#1090;` decoded
   - `test_unix_timestamp_converted`
-- [ ] Run `uv run pytest apps/forum_import/tests.py` — must pass before Task 5
+- [x] Run `uv run pytest apps/forum_import/tests.py` — must pass before Task 5
 
 ### Task 5: Register models in admin
 
