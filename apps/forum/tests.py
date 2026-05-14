@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import ForumCategory, SubForum
+from .models import ForumCategory, ForumUser, SubForum
 
 
 class ForumCategoryModelTests(TestCase):
@@ -51,6 +51,21 @@ class SubForumModelTests(TestCase):
             name="Горные велопоходы",
         )
         self.assertEqual(nested.category, self.category)
+
+
+class ForumUserModelTests(TestCase):
+    def test_create_and_retrieve(self):
+        user = ForumUser.objects.create(phpbb_id=42, username="Турист")
+        retrieved = ForumUser.objects.get(phpbb_id=42)
+        self.assertEqual(retrieved.username, "Турист")
+        self.assertEqual(str(user), "Турист")
+
+    def test_defaults(self):
+        user = ForumUser.objects.create(phpbb_id=99, username="test")
+        self.assertEqual(user.post_count, 0)
+        self.assertEqual(user.email, "")
+        self.assertEqual(user.avatar, "")
+        self.assertIsNone(user.registered_at)
 
 
 class ForumIndexViewTests(TestCase):

@@ -73,11 +73,11 @@ WHERE user_id != 1 AND user_type != 2
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/0002_forumuser.py` (generated)
 
-- [ ] add `ForumUser` model to `apps/forum/models.py` with all six fields and `verbose_name`
-- [ ] run `uv run python manage.py makemigrations forum` to generate migration
-- [ ] run `uv run python manage.py migrate` to apply it
-- [ ] write test in `apps/forum/tests.py` asserting `ForumUser` can be created and retrieved
-- [ ] run `uv run pytest apps/forum/tests.py` — must pass before Task 2
+- [x] add `ForumUser` model to `apps/forum/models.py` with all six fields and `verbose_name`
+- [x] run `uv run python manage.py makemigrations forum` to generate migration
+- [x] run `uv run python manage.py migrate` to apply it
+- [x] write test in `apps/forum/tests.py` asserting `ForumUser` can be created and retrieved
+- [x] run `uv run pytest apps/forum/tests.py` — must pass before Task 2
 
 ### Task 2: Register ForumUser in Django admin
 
