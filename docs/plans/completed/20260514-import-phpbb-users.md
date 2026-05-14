@@ -131,8 +131,8 @@ WHERE user_id != 1 AND user_type != 2
 - Modify: `CLAUDE.md`
 - Move: `docs/plans/20260514-import-phpbb-users.md` → `docs/plans/completed/`
 
-- [ ] update `CLAUDE.md` import status: mark `[ ] Topics, posts, users` note — add `[x] Users (ForumUser)` line
-- [ ] move this plan to `docs/plans/completed/20260514-import-phpbb-users.md`
+- [x] update `CLAUDE.md` import status: mark `[ ] Topics, posts, users` note — add `[x] Users (ForumUser)` line
+- [x] move this plan to `docs/plans/completed/20260514-import-phpbb-users.md`
 
 ## Post-Completion
 

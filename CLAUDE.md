@@ -68,7 +68,8 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 
 **Import status:**
 - [x] Categories and subforums (`ForumCategory`, `SubForum`) — done
-- [ ] Topics, posts, users — planned, models and import commands not yet created
+- [x] Users (`ForumUser`) — done
+- [ ] Topics, posts — planned, models and import commands not yet created
 
 ## Branch naming
 
