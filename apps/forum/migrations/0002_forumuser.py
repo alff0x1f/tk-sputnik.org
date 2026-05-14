@@ -4,26 +4,53 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('forum', '0001_initial'),
+        ("forum", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ForumUser',
+            name="ForumUser",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(unique=True, verbose_name='ID в phpBB')),
-                ('username', models.CharField(max_length=255, verbose_name='Имя пользователя')),
-                ('email', models.EmailField(blank=True, max_length=254, verbose_name='Email')),
-                ('avatar', models.CharField(blank=True, max_length=500, verbose_name='Аватар')),
-                ('registered_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата регистрации')),
-                ('post_count', models.IntegerField(default=0, verbose_name='Количество сообщений')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(unique=True, verbose_name="ID в phpBB"),
+                ),
+                (
+                    "username",
+                    models.CharField(max_length=255, verbose_name="Имя пользователя"),
+                ),
+                (
+                    "email",
+                    models.EmailField(blank=True, max_length=254, verbose_name="Email"),
+                ),
+                (
+                    "avatar",
+                    models.CharField(blank=True, max_length=500, verbose_name="Аватар"),
+                ),
+                (
+                    "registered_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата регистрации"
+                    ),
+                ),
+                (
+                    "post_count",
+                    models.IntegerField(default=0, verbose_name="Количество сообщений"),
+                ),
             ],
             options={
-                'verbose_name': 'Пользователь форума',
-                'verbose_name_plural': 'Пользователи форума',
+                "verbose_name": "Пользователь форума",
+                "verbose_name_plural": "Пользователи форума",
             },
         ),
     ]
