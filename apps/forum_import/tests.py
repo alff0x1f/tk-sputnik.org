@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.forum.models import ForumCategory, SubForum
+from apps.forum.models import ForumCategory, ForumUser, SubForum
 
 
 class ForumImportAppConfigTest(TestCase):
@@ -146,3 +146,125 @@ class ImportPhpbbForumsCommandTest(TestCase):
         self.assertEqual(cat.name, 'Турклуб "Спутник"')
         sub = SubForum.objects.get(phpbb_id=10)
         self.assertEqual(sub.name, "Походы & приключения")
+
+
+class ImportPhpbbUsersCommandTest(TestCase):
+    def _make_user_row(
+        self,
+        user_id=10,
+        username="testuser",
+        email="test@example.com",
+        avatar="",
+        avatar_type=0,
+        regdate=1000000,
+        posts=5,
+    ):
+        return (user_id, username, email, avatar, avatar_type, regdate, posts)
+
+    def _mock_user_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("user_id",),
+            ("username",),
+            ("user_email",),
+            ("user_avatar",),
+            ("user_avatar_type",),
+            ("user_regdate",),
+            ("user_posts",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_imports_users_and_prints_count(self, mock_connections):
+        rows = [
+            self._make_user_row(10, "alice", "alice@example.com"),
+            self._make_user_row(11, "bob", "bob@example.com"),
+        ]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_users", stdout=out)
+
+        self.assertEqual(ForumUser.objects.count(), 2)
+        self.assertIn("Imported 2 users", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_anon_user_excluded_by_sql_filter(self, mock_connections):
+        cursor = self._mock_user_cursor([])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("user_id != 1", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_bot_user_excluded_by_sql_filter(self, mock_connections):
+        cursor = self._mock_user_cursor([])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("user_type != 2", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_remote_avatar_stored_as_is(self, mock_connections):
+        url = "https://example.com/avatar.jpg"
+        rows = [self._make_user_row(10, avatar=url, avatar_type=2)]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        user = ForumUser.objects.get(phpbb_id=10)
+        self.assertEqual(user.avatar, url)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_uploaded_avatar_stored_as_filename(self, mock_connections):
+        filename = "10_abc123.jpg"
+        rows = [self._make_user_row(10, avatar=filename, avatar_type=1)]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        user = ForumUser.objects.get(phpbb_id=10)
+        self.assertEqual(user.avatar, filename)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_empty_avatar_stored_as_empty_string(self, mock_connections):
+        rows = [self._make_user_row(10, avatar="", avatar_type=0)]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        user = ForumUser.objects.get(phpbb_id=10)
+        self.assertEqual(user.avatar, "")
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_regdate_timestamp_converted_to_aware_datetime(self, mock_connections):
+        ts = 1000000
+        rows = [self._make_user_row(10, regdate=ts)]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        user = ForumUser.objects.get(phpbb_id=10)
+        expected = datetime.fromtimestamp(ts, tz=UTC)
+        self.assertEqual(user.registered_at, expected)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_users.connections")
+    def test_idempotency(self, mock_connections):
+        rows = [self._make_user_row(10, "alice")]
+        cursor = self._mock_user_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_users", stdout=StringIO())
+        call_command("import_phpbb_users", stdout=StringIO())
+
+        self.assertEqual(ForumUser.objects.count(), 1)

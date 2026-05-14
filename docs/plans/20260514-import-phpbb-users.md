@@ -106,16 +106,16 @@ WHERE user_id != 1 AND user_type != 2
 **Files:**
 - Modify: `apps/forum_import/tests.py`
 
-- [ ] add `_make_user_row` helper and `_mock_user_cursor` following the existing pattern in the file
-- [ ] test: normal import creates `ForumUser` records and prints correct count
-- [ ] test: `user_id=1` (anonymous) is skipped
-- [ ] test: `user_type=2` (bot) is skipped
-- [ ] test: remote avatar (`user_avatar_type=2`) stored as-is
-- [ ] test: uploaded avatar (`user_avatar_type=1`) stored as filename string
-- [ ] test: empty avatar stored as `""`
-- [ ] test: `user_regdate` unix timestamp converted to aware datetime
-- [ ] test: idempotency — running command twice leaves one record
-- [ ] run `uv run pytest apps/forum_import/tests.py` — all must pass before Task 5
+- [x] add `_make_user_row` helper and `_mock_user_cursor` following the existing pattern in the file
+- [x] test: normal import creates `ForumUser` records and prints correct count
+- [x] test: `user_id=1` (anonymous) is skipped
+- [x] test: `user_type=2` (bot) is skipped
+- [x] test: remote avatar (`user_avatar_type=2`) stored as-is
+- [x] test: uploaded avatar (`user_avatar_type=1`) stored as filename string
+- [x] test: empty avatar stored as `""`
+- [x] test: `user_regdate` unix timestamp converted to aware datetime
+- [x] test: idempotency — running command twice leaves one record
+- [x] run `uv run pytest apps/forum_import/tests.py` — all must pass before Task 5
 
 ### Task 5: Verify acceptance criteria
 
