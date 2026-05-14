@@ -99,9 +99,9 @@ def subforum_topics(request, phpbb_id):
 **Files:**
 - Modify: `apps/forum/templates/forum/forum.html`
 
-- [ ] Wrap `.sf-title` text in `<a href="{% url 'subforum-topics' subforum.phpbb_id %}">` on direct subforums
-- [ ] Do the same for child subforum `.sf-child` chips (use `child.phpbb_id`)
-- [ ] Remove `cursor:pointer` from `.subforum:hover` in `forum.css` (the title link provides navigation; full-row pointer without full-row link is misleading)
+- [x] Wrap `.sf-title` text in `<a href="{% url 'subforum-topics' subforum.phpbb_id %}">` on direct subforums
+- [x] Do the same for child subforum `.sf-child` chips (use `child.phpbb_id`)
+- [x] Remove `cursor:pointer` from `.subforum:hover` in `forum.css` (the title link provides navigation; full-row pointer without full-row link is misleading)
 
 ### Task 5: Tests
 
