@@ -12,8 +12,6 @@
 {% block content %}
   <main class="feed">
     <div class="crumbs">
-      <a href="{% url 'home' %}">Спутник</a>
-      <span class="sep">›</span>
       <a href="{% url 'forum-index' %}">Форум</a>
       <span class="sep">›</span>
       <span>{{ subforum.category.name }}</span>
@@ -44,8 +42,8 @@
             <div class="topic-meta">{{ topic.first_author|default:"—" }}</div>
           </div>
           <div class="topic-stats">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <b>{{ topic.post_count|add:"-1" }}</b>
-            ответов
           </div>
           <div class="topic-last">
             {% if topic.last_post_at %}
