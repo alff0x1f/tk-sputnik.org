@@ -178,9 +178,9 @@ def _to_html(raw: str, uid: str) -> str:
 **Files:**
 - Modify: `apps/forum/admin.py`
 
-- [ ] Register `Topic` with `list_display = ["title", "subforum", "post_count", "created_at"]`
-- [ ] Register `Post` with `list_display = ["phpbb_id", "topic", "author_username", "created_at"]`
-- [ ] Run `uv run pytest` (full suite) — must pass before Task 6
+- [x] Register `Topic` with `list_display = ["title", "subforum", "post_count", "created_at"]`
+- [x] Register `Post` with `list_display = ["phpbb_id", "topic", "author_username", "created_at"]`
+- [x] Run `uv run pytest` (full suite) — must pass before Task 6
 
 ### Task 6: Verify and clean up
 
