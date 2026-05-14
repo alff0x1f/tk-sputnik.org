@@ -125,8 +125,8 @@ def subforum_topics(request, phpbb_id):
 
 ### Task 7: [Final] Update documentation
 
-- [ ] Update `CLAUDE.md` if new patterns introduced (unlikely — this follows existing patterns)
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update `CLAUDE.md` if new patterns introduced (unlikely — this follows existing patterns)
+- [x] Move this plan to `docs/plans/completed/`
 
 ## Post-Completion
 
