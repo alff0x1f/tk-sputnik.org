@@ -128,9 +128,9 @@ def _to_html(raw: str, uid: str) -> str:
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] Run `uv add bbcode` to add the library and update `pyproject.toml` + `uv.lock`
-- [ ] Smoke-test: `uv run python -c "import bbcode; print(bbcode.render_html('[b]ok[/b]'))"`
-- [ ] No separate test needed — covered by Task 4 tests
+- [x] Run `uv add bbcode` to add the library and update `pyproject.toml` + `uv.lock`
+- [x] Smoke-test: `uv run python -c "import bbcode; print(bbcode.render_html('[b]ok[/b]'))"`
+- [x] No separate test needed — covered by Task 4 tests
 
 ### Task 3: import_phpbb_topics command
 
