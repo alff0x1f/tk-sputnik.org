@@ -1,0 +1,88 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}{{ subforum.name }} — Форум — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
+{% endblock %}
+
+{% block topbar_action %}{% endblock %}
+
+{% block content %}
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'home' %}">Спутник</a>
+      <span class="sep">›</span>
+      <a href="{% url 'forum-index' %}">Форум</a>
+      <span class="sep">›</span>
+      <span>{{ subforum.category.name }}</span>
+      <span class="sep">›</span>
+      <span>{{ subforum.name }}</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">{{ subforum.name }}</h1>
+    </div>
+    {% if subforum.description %}<div class="feed-sub">{{ subforum.description }}</div>{% endif %}
+
+    <div class="forum-cat">
+      <div class="forum-cat-head">
+        <h2>
+          {{ subforum.topic_count }} тем · {{ subforum.post_count }} сообщений
+        </h2>
+      </div>
+
+      {% if page_obj.object_list %}
+        {% for topic in page_obj %}
+        <div class="topic">
+          <div class="topic-ico">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="topic-body">
+            <div class="topic-title">{{ topic.title }}</div>
+            <div class="topic-meta">{{ topic.first_author|default:"—" }}</div>
+          </div>
+          <div class="topic-stats">
+            <b>{{ topic.post_count }}</b>
+            ответов
+          </div>
+          <div class="topic-last">
+            {% if topic.last_post_at %}
+            <span class="when">{{ topic.last_post_at|date:"d.m.Y" }}</span>
+            {% endif %}
+            <span class="who">{{ topic.last_post_author|default:"—" }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="padding:24px 16px; color:var(--muted); font-size:14px;">Тем нет</div>
+      {% endif %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo;</a>
+      {% else %}
+        <span class="disabled">&lsaquo;</span>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="current">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">&rsaquo;</a>
+      {% else %}
+        <span class="disabled">&rsaquo;</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </main>
+{% endblock %}

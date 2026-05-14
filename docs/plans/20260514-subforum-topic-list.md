@@ -87,12 +87,12 @@ def subforum_topics(request, phpbb_id):
 **Files:**
 - Create: `apps/forum/templates/forum/subforum.html`
 
-- [ ] Extend `demo/base.html`, load `static`, link `forum/css/forum.css`
-- [ ] Breadcrumbs: Форум (link to `forum-index`) › Category name › Subforum name
-- [ ] Subforum header block: name as `<h1>`, description, stats (topic_count, post_count)
-- [ ] Topic list: iterate `page_obj` — one `.topic` row per topic with icon, title + `by {{ topic.first_author|default:"—" }}`, `{{ topic.post_count }}` replies, last post author + date formatted as `d.m.Y`
-- [ ] Empty state: show "Тем нет" if `page_obj.object_list` is empty
-- [ ] Pagination block (only if `page_obj.paginator.num_pages > 1`): previous/next links + page numbers using `page_obj.paginator.page_range`
+- [x] Extend `demo/base.html`, load `static`, link `forum/css/forum.css`
+- [x] Breadcrumbs: Форум (link to `forum-index`) › Category name › Subforum name
+- [x] Subforum header block: name as `<h1>`, description, stats (topic_count, post_count)
+- [x] Topic list: iterate `page_obj` — one `.topic` row per topic with icon, title + `by {{ topic.first_author|default:"—" }}`, `{{ topic.post_count }}` replies, last post author + date formatted as `d.m.Y`
+- [x] Empty state: show "Тем нет" if `page_obj.object_list` is empty
+- [x] Pagination block (only if `page_obj.paginator.num_pages > 1`): previous/next links + page numbers using `page_obj.paginator.page_range`
 
 ### Task 4: Link subforums on forum index
 
