@@ -479,6 +479,49 @@ class ImportPhpbbPostsCommandTest(TestCase):
         self.assertNotIn(f":{uid}", post.text_html)
 
     @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_stripped_url(self, mock_connections):
+        uid = "12hsql24"
+        # phpBB stores colons in URLs as &#58;; after html.unescape they become ':'
+        rows = [
+            self._make_row(
+                200,
+                100,
+                post_text=f"[url=http&#58;//example.com:{uid}]link[/url:{uid}]",
+                bbcode_uid=uid,
+            )
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertNotIn(f":{uid}", post.text_html)
+        self.assertIn("example.com", post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_stripped_list(self, mock_connections):
+        uid = "12hsql24"
+        rows = [
+            self._make_row(
+                200,
+                100,
+                post_text=f"[list:u:{uid}][*:{uid}]item[/*:m:{uid}][/list:u:{uid}]",
+                bbcode_uid=uid,
+            )
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertNotIn(f":{uid}", post.text_html)
+        self.assertNotIn("[list", post.text_html)
+        self.assertIn("<ul>", post.text_html)
+        self.assertIn("<li>", post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
     def test_html_entities_unescaped(self, mock_connections):
         # &#1087;&#1088;&#1080;&#1074;&#1077;&#1090; = привет
         rows = [
@@ -508,3 +551,45 @@ class ImportPhpbbPostsCommandTest(TestCase):
         post = Post.objects.get(phpbb_id=200)
         expected = datetime.fromtimestamp(ts, tz=UTC)
         self.assertEqual(post.created_at, expected)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_img_tag_converted_to_html(self, mock_connections):
+        uid = "abc123"
+        rows = [
+            self._make_row(
+                200,
+                100,
+                post_text=f"[img:{uid}]http://example.com/a.jpg[/img:{uid}]",
+                bbcode_uid=uid,
+            )
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertIn('<img src="http://example.com/a.jpg"', post.text_html)
+        self.assertNotIn("[img]", post.text_html)
+        self.assertNotIn("[/img]", post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_size_tag_converted_to_html(self, mock_connections):
+        uid = "abc123"
+        rows = [
+            self._make_row(
+                200,
+                100,
+                post_text=f"[size=150:{uid}]big text[/size:{uid}]",
+                bbcode_uid=uid,
+            )
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertIn("big text", post.text_html)
+        self.assertIn("font-size:150%", post.text_html)
+        self.assertNotIn("[size", post.text_html)
