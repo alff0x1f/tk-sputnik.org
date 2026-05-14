@@ -114,14 +114,14 @@ def _to_html(raw: str, uid: str) -> str:
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/0003_topic_post.py` (via makemigrations)
 
-- [ ] Add `Topic` model to `apps/forum/models.py` (fields per Technical Details above)
-- [ ] Add `Post` model to `apps/forum/models.py` (fields per Technical Details above)
-- [ ] Run `uv run python manage.py makemigrations forum` and verify generated file
-- [ ] Write model-level tests in `apps/forum/tests.py`:
+- [x] Add `Topic` model to `apps/forum/models.py` (fields per Technical Details above)
+- [x] Add `Post` model to `apps/forum/models.py` (fields per Technical Details above)
+- [x] Run `uv run python manage.py makemigrations forum` and verify generated file
+- [x] Write model-level tests in `apps/forum/tests.py`:
   - `test_topic_str` — `str(topic)` returns title
   - `test_post_str` — `str(post)` returns something sensible
   - `test_post_author_nullable` — post can be saved without author
-- [ ] Run `uv run pytest apps/forum/tests.py` — must pass before Task 2
+- [x] Run `uv run pytest apps/forum/tests.py` — must pass before Task 2
 
 ### Task 2: Add bbcode dependency
 
