@@ -44,7 +44,7 @@
             <div class="topic-meta">{{ topic.first_author|default:"—" }}</div>
           </div>
           <div class="topic-stats">
-            <b>{{ topic.post_count }}</b>
+            <b>{{ topic.post_count|add:"-1" }}</b>
             ответов
           </div>
           <div class="topic-last">
