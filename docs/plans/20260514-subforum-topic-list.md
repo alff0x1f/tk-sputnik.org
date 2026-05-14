@@ -108,12 +108,12 @@ def subforum_topics(request, phpbb_id):
 **Files:**
 - Modify: `apps/forum/tests.py`
 
-- [ ] Add `SubforumTopicsViewTest` test class
-- [ ] Test: GET `/forum/f/<phpbb_id>/` returns 200 and uses `forum/subforum.html` template
-- [ ] Test: 404 for unknown phpbb_id
-- [ ] Test: `page_obj` in context, contains correct topics for the subforum
-- [ ] Test: pagination — create 26 topics, verify page 1 has 25 and `?page=2` has 1
-- [ ] Run `uv run pytest apps/forum/tests.py` — must pass
+- [x] Add `SubforumTopicsViewTest` test class
+- [x] Test: GET `/forum/f/<phpbb_id>/` returns 200 and uses `forum/subforum.html` template
+- [x] Test: 404 for unknown phpbb_id
+- [x] Test: `page_obj` in context, contains correct topics for the subforum
+- [x] Test: pagination — create 26 topics, verify page 1 has 25 and `?page=2` has 1
+- [x] Run `uv run pytest apps/forum/tests.py` — must pass
 
 ### Task 6: Verify acceptance criteria
 
