@@ -137,18 +137,18 @@ def _to_html(raw: str, uid: str) -> str:
 **Files:**
 - Create: `apps/forum_import/management/commands/import_phpbb_topics.py`
 
-- [ ] Create command reading all rows from `vu2_topics`
-- [ ] For each row: resolve `SubForum` by `phpbb_id == forum_id`; skip with stderr message if not found
-- [ ] `update_or_create(phpbb_id=topic_id, defaults={subforum, title, created_at, views, post_count})`
+- [x] Create command reading all rows from `vu2_topics`
+- [x] For each row: resolve `SubForum` by `phpbb_id == forum_id`; skip with stderr message if not found
+- [x] `update_or_create(phpbb_id=topic_id, defaults={subforum, title, created_at, views, post_count})`
   - `post_count = topic_replies + 1` (phpBB stores reply count, not total)
-- [ ] Print `Imported N topics (M skipped)` to stdout
-- [ ] Write tests in `apps/forum_import/tests.py` (`ImportPhpbbTopicsCommandTest`):
+- [x] Print `Imported N topics (M skipped)` to stdout
+- [x] Write tests in `apps/forum_import/tests.py` (`ImportPhpbbTopicsCommandTest`):
   - `test_imports_topics` — happy path, count matches
   - `test_skips_unknown_subforum` — subforum not in DB → skipped, stderr message
   - `test_idempotency` — running twice doesn't duplicate
   - `test_unix_timestamp_converted` — `created_at` is timezone-aware
   - `test_post_count_includes_first_post` — `post_count = topic_replies + 1`
-- [ ] Run `uv run pytest apps/forum_import/tests.py` — must pass before Task 4
+- [x] Run `uv run pytest apps/forum_import/tests.py` — must pass before Task 4
 
 ### Task 4: import_phpbb_posts command
 

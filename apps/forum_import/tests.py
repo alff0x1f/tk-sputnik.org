@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.forum.models import ForumCategory, ForumUser, SubForum
+from apps.forum.models import ForumCategory, ForumUser, SubForum, Topic
 
 
 class ForumImportAppConfigTest(TestCase):
@@ -268,3 +268,96 @@ class ImportPhpbbUsersCommandTest(TestCase):
         call_command("import_phpbb_users", stdout=StringIO())
 
         self.assertEqual(ForumUser.objects.count(), 1)
+
+
+class ImportPhpbbTopicsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+
+    def _make_row(
+        self, topic_id=100, forum_id=10, title="Тема", ts=1000000, views=5, replies=3
+    ):
+        return (topic_id, forum_id, title, ts, views, replies)
+
+    def _mock_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("topic_id",),
+            ("forum_id",),
+            ("topic_title",),
+            ("topic_time",),
+            ("topic_views",),
+            ("topic_replies",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_topics.connections")
+    def test_imports_topics(self, mock_connections):
+        rows = [
+            self._make_row(100, 10, "Первая тема"),
+            self._make_row(101, 10, "Вторая тема"),
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_topics", stdout=out)
+
+        self.assertEqual(Topic.objects.count(), 2)
+        self.assertIn("Imported 2 topics (0 skipped)", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_topics.connections")
+    def test_skips_unknown_subforum(self, mock_connections):
+        rows = [
+            self._make_row(100, 10, "Нормальная тема"),
+            self._make_row(101, 99, "Тема с неизвестным форумом"),
+        ]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        err = StringIO()
+        call_command("import_phpbb_topics", stdout=out, stderr=err)
+
+        self.assertEqual(Topic.objects.count(), 1)
+        self.assertIn("Imported 1 topics (1 skipped)", out.getvalue())
+        self.assertIn("phpbb_id=99", err.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_topics.connections")
+    def test_idempotency(self, mock_connections):
+        rows = [self._make_row(100, 10, "Тема")]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_topics", stdout=StringIO())
+        call_command("import_phpbb_topics", stdout=StringIO())
+
+        self.assertEqual(Topic.objects.count(), 1)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_topics.connections")
+    def test_unix_timestamp_converted(self, mock_connections):
+        ts = 1000000
+        rows = [self._make_row(100, 10, ts=ts)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_topics", stdout=StringIO())
+
+        topic = Topic.objects.get(phpbb_id=100)
+        expected = datetime.fromtimestamp(ts, tz=UTC)
+        self.assertEqual(topic.created_at, expected)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_topics.connections")
+    def test_post_count_includes_first_post(self, mock_connections):
+        rows = [self._make_row(100, 10, replies=7)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_topics", stdout=StringIO())
+
+        topic = Topic.objects.get(phpbb_id=100)
+        self.assertEqual(topic.post_count, 8)

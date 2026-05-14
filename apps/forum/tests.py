@@ -76,7 +76,9 @@ class TopicModelTests(TestCase):
         )
 
     def test_topic_str(self):
-        topic = Topic.objects.create(phpbb_id=100, subforum=self.subforum, title="Поход на Эльбрус")
+        topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Поход на Эльбрус"
+        )
         self.assertEqual(str(topic), "Поход на Эльбрус")
 
     def test_topic_defaults(self):
@@ -97,21 +99,29 @@ class PostModelTests(TestCase):
         self.subforum = SubForum.objects.create(
             phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
         )
-        self.topic = Topic.objects.create(phpbb_id=100, subforum=self.subforum, title="Topic")
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Topic"
+        )
         self.user = ForumUser.objects.create(phpbb_id=42, username="Турист")
 
     def test_post_str(self):
         post = Post.objects.create(
-            phpbb_id=1000, topic=self.topic, author=self.user,
-            text_bbcode="[b]text[/b]", text_html="<b>text</b>"
+            phpbb_id=1000,
+            topic=self.topic,
+            author=self.user,
+            text_bbcode="[b]text[/b]",
+            text_html="<b>text</b>",
         )
         self.assertIn("1000", str(post))
 
     def test_post_author_nullable(self):
         post = Post.objects.create(
-            phpbb_id=1001, topic=self.topic, author=None,
+            phpbb_id=1001,
+            topic=self.topic,
+            author=None,
             author_username="anonymous",
-            text_bbcode="hello", text_html="hello"
+            text_bbcode="hello",
+            text_html="hello",
         )
         self.assertIsNone(post.author)
         self.assertEqual(post.author_username, "anonymous")
@@ -124,8 +134,11 @@ class PostModelTests(TestCase):
 
     def test_user_set_null_on_delete(self):
         post = Post.objects.create(
-            phpbb_id=1003, topic=self.topic, author=self.user,
-            text_bbcode="x", text_html="x"
+            phpbb_id=1003,
+            topic=self.topic,
+            author=self.user,
+            text_bbcode="x",
+            text_html="x",
         )
         self.user.delete()
         post.refresh_from_db()
