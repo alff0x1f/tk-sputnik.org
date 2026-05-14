@@ -84,9 +84,9 @@ WHERE user_id != 1 AND user_type != 2
 **Files:**
 - Modify: `apps/forum/admin.py`
 
-- [ ] add `admin.site.register(ForumUser)` to `apps/forum/admin.py`
-- [ ] (no separate test needed — admin registration is verified by existing app-config test pattern)
-- [ ] run `uv run pytest apps/forum/` — must pass before Task 3
+- [x] add `admin.site.register(ForumUser)` to `apps/forum/admin.py`
+- [x] (no separate test needed — admin registration is verified by existing app-config test pattern)
+- [x] run `uv run pytest apps/forum/` — must pass before Task 3
 
 ### Task 3: Implement import_phpbb_users management command
 
