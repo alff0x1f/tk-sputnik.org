@@ -70,10 +70,13 @@ class Command(BaseCommand):
         columns = [col[0] for col in cursor.description]
         rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
+        total = len(rows)
         imported = 0
         skipped = 0
 
-        for row in rows:
+        self.stdout.write(f"Importing {total} posts...")
+
+        for i, row in enumerate(rows, start=1):
             try:
                 topic = Topic.objects.get(phpbb_id=row["topic_id"])
             except Topic.DoesNotExist:
@@ -105,4 +108,11 @@ class Command(BaseCommand):
             )
             imported += 1
 
-        self.stdout.write(f"Imported {imported} posts ({skipped} skipped)")
+            if i % 100 == 0 or i == total:
+                self.stdout.write(f"\r  {i}/{total}", ending="")
+                self.stdout.flush()
+
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.SUCCESS(f"Imported {imported} posts ({skipped} skipped)")
+        )

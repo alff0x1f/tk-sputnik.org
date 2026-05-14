@@ -22,10 +22,13 @@ class Command(BaseCommand):
         columns = [col[0] for col in cursor.description]
         rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
+        total = len(rows)
         imported = 0
         skipped = 0
 
-        for row in rows:
+        self.stdout.write(f"Importing {total} topics...")
+
+        for i, row in enumerate(rows, start=1):
             try:
                 subforum = SubForum.objects.get(phpbb_id=row["forum_id"])
             except SubForum.DoesNotExist:
@@ -48,7 +51,14 @@ class Command(BaseCommand):
             )
             imported += 1
 
-        self.stdout.write(f"Imported {imported} topics ({skipped} skipped)")
+            if i % 100 == 0 or i == total:
+                self.stdout.write(f"\r  {i}/{total}", ending="")
+                self.stdout.flush()
+
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.SUCCESS(f"Imported {imported} topics ({skipped} skipped)")
+        )
 
 
 def _unix_to_dt(ts):
