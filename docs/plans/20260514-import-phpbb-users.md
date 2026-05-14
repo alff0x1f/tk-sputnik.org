@@ -93,13 +93,13 @@ WHERE user_id != 1 AND user_type != 2
 **Files:**
 - Create: `apps/forum_import/management/commands/import_phpbb_users.py`
 
-- [ ] create command class inheriting `BaseCommand`, `help` string set
-- [ ] execute SQL selecting all needed columns from `vu2_users` with `WHERE user_id != 1 AND user_type != 2`
-- [ ] map rows to `ForumUser` via `update_or_create(phpbb_id=..., defaults={...})`
-- [ ] apply avatar logic: store `user_avatar` string as-is (empty string when blank)
-- [ ] convert `user_regdate` unix timestamp with `_unix_to_dt` (import from `import_phpbb_forums` or duplicate the two-liner)
-- [ ] print `Imported N users` to stdout
-- [ ] run `uv run ruff check apps/forum_import/management/commands/import_phpbb_users.py` — must be clean
+- [x] create command class inheriting `BaseCommand`, `help` string set
+- [x] execute SQL selecting all needed columns from `vu2_users` with `WHERE user_id != 1 AND user_type != 2`
+- [x] map rows to `ForumUser` via `update_or_create(phpbb_id=..., defaults={...})`
+- [x] apply avatar logic: store `user_avatar` string as-is (empty string when blank)
+- [x] convert `user_regdate` unix timestamp with `_unix_to_dt` (import from `import_phpbb_forums` or duplicate the two-liner)
+- [x] print `Imported N users` to stdout
+- [x] run `uv run ruff check apps/forum_import/management/commands/import_phpbb_users.py` — must be clean
 
 ### Task 4: Write tests for import_phpbb_users
 
