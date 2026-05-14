@@ -4,7 +4,7 @@
 Add a topic-list page for each subforum in the phpBB forum archive. Currently the forum shows only the index (categories + subforums). Clicking a subforum leads nowhere — this plan wires up navigation to `/forum/f/<phpbb_id>/` and renders a paginated list of topics with author and last-post info.
 
 ## Context (from discovery)
-- Branch: `phpbb-import-topics-posts` — has `Topic` and `Post` models, not yet on `main`
+- Branch: `feat/show-subfforums`
 - `apps/forum/views.py` — single `forum_index` view; no subforum or topic views
 - `apps/forum/urls.py` — single `""` route; no `/f/` path
 - `apps/forum/templates/forum/forum.html` — subforum rows are `<div class="subforum">` with no `href`
@@ -66,12 +66,12 @@ def subforum_topics(request, phpbb_id):
 - Modify: `apps/forum/urls.py`
 - Modify: `apps/forum/views.py`
 
-- [ ] Add `from django.core.paginator import Paginator` and `from django.shortcuts import get_object_or_404` to `views.py`
-- [ ] Add `from django.db.models import OuterRef, Subquery` to `views.py`
-- [ ] Add `Post, SubForum` to the models import in `views.py`
-- [ ] Implement `subforum_topics(request, phpbb_id)` view using the Subquery pattern above
-- [ ] Add `path("f/<int:phpbb_id>/", views.subforum_topics, name="subforum-topics")` to `urls.py`
-- [ ] Run `uv run ruff check apps/forum/views.py apps/forum/urls.py` — fix any issues
+- [x] Add `from django.core.paginator import Paginator` and `from django.shortcuts import get_object_or_404` to `views.py`
+- [x] Add `from django.db.models import OuterRef, Subquery` to `views.py`
+- [x] Add `Post, SubForum` to the models import in `views.py`
+- [x] Implement `subforum_topics(request, phpbb_id)` view using the Subquery pattern above
+- [x] Add `path("f/<int:phpbb_id>/", views.subforum_topics, name="subforum-topics")` to `urls.py`
+- [x] Run `uv run ruff check apps/forum/views.py apps/forum/urls.py` — fix any issues
 
 ### Task 2: Add topic CSS to forum.css
 
