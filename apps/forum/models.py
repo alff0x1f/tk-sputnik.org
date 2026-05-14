@@ -54,3 +54,19 @@ class SubForum(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ForumUser(models.Model):
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    username = models.CharField("Имя пользователя", max_length=255)
+    email = models.EmailField("Email", blank=True)
+    avatar = models.CharField("Аватар", max_length=500, blank=True)
+    registered_at = models.DateTimeField("Дата регистрации", null=True, blank=True)
+    post_count = models.IntegerField("Количество сообщений", default=0)
+
+    class Meta:
+        verbose_name = "Пользователь форума"
+        verbose_name_plural = "Пользователи форума"
+
+    def __str__(self):
+        return self.username

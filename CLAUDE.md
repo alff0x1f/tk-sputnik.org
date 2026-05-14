@@ -36,11 +36,40 @@ Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproje
 ## Architecture
 
 - `config/` — Django project config (settings, urls, wsgi, asgi)
-- `apps/` — all Django apps live here; currently only `apps.demo`
+- `apps/` — all Django apps live here
 - New apps go in `apps/` and are registered in `INSTALLED_APPS` as `apps.<name>`
 - Database: SQLite in development (`db.sqlite3`), PostgreSQL via `psycopg[binary]` in production
 - Static files: standard Django `STATIC_URL`
 - No custom authentication — uses Django's built-in auth
+
+## phpBB forum archive
+
+The site includes a read-only archive of the old phpBB forum (2007–2014), accessible at `/forum/`.
+
+**Apps:**
+- `apps/forum` — models `ForumCategory` and `SubForum` stored in PostgreSQL; view at `/forum/`
+- `apps/forum_import` — import infrastructure; management command `import_phpbb_forums`
+
+**Data source:** phpBB 3.x MySQL database, table prefix `vu2_`. The MySQL instance runs as a separate Docker Compose service with `profiles: [phpbb]` — it is not started by default.
+
+**Import workflow (one-time manual step):**
+```bash
+docker compose --profile phpbb up -d phpbb_db
+# wait for healthy, then load the dump:
+docker compose exec phpbb_db mysql -u phpbb -p phpbb < /path/to/forum_dump.sql
+# run the import command:
+uv run python manage.py import_phpbb_forums
+# expected output: Imported 5 categories, N subforums
+```
+
+**Django database connection:** `DATABASES['phpbb']` points to MySQL via PyMySQL (`pymysql.install_as_MySQLdb()` in `config/__init__.py`). MySQL env vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`. See `apps/forum_import/README.md` for details.
+
+After import, MySQL is no longer needed at runtime — all data lives in PostgreSQL.
+
+**Import status:**
+- [x] Categories and subforums (`ForumCategory`, `SubForum`) — done
+- [x] Users (`ForumUser`) — done
+- [ ] Topics, posts — planned, models and import commands not yet created
 
 ## Branch naming
 

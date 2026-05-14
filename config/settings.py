@@ -108,8 +108,8 @@ DATABASES = {
     "phpbb": {
         "ENGINE": "apps.forum_import.mysql_legacy_backend",
         "NAME": os.getenv("MYSQL_DATABASE", "phpbb"),
-        "USER": os.getenv("MYSQL_USER", "phpbb"),
-        "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
+        "USER": os.getenv("MYSQL_USER", "dev"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD", "dev"),
         "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
         "PORT": os.getenv("MYSQL_PORT", "3306"),
         "OPTIONS": {"charset": "utf8mb4"},
