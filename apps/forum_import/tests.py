@@ -369,9 +369,7 @@ class ImportPhpbbPostsCommandTest(TestCase):
         subforum = SubForum.objects.create(
             phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
         )
-        self.topic = Topic.objects.create(
-            phpbb_id=100, subforum=subforum, title="Тема"
-        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
         self.user = ForumUser.objects.create(phpbb_id=5, username="alice")
 
     def _make_row(
@@ -384,7 +382,15 @@ class ImportPhpbbPostsCommandTest(TestCase):
         bbcode_uid="",
         post_time=1000000,
     ):
-        return (post_id, topic_id, poster_id, post_username, post_text, bbcode_uid, post_time)
+        return (
+            post_id,
+            topic_id,
+            poster_id,
+            post_username,
+            post_text,
+            bbcode_uid,
+            post_time,
+        )
 
     def _mock_cursor(self, rows):
         cursor = MagicMock()
@@ -458,7 +464,11 @@ class ImportPhpbbPostsCommandTest(TestCase):
     @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
     def test_bbcode_uid_stripped(self, mock_connections):
         uid = "12hsql24"
-        rows = [self._make_row(200, 100, post_text=f"[b:{uid}]bold[/b:{uid}]", bbcode_uid=uid)]
+        rows = [
+            self._make_row(
+                200, 100, post_text=f"[b:{uid}]bold[/b:{uid}]", bbcode_uid=uid
+            )
+        ]
         cursor = self._mock_cursor(rows)
         mock_connections.__getitem__.return_value.cursor.return_value = cursor
 
@@ -471,7 +481,13 @@ class ImportPhpbbPostsCommandTest(TestCase):
     @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
     def test_html_entities_unescaped(self, mock_connections):
         # &#1087;&#1088;&#1080;&#1074;&#1077;&#1090; = привет
-        rows = [self._make_row(200, 100, post_text="&#1087;&#1088;&#1080;&#1074;&#1077;&#1090;")]
+        rows = [
+            self._make_row(
+                200,
+                100,
+                post_text="&#1087;&#1088;&#1080;&#1074;&#1077;&#1090;",
+            )
+        ]
         cursor = self._mock_cursor(rows)
         mock_connections.__getitem__.return_value.cursor.return_value = cursor
 

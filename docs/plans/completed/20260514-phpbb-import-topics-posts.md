@@ -184,10 +184,10 @@ def _to_html(raw: str, uid: str) -> str:
 
 ### Task 6: Verify and clean up
 
-- [ ] Run full test suite: `uv run pytest`
-- [ ] Run linter: `uv run ruff check . && uv run ruff format --check .`
-- [ ] Update `CLAUDE.md` import status checklist (Topics/Posts → `[x] done`)
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Run full test suite: `uv run pytest`
+- [x] Run linter: `uv run ruff check . && uv run ruff format --check .`
+- [x] Update `CLAUDE.md` import status checklist (Topics/Posts → `[x] done`)
+- [x] Move this plan to `docs/plans/completed/`
 
 ## Post-Completion
 
