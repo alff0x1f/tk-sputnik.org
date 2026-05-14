@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+import datetime
 
 from django.test import TestCase
 from django.urls import reverse
@@ -184,7 +184,9 @@ class ForumIndexViewTests(TestCase):
 
 class SubforumTopicsViewTest(TestCase):
     def setUp(self):
-        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat", sort_order=1)
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
         self.subforum = SubForum.objects.create(
             phpbb_id=42, phpbb_parent_id=1, category=self.category, name="Походы"
         )
@@ -195,13 +197,13 @@ class SubforumTopicsViewTest(TestCase):
             phpbb_id=1000,
             subforum=self.subforum,
             title="Эльбрус 2010",
-            created_at=datetime(2010, 6, 1, tzinfo=timezone.utc),
+            created_at=datetime.datetime(2010, 6, 1, tzinfo=datetime.UTC),
         )
         self.other_topic = Topic.objects.create(
             phpbb_id=2000,
             subforum=self.other_subforum,
             title="Other topic",
-            created_at=datetime(2010, 7, 1, tzinfo=timezone.utc),
+            created_at=datetime.datetime(2010, 7, 1, tzinfo=datetime.UTC),
         )
 
     def test_returns_200(self):
@@ -233,7 +235,7 @@ class SubforumTopicsViewTest(TestCase):
                 phpbb_id=3000 + i,
                 subforum=self.subforum,
                 title=f"Topic {i}",
-                created_at=datetime(2011, 1, i, tzinfo=timezone.utc),
+                created_at=datetime.datetime(2011, 1, i, tzinfo=datetime.UTC),
             )
         url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
         response = self.client.get(url)
@@ -245,7 +247,7 @@ class SubforumTopicsViewTest(TestCase):
                 phpbb_id=3000 + i,
                 subforum=self.subforum,
                 title=f"Topic {i}",
-                created_at=datetime(2011, 1, i, tzinfo=timezone.utc),
+                created_at=datetime.datetime(2011, 1, i, tzinfo=datetime.UTC),
             )
         url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
         response = self.client.get(url + "?page=2")
