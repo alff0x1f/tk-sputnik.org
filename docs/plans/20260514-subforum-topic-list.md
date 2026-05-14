@@ -78,9 +78,9 @@ def subforum_topics(request, phpbb_id):
 **Files:**
 - Modify: `apps/forum/static/forum/css/forum.css`
 
-- [ ] Append `.topic`, `.topic-ico`, `.topic-body`, `.topic-title`, `.topic-meta`, `.topic-stats`, `.topic-last` rules from `apps/demo/templates/demo/forum.html` `<style>` block (lines 117–163 of the demo template)
-- [ ] Add responsive overrides for `.topic` at 1000px and 720px breakpoints (matching demo)
-- [ ] Add `.pagination` styles for the page navigation (simple `display:flex; gap:4px` row of page links)
+- [x] Append `.topic`, `.topic-ico`, `.topic-body`, `.topic-title`, `.topic-meta`, `.topic-stats`, `.topic-last` rules from `apps/demo/templates/demo/forum.html` `<style>` block (lines 117–163 of the demo template)
+- [x] Add responsive overrides for `.topic` at 1000px and 720px breakpoints (matching demo)
+- [x] Add `.pagination` styles for the page navigation (simple `display:flex; gap:4px` row of page links)
 
 ### Task 3: Create subforum template
 
