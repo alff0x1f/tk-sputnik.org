@@ -5,6 +5,7 @@ description = "Сайт турклуба, from scratch with Django"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "bbcode>=1.1.0",
     "django>=5.2,<5.3",
     "gunicorn>=25.3.0",
     "psycopg[binary]>=3.3.3",

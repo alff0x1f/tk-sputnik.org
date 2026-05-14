@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import ForumCategory, ForumUser, SubForum
+from .models import ForumCategory, ForumUser, Post, SubForum, Topic
 
 
 class ForumCategoryModelTests(TestCase):
@@ -66,6 +66,83 @@ class ForumUserModelTests(TestCase):
         self.assertEqual(user.email, "")
         self.assertEqual(user.avatar, "")
         self.assertIsNone(user.registered_at)
+
+
+class TopicModelTests(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+
+    def test_topic_str(self):
+        topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Поход на Эльбрус"
+        )
+        self.assertEqual(str(topic), "Поход на Эльбрус")
+
+    def test_topic_defaults(self):
+        topic = Topic.objects.create(phpbb_id=101, subforum=self.subforum, title="Test")
+        self.assertEqual(topic.views, 0)
+        self.assertEqual(topic.post_count, 0)
+        self.assertIsNone(topic.created_at)
+
+    def test_topic_related_name(self):
+        Topic.objects.create(phpbb_id=102, subforum=self.subforum, title="A")
+        Topic.objects.create(phpbb_id=103, subforum=self.subforum, title="B")
+        self.assertEqual(self.subforum.topics.count(), 2)
+
+
+class PostModelTests(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Topic"
+        )
+        self.user = ForumUser.objects.create(phpbb_id=42, username="Турист")
+
+    def test_post_str(self):
+        post = Post.objects.create(
+            phpbb_id=1000,
+            topic=self.topic,
+            author=self.user,
+            text_bbcode="[b]text[/b]",
+            text_html="<b>text</b>",
+        )
+        self.assertIn("1000", str(post))
+
+    def test_post_author_nullable(self):
+        post = Post.objects.create(
+            phpbb_id=1001,
+            topic=self.topic,
+            author=None,
+            author_username="anonymous",
+            text_bbcode="hello",
+            text_html="hello",
+        )
+        self.assertIsNone(post.author)
+        self.assertEqual(post.author_username, "anonymous")
+
+    def test_post_related_name(self):
+        Post.objects.create(
+            phpbb_id=1002, topic=self.topic, text_bbcode="a", text_html="a"
+        )
+        self.assertEqual(self.topic.posts.count(), 1)
+
+    def test_user_set_null_on_delete(self):
+        post = Post.objects.create(
+            phpbb_id=1003,
+            topic=self.topic,
+            author=self.user,
+            text_bbcode="x",
+            text_html="x",
+        )
+        self.user.delete()
+        post.refresh_from_db()
+        self.assertIsNone(post.author)
 
 
 class ForumIndexViewTests(TestCase):
