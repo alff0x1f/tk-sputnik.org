@@ -119,11 +119,11 @@ WHERE user_id != 1 AND user_type != 2
 
 ### Task 5: Verify acceptance criteria
 
-- [ ] run full test suite: `uv run pytest`
-- [ ] run linter: `uv run ruff check .`
-- [ ] confirm `ForumUser` model has all six fields with correct types
-- [ ] confirm command skips anon and bot users
-- [ ] confirm idempotency test passes
+- [x] run full test suite: `uv run pytest`
+- [x] run linter: `uv run ruff check .`
+- [x] confirm `ForumUser` model has all six fields with correct types
+- [x] confirm command skips anon and bot users
+- [x] confirm idempotency test passes
 
 ### Task 6: [Final] Update documentation
 
