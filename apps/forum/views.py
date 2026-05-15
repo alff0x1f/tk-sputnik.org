@@ -12,9 +12,9 @@ def forum_index(request):
         by_parent = {}
         for sf in cat.subforums.all():
             by_parent.setdefault(sf.phpbb_parent_id, []).append(sf)
-        cat.direct_subforums = by_parent.get(cat.phpbb_id, [])
+        cat.direct_subforums = by_parent.get(cat.id, [])
         for sf in cat.direct_subforums:
-            sf.children = by_parent.get(sf.phpbb_id, [])
+            sf.children = by_parent.get(sf.id, [])
     return render(request, "forum/forum.html", {"categories": categories})
 
 
@@ -24,8 +24,8 @@ def _display_name(qs):
     ).values("_name")
 
 
-def subforum_topics(request, phpbb_id):
-    subforum = get_object_or_404(SubForum, phpbb_id=phpbb_id)
+def subforum_topics(request, pk):
+    subforum = get_object_or_404(SubForum, pk=pk)
     first_post = Post.objects.filter(topic=OuterRef("pk")).order_by("created_at")
     last_post = Post.objects.filter(topic=OuterRef("pk")).order_by("-created_at")
     topics_qs = subforum.topics.annotate(
@@ -41,8 +41,8 @@ def subforum_topics(request, phpbb_id):
     )
 
 
-def topic_posts(request, phpbb_id):
-    topic = get_object_or_404(Topic, phpbb_id=phpbb_id)
+def topic_posts(request, pk):
+    topic = get_object_or_404(Topic, pk=pk)
     posts_qs = topic.posts.select_related("author").order_by("created_at")
     page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
     return render(

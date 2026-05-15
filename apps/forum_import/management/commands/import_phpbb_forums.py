@@ -31,8 +31,9 @@ class Command(BaseCommand):
                 continue
             last_post_at = _unix_to_dt(row["forum_last_post_time"])
             ForumCategory.objects.update_or_create(
-                phpbb_id=forum_id,
+                id=forum_id,
                 defaults={
+                    "phpbb_id": forum_id,
                     "name": html.unescape(row["forum_name"]),
                     "description": html.unescape(row["forum_desc"] or ""),
                     "topic_count": row["forum_topics"],
@@ -57,7 +58,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"No root category for subforum {forum_id}, skipping")
                 continue
             try:
-                category = ForumCategory.objects.get(phpbb_id=root_cat_id)
+                category = ForumCategory.objects.get(id=root_cat_id)
             except ForumCategory.DoesNotExist:
                 self.stderr.write(
                     f"Category phpbb_id={root_cat_id} not found"
@@ -66,8 +67,9 @@ class Command(BaseCommand):
                 continue
             last_post_at = _unix_to_dt(row["forum_last_post_time"])
             SubForum.objects.update_or_create(
-                phpbb_id=forum_id,
+                id=forum_id,
                 defaults={
+                    "phpbb_id": forum_id,
                     "phpbb_parent_id": row["parent_id"],
                     "category": category,
                     "name": html.unescape(row["forum_name"]),

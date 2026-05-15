@@ -2,7 +2,7 @@ from django.db import models
 
 
 class ForumCategory(models.Model):
-    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True, null=True, blank=True)
     name = models.CharField("Название", max_length=255)
     description = models.TextField("Описание", blank=True)
     topic_count = models.IntegerField("Количество тем", default=0)
@@ -26,7 +26,7 @@ class ForumCategory(models.Model):
 
 
 class SubForum(models.Model):
-    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True, null=True, blank=True)
     phpbb_parent_id = models.IntegerField("ID родителя в phpBB")
     category = models.ForeignKey(
         ForumCategory,
@@ -57,7 +57,7 @@ class SubForum(models.Model):
 
 
 class ForumUser(models.Model):
-    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True, null=True, blank=True)
     username = models.CharField("Имя пользователя", max_length=255)
     email = models.EmailField("Email", blank=True)
     avatar = models.CharField("Аватар", max_length=500, blank=True)
@@ -73,7 +73,7 @@ class ForumUser(models.Model):
 
 
 class Topic(models.Model):
-    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True, null=True, blank=True)
     subforum = models.ForeignKey(
         SubForum,
         on_delete=models.CASCADE,
@@ -95,7 +95,7 @@ class Topic(models.Model):
 
 
 class Post(models.Model):
-    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True, null=True, blank=True)
     topic = models.ForeignKey(
         Topic,
         on_delete=models.CASCADE,

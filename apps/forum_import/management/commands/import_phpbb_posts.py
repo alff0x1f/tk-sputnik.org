@@ -78,7 +78,7 @@ class Command(BaseCommand):
 
         for i, row in enumerate(rows, start=1):
             try:
-                topic = Topic.objects.get(phpbb_id=row["topic_id"])
+                topic = Topic.objects.get(id=row["topic_id"])
             except Topic.DoesNotExist:
                 self.stderr.write(
                     f"Topic phpbb_id={row['topic_id']} not found"
@@ -88,7 +88,7 @@ class Command(BaseCommand):
                 continue
 
             try:
-                author = ForumUser.objects.get(phpbb_id=row["poster_id"])
+                author = ForumUser.objects.get(id=row["poster_id"])
             except ForumUser.DoesNotExist:
                 author = None
 
@@ -96,8 +96,9 @@ class Command(BaseCommand):
             uid = row["bbcode_uid"] or ""
 
             Post.objects.update_or_create(
-                phpbb_id=row["post_id"],
+                id=row["post_id"],
                 defaults={
+                    "phpbb_id": row["post_id"],
                     "topic": topic,
                     "author": author,
                     "author_username": row["post_username"] or "",
