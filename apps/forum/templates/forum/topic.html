@@ -1,5 +1,5 @@
 {% extends "demo/base.html" %}
-{% load static %}
+{% load static forum_extras %}
 
 {% block title %}{{ topic.title }} — Форум — Турклуб Спутник{% endblock %}
 
@@ -24,7 +24,7 @@
     <div class="feed-head">
       <h1 class="feed-title">{{ topic.title }}</h1>
       <div class="feed-sub">
-        {{ topic.post_count }} сообщени{{ topic.post_count|pluralize:"е,я,й" }}{% if topic.created_at %} · {{ topic.created_at|date:"d M Y" }}{% endif %}
+        {{ topic.post_count }} {{ topic.post_count|ru_pluralize:"сообщение,сообщения,сообщений" }}{% if topic.created_at %} · {{ topic.created_at|date:"d M Y" }}{% endif %}
       </div>
     </div>
 
