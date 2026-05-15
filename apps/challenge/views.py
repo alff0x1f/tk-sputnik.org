@@ -1,13 +1,16 @@
+import datetime
 import json
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Sum
-from django.http import FileResponse, Http404
-from django.shortcuts import render
+from django.http import FileResponse, Http404, JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_http_methods
 
 from .models import Athlete, SourceMessage, Workout
+from .scoring import recompute_athlete_scores
 
 
 def challenge_photo(request, filename):
@@ -57,6 +60,91 @@ def review(request):
     return render(request, "challenge/review.html", {
         "cards_json": json.dumps(cards, ensure_ascii=False),
     })
+
+
+def _workout_response(workout, athlete):
+    total = athlete.workouts.aggregate(t=Sum("total_points"))["t"] or 0
+    return JsonResponse({
+        "workout": {
+            "id": workout.pk,
+            "base_points": workout.base_points,
+            "streak_bonus": workout.streak_bonus,
+            "total_points": workout.total_points,
+        },
+        "athlete_total": total,
+    })
+
+
+@staff_member_required
+@require_http_methods(["POST"])
+def api_workout_create(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    try:
+        athlete = Athlete.objects.get(pk=data["athlete_id"])
+    except (Athlete.DoesNotExist, KeyError):
+        return JsonResponse({"error": "Athlete not found"}, status=400)
+
+    try:
+        date = datetime.date.fromisoformat(data["date"])
+    except (KeyError, ValueError):
+        return JsonResponse({"error": "Invalid date"}, status=400)
+
+    activity = data.get("activity", "")
+    valid_activities = {k for k, _ in Workout.ACTIVITY_CHOICES}
+    if activity not in valid_activities:
+        return JsonResponse({"error": "Invalid activity"}, status=400)
+
+    workout = Workout.objects.create(
+        athlete=athlete,
+        date=date,
+        activity=activity,
+        distance_km=data.get("distance_km"),
+        pace_min_per_km=data.get("pace_min_per_km"),
+        msg_id=data.get("msg_id"),
+    )
+    recompute_athlete_scores(athlete)
+    workout.refresh_from_db()
+    response = _workout_response(workout, athlete)
+    response.status_code = 201
+    return response
+
+
+@staff_member_required
+@require_http_methods(["PUT", "DELETE"])
+def api_workout_detail(request, pk):
+    workout = get_object_or_404(Workout, pk=pk)
+    athlete = workout.athlete
+
+    if request.method == "DELETE":
+        workout.delete()
+        recompute_athlete_scores(athlete)
+        return JsonResponse({}, status=204)
+
+    # PUT
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    updatable = ["activity", "distance_km", "pace_min_per_km", "msg_id"]
+    for field in updatable:
+        if field in data:
+            setattr(workout, field, data[field])
+
+    if "date" in data:
+        try:
+            workout.date = datetime.date.fromisoformat(data["date"])
+        except ValueError:
+            return JsonResponse({"error": "Invalid date"}, status=400)
+
+    workout.save()
+    recompute_athlete_scores(athlete)
+    workout.refresh_from_db()
+    return _workout_response(workout, athlete)
 
 
 def leaderboard(request):

@@ -201,13 +201,13 @@ def challenge_photo(request, filename):
 - Modify: `apps/challenge/views.py`
 - Modify: `apps/challenge/urls.py`
 
-- [ ] Implement `api_workout_create(request)` — POST JSON `{athlete_id, date, activity, distance_km, pace_min_per_km, msg_id}`, creates Workout, calls `recompute_athlete_scores`, returns updated athlete totals
-- [ ] Implement `api_workout_update(request, pk)` — PUT JSON with partial fields, updates Workout, recomputes, returns updated totals
-- [ ] Implement `api_workout_delete(request, pk)` — DELETE, removes Workout, recomputes, returns 204
-- [ ] All three: `@require_http_methods`, `@staff_member_required`, parse JSON body, return JSON response with `JsonResponse`
-- [ ] Add URLs under `review/api/workout/` prefix
-- [ ] Write tests: unauthenticated → 302; non-staff → 302; staff POST/PUT/DELETE → correct DB changes + correct recompute triggered; invalid JSON → 400
-- [ ] Run tests — must pass before Task 8
+- [x] Implement `api_workout_create(request)` — POST JSON `{athlete_id, date, activity, distance_km, pace_min_per_km, msg_id}`, creates Workout, calls `recompute_athlete_scores`, returns updated athlete totals
+- [x] Implement `api_workout_update(request, pk)` — PUT JSON with partial fields, updates Workout, recomputes, returns updated totals
+- [x] Implement `api_workout_delete(request, pk)` — DELETE, removes Workout, recomputes, returns 204
+- [x] All three: `@require_http_methods`, `@staff_member_required`, parse JSON body, return JSON response with `JsonResponse`
+- [x] Add URLs under `review/api/workout/` prefix
+- [x] Write tests: unauthenticated → 302; non-staff → 302; staff POST/PUT/DELETE → correct DB changes + correct recompute triggered; invalid JSON → 400
+- [x] Run tests — must pass before Task 8
 
 ### Task 8: Review page — interactive editing (JS)
 

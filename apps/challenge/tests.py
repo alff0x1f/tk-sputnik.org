@@ -624,6 +624,207 @@ class ReviewViewTests(TestCase):
         self.assertIn("2000", content)
 
 
+class ReviewAPITests(TestCase):
+    def setUp(self):
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.workout = Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 1),
+            activity="running",
+            distance_km=10.0,
+            pace_min_per_km=5.0,
+            base_points=3,
+            streak_bonus=0,
+            total_points=3,
+            msg_id=1001,
+        )
+        from django.contrib.auth.models import User
+        self.staff = User.objects.create_user(
+            username="admin", password="password", is_staff=True
+        )
+        self.regular = User.objects.create_user(
+            username="regular", password="password", is_staff=False
+        )
+
+    def _post(self, data, user=None):
+        if user:
+            self.client.force_login(user)
+        return self.client.post(
+            "/challenge/review/api/workout/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+
+    def _put(self, pk, data, user=None):
+        if user:
+            self.client.force_login(user)
+        return self.client.put(
+            f"/challenge/review/api/workout/{pk}/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+
+    def _delete(self, pk, user=None):
+        if user:
+            self.client.force_login(user)
+        return self.client.delete(f"/challenge/review/api/workout/{pk}/")
+
+    # Auth checks
+
+    def test_create_unauthenticated_redirects(self):
+        resp = self._post(
+            {"athlete_id": "u1", "date": "2026-01-10", "activity": "hiking"}
+        )
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_create_non_staff_redirects(self):
+        resp = self._post(
+            {"athlete_id": "u1", "date": "2026-01-10", "activity": "hiking"},
+            user=self.regular,
+        )
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_update_unauthenticated_redirects(self):
+        resp = self._put(self.workout.pk, {"distance_km": 12.0})
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_update_non_staff_redirects(self):
+        resp = self._put(self.workout.pk, {"distance_km": 12.0}, user=self.regular)
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_delete_unauthenticated_redirects(self):
+        resp = self._delete(self.workout.pk)
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_delete_non_staff_redirects(self):
+        resp = self._delete(self.workout.pk, user=self.regular)
+        self.assertIn(resp.status_code, [301, 302])
+
+    # Create
+
+    def test_create_workout_success(self):
+        resp = self._post(
+            {"athlete_id": "u1", "date": "2026-01-10", "activity": "hiking"},
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(Workout.objects.count(), 2)
+        data = json.loads(resp.content)
+        self.assertIn("workout", data)
+        self.assertIn("athlete_total", data)
+
+    def test_create_workout_recomputes_scores(self):
+        resp = self._post(
+            {
+                "athlete_id": "u1",
+                "date": "2026-01-05",
+                "activity": "skiing",
+                "distance_km": 8.0,
+            },
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 201)
+        new_id = json.loads(resp.content)["workout"]["id"]
+        new_w = Workout.objects.get(pk=new_id)
+        # Gap from Jan 1 to Jan 5 is 4 days → streak bonus
+        self.assertEqual(new_w.streak_bonus, 1)
+
+    def test_create_invalid_json_returns_400(self):
+        self.client.force_login(self.staff)
+        resp = self.client.post(
+            "/challenge/review/api/workout/",
+            data="not-json",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_invalid_activity_returns_400(self):
+        resp = self._post(
+            {"athlete_id": "u1", "date": "2026-01-10", "activity": "yoga"},
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_unknown_athlete_returns_400(self):
+        resp = self._post(
+            {"athlete_id": "no_such_id", "date": "2026-01-10", "activity": "hiking"},
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_invalid_date_returns_400(self):
+        resp = self._post(
+            {"athlete_id": "u1", "date": "not-a-date", "activity": "hiking"},
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    # Update
+
+    def test_update_workout_success(self):
+        resp = self._put(self.workout.pk, {"distance_km": 15.0}, user=self.staff)
+        self.assertEqual(resp.status_code, 200)
+        self.workout.refresh_from_db()
+        self.assertEqual(self.workout.distance_km, 15.0)
+
+    def test_update_workout_recomputes(self):
+        resp = self._put(
+            self.workout.pk,
+            {"activity": "hiking", "distance_km": None},
+            user=self.staff,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.workout.refresh_from_db()
+        self.assertEqual(self.workout.activity, "hiking")
+        self.assertEqual(self.workout.base_points, 2)
+
+    def test_update_invalid_json_returns_400(self):
+        self.client.force_login(self.staff)
+        resp = self.client.put(
+            f"/challenge/review/api/workout/{self.workout.pk}/",
+            data="not-json",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_update_not_found_returns_404(self):
+        resp = self._put(99999, {"distance_km": 5.0}, user=self.staff)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_update_returns_athlete_total(self):
+        resp = self._put(self.workout.pk, {"distance_km": 15.0}, user=self.staff)
+        data = json.loads(resp.content)
+        self.assertIn("athlete_total", data)
+
+    # Delete
+
+    def test_delete_workout_success(self):
+        resp = self._delete(self.workout.pk, user=self.staff)
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(Workout.objects.count(), 0)
+
+    def test_delete_workout_recomputes(self):
+        # Add a second workout that would get streak bonus from the first
+        w2 = Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 4),
+            activity="skiing",
+            distance_km=8.0,
+            base_points=2,
+            streak_bonus=1,
+            total_points=3,
+        )
+        # Delete the first workout — w2 should lose its streak bonus
+        resp = self._delete(self.workout.pk, user=self.staff)
+        self.assertEqual(resp.status_code, 204)
+        w2.refresh_from_db()
+        self.assertEqual(w2.streak_bonus, 0)
+
+    def test_delete_not_found_returns_404(self):
+        resp = self._delete(99999, user=self.staff)
+        self.assertEqual(resp.status_code, 404)
+
+
 class LeaderboardViewTests(TestCase):
     def setUp(self):
         self.anna = Athlete.objects.create(telegram_id="u1", name="Анна")
