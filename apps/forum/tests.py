@@ -256,7 +256,9 @@ class SubforumTopicsViewTest(TestCase):
 
 class TopicPostsViewTest(TestCase):
     def setUp(self):
-        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat", sort_order=1)
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
         self.subforum = SubForum.objects.create(
             phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
         )
