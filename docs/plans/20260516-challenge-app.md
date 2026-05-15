@@ -184,16 +184,16 @@ def challenge_photo(request, filename):
 - Modify: `apps/challenge/urls.py`
 - Create: `apps/challenge/templates/challenge/review.html`
 
-- [ ] Create `review` view (staff_member_required): load all SourceMessages ordered by date; for each, fetch linked Workouts (by msg_id); serialize to CARDS JSON; embed in template
-- [ ] Add URL: `path("review/", views.review, name="challenge-review")`
-- [ ] Create `review.html` extending `demo/base.html`:
+- [x] Create `review` view (staff_member_required): load all SourceMessages ordered by date; for each, fetch linked Workouts (by msg_id); serialize to CARDS JSON; embed in template
+- [x] Add URL: `path("review/", views.review, name="challenge-review")`
+- [x] Create `review.html` extending `demo/base.html`:
   - Topbar (inside `{% block content %}`): prev/next nav, card counter, user filter dropdown, status filter (all / has_workout / no_workout)
   - Left panel: photo gallery + message text (sender, date)
   - Right panel: read-only workout list (date, activity, distance, pace, points)
   - `?msg=<id>` URL param: jump to that card on load
   - Style uses site CSS variables; light-mode to match site (not dark-mode of scratch version)
-- [ ] Write view tests: non-staff → redirect to login; staff → 200, CARDS JSON present in response
-- [ ] Run tests — must pass before Task 7
+- [x] Write view tests: non-staff → redirect to login; staff → 200, CARDS JSON present in response
+- [x] Run tests — must pass before Task 7
 
 ### Task 7: Review API — CRUD endpoints
 

@@ -542,6 +542,88 @@ class PhotoViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class ReviewViewTests(TestCase):
+    def setUp(self):
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.msg = SourceMessage.objects.create(
+            msg_id=1001,
+            from_name="Анна",
+            date=datetime.date(2026, 1, 1),
+            text="Пробежала 10 км",
+            photos=["photos/img1.jpg"],
+        )
+        Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 1),
+            activity="running",
+            distance_km=10.0,
+            pace_min_per_km=5.0,
+            base_points=3,
+            streak_bonus=0,
+            total_points=3,
+            msg_id=1001,
+        )
+        self.staff = self._make_staff()
+
+    def _make_staff(self):
+        from django.contrib.auth.models import User
+        return User.objects.create_user(
+            username="admin", password="password", is_staff=True
+        )
+
+    def _make_regular_user(self):
+        from django.contrib.auth.models import User
+        return User.objects.create_user(
+            username="regular", password="password", is_staff=False
+        )
+
+    def test_non_staff_redirected(self):
+        response = self.client.get("/challenge/review/")
+        self.assertIn(response.status_code, [302, 301])
+
+    def test_regular_user_redirected(self):
+        self._make_regular_user()
+        self.client.login(username="regular", password="password")
+        response = self.client.get("/challenge/review/")
+        self.assertIn(response.status_code, [302, 301])
+
+    def test_staff_can_access(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_cards_json_in_response(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        self.assertIn(b"CARDS", response.content)
+        self.assertIn(b"1001", response.content)
+
+    def test_cards_json_contains_workout(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        content = response.content.decode("utf-8")
+        self.assertIn("running", content)
+        self.assertIn("Анна", content)  # "Анна"
+
+    def test_cards_json_contains_photo(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        content = response.content.decode("utf-8")
+        self.assertIn("photos/img1.jpg", content)
+
+    def test_message_without_workouts_included(self):
+        SourceMessage.objects.create(
+            msg_id=2000,
+            from_name="Борис",
+            date=datetime.date(2026, 1, 2),
+            text="",
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        content = response.content.decode("utf-8")
+        self.assertIn("2000", content)
+
+
 class LeaderboardViewTests(TestCase):
     def setUp(self):
         self.anna = Athlete.objects.create(telegram_id="u1", name="Анна")
