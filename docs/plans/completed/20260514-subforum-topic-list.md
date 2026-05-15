@@ -81,6 +81,7 @@ def subforum_topics(request, phpbb_id):
 - [x] Append `.topic`, `.topic-ico`, `.topic-body`, `.topic-title`, `.topic-meta`, `.topic-stats`, `.topic-last` rules from `apps/demo/templates/demo/forum.html` `<style>` block (lines 117–163 of the demo template)
 - [x] Add responsive overrides for `.topic` at 1000px and 720px breakpoints (matching demo)
 - [x] Add `.pagination` styles for the page navigation (simple `display:flex; gap:4px` row of page links)
+- [x] Update `.topic-stats` to flex layout with icon SVG support (same dimensions as `.sf-stat svg`); removed `text-align:right` and `display:block` on `b`
 
 ### Task 3: Create subforum template
 
@@ -88,9 +89,9 @@ def subforum_topics(request, phpbb_id):
 - Create: `apps/forum/templates/forum/subforum.html`
 
 - [x] Extend `demo/base.html`, load `static`, link `forum/css/forum.css`
-- [x] Breadcrumbs: Форум (link to `forum-index`) › Category name › Subforum name
+- [x] Breadcrumbs: Форум (link to `forum-index`) › Category name › Subforum name (no Спутник prefix)
 - [x] Subforum header block: name as `<h1>`, description, stats (topic_count, post_count)
-- [x] Topic list: iterate `page_obj` — one `.topic` row per topic with icon, title + `by {{ topic.first_author|default:"—" }}`, `{{ topic.post_count }}` replies, last post author + date formatted as `d.m.Y`
+- [x] Topic list: iterate `page_obj` — one `.topic` row per topic with icon, title + `by {{ topic.first_author|default:"—" }}`, chat-bubble icon + `{{ topic.post_count|add:"-1" }}` (replies, not raw post_count), last post author + date formatted as `d.m.Y`
 - [x] Empty state: show "Тем нет" if `page_obj.object_list` is empty
 - [x] Pagination block (only if `page_obj.paginator.num_pages > 1`): previous/next links + page numbers using `page_obj.paginator.page_range`
 
@@ -102,6 +103,7 @@ def subforum_topics(request, phpbb_id):
 - [x] Wrap `.sf-title` text in `<a href="{% url 'subforum-topics' subforum.phpbb_id %}">` on direct subforums
 - [x] Do the same for child subforum `.sf-child` chips (use `child.phpbb_id`)
 - [x] Remove `cursor:pointer` from `.subforum:hover` in `forum.css` (the title link provides navigation; full-row pointer without full-row link is misleading)
+- [x] Breadcrumbs: replaced `Спутник › Форум` with just `<span>Форум</span>` — Спутник removed from forum pages
 
 ### Task 5: Tests
 
