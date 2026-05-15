@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
@@ -26,4 +28,4 @@ urlpatterns = [
     path("contributors/", include("apps.contributors.urls")),
     path("accounts/", include("apps.accounts.urls")),
     path("forum/", include("apps.forum.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

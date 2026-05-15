@@ -6,6 +6,7 @@ scratch
 __pycache__
 *.py[oc]
 db.sqlite3
+media
 
 # Ignore development files
 docs
