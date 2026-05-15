@@ -12,8 +12,6 @@
 {% block content %}
   <main class="feed">
     <div class="crumbs">
-      <a href="{% url 'home' %}">Спутник</a>
-      <span class="sep">›</span>
       <span>Форум</span>
     </div>
 
@@ -34,16 +32,16 @@
           <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <div class="sf-body">
-          <div class="sf-title">{{ subforum.name }}</div>
+          <div class="sf-title"><a href="{% url 'subforum-topics' subforum.phpbb_id %}">{{ subforum.name }}</a></div>
           {% if subforum.description %}<div class="sf-desc">{{ subforum.description }}</div>{% endif %}
           {% if subforum.children %}
           <div class="sf-children">
             {% for child in subforum.children %}
-            <span class="sf-child">
+            <a class="sf-child" href="{% url 'subforum-topics' child.phpbb_id %}">
               <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               <span class="sf-child-title">{{ child.name }}</span>
               <span class="sf-child-stats">{{ child.topic_count }} тем</span>
-            </span>
+            </a>
             {% endfor %}
           </div>
           {% endif %}

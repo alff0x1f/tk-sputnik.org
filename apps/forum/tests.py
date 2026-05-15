@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -178,3 +180,75 @@ class ForumIndexViewTests(TestCase):
     def test_forum_index_uses_correct_template(self):
         response = self.client.get(reverse("forum-index"))
         self.assertTemplateUsed(response, "forum/forum.html")
+
+
+class SubforumTopicsViewTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.subforum = SubForum.objects.create(
+            phpbb_id=42, phpbb_parent_id=1, category=self.category, name="Походы"
+        )
+        self.other_subforum = SubForum.objects.create(
+            phpbb_id=99, phpbb_parent_id=1, category=self.category, name="Other"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=1000,
+            subforum=self.subforum,
+            title="Эльбрус 2010",
+            created_at=datetime.datetime(2010, 6, 1, tzinfo=datetime.UTC),
+        )
+        self.other_topic = Topic.objects.create(
+            phpbb_id=2000,
+            subforum=self.other_subforum,
+            title="Other topic",
+            created_at=datetime.datetime(2010, 7, 1, tzinfo=datetime.UTC),
+        )
+
+    def test_returns_200(self):
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_uses_correct_template(self):
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "forum/subforum.html")
+
+    def test_404_for_unknown_phpbb_id(self):
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 9999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_has_page_obj_with_correct_topics(self):
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
+        response = self.client.get(url)
+        self.assertIn("page_obj", response.context)
+        topic_ids = [t.phpbb_id for t in response.context["page_obj"].object_list]
+        self.assertIn(1000, topic_ids)
+        self.assertNotIn(2000, topic_ids)
+
+    def test_pagination_page1_has_25_topics(self):
+        for i in range(1, 26):
+            Topic.objects.create(
+                phpbb_id=3000 + i,
+                subforum=self.subforum,
+                title=f"Topic {i}",
+                created_at=datetime.datetime(2011, 1, i, tzinfo=datetime.UTC),
+            )
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
+        response = self.client.get(url)
+        self.assertEqual(len(response.context["page_obj"].object_list), 25)
+
+    def test_pagination_page2_has_remaining_topics(self):
+        for i in range(1, 26):
+            Topic.objects.create(
+                phpbb_id=3000 + i,
+                subforum=self.subforum,
+                title=f"Topic {i}",
+                created_at=datetime.datetime(2011, 1, i, tzinfo=datetime.UTC),
+            )
+        url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
+        response = self.client.get(url + "?page=2")
+        self.assertEqual(len(response.context["page_obj"].object_list), 1)
