@@ -16,7 +16,7 @@
       <span class="sep">›</span>
       <span>{{ topic.subforum.category.name }}</span>
       <span class="sep">›</span>
-      <a href="{% url 'subforum-topics' topic.subforum.phpbb_id %}">{{ topic.subforum.name }}</a>
+      <a href="{% url 'subforum-topics' topic.subforum.id %}">{{ topic.subforum.name }}</a>
       <span class="sep">›</span>
       <span>{{ topic.title }}</span>
     </div>

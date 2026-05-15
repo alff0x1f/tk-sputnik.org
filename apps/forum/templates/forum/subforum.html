@@ -38,7 +38,7 @@
             <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <div class="topic-body">
-            <div class="topic-title"><a href="{% url 'topic-posts' topic.phpbb_id %}">{{ topic.title }}</a></div>
+            <div class="topic-title"><a href="{% url 'topic-posts' topic.id %}">{{ topic.title }}</a></div>
             <div class="topic-meta">{{ topic.first_author|default:"—" }}</div>
           </div>
           <div class="topic-stats">

@@ -5,104 +5,295 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ForumCategory',
+            name="ForumCategory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(blank=True, null=True, unique=True, verbose_name='ID в phpBB')),
-                ('name', models.CharField(max_length=255, verbose_name='Название')),
-                ('description', models.TextField(blank=True, verbose_name='Описание')),
-                ('topic_count', models.IntegerField(default=0, verbose_name='Количество тем')),
-                ('post_count', models.IntegerField(default=0, verbose_name='Количество сообщений')),
-                ('last_post_title', models.CharField(blank=True, max_length=255, verbose_name='Заголовок последнего поста')),
-                ('last_post_username', models.CharField(blank=True, max_length=255, verbose_name='Автор последнего поста')),
-                ('last_post_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата последнего поста')),
-                ('sort_order', models.IntegerField(default=0, verbose_name='Порядок сортировки')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(
+                        blank=True, null=True, unique=True, verbose_name="ID в phpBB"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="Название")),
+                ("description", models.TextField(blank=True, verbose_name="Описание")),
+                (
+                    "topic_count",
+                    models.IntegerField(default=0, verbose_name="Количество тем"),
+                ),
+                (
+                    "post_count",
+                    models.IntegerField(default=0, verbose_name="Количество сообщений"),
+                ),
+                (
+                    "last_post_title",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        verbose_name="Заголовок последнего поста",
+                    ),
+                ),
+                (
+                    "last_post_username",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        verbose_name="Автор последнего поста",
+                    ),
+                ),
+                (
+                    "last_post_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата последнего поста"
+                    ),
+                ),
+                (
+                    "sort_order",
+                    models.IntegerField(default=0, verbose_name="Порядок сортировки"),
+                ),
             ],
             options={
-                'verbose_name': 'Категория форума',
-                'verbose_name_plural': 'Категории форума',
-                'ordering': ['sort_order'],
+                "verbose_name": "Категория форума",
+                "verbose_name_plural": "Категории форума",
+                "ordering": ["sort_order"],
             },
         ),
         migrations.CreateModel(
-            name='ForumUser',
+            name="ForumUser",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(blank=True, null=True, unique=True, verbose_name='ID в phpBB')),
-                ('username', models.CharField(max_length=255, verbose_name='Имя пользователя')),
-                ('email', models.EmailField(blank=True, max_length=254, verbose_name='Email')),
-                ('avatar', models.CharField(blank=True, max_length=500, verbose_name='Аватар')),
-                ('registered_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата регистрации')),
-                ('post_count', models.IntegerField(default=0, verbose_name='Количество сообщений')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(
+                        blank=True, null=True, unique=True, verbose_name="ID в phpBB"
+                    ),
+                ),
+                (
+                    "username",
+                    models.CharField(max_length=255, verbose_name="Имя пользователя"),
+                ),
+                (
+                    "email",
+                    models.EmailField(blank=True, max_length=254, verbose_name="Email"),
+                ),
+                (
+                    "avatar",
+                    models.CharField(blank=True, max_length=500, verbose_name="Аватар"),
+                ),
+                (
+                    "registered_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата регистрации"
+                    ),
+                ),
+                (
+                    "post_count",
+                    models.IntegerField(default=0, verbose_name="Количество сообщений"),
+                ),
             ],
             options={
-                'verbose_name': 'Пользователь форума',
-                'verbose_name_plural': 'Пользователи форума',
+                "verbose_name": "Пользователь форума",
+                "verbose_name_plural": "Пользователи форума",
             },
         ),
         migrations.CreateModel(
-            name='SubForum',
+            name="SubForum",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(blank=True, null=True, unique=True, verbose_name='ID в phpBB')),
-                ('phpbb_parent_id', models.IntegerField(verbose_name='ID родителя в phpBB')),
-                ('name', models.CharField(max_length=255, verbose_name='Название')),
-                ('description', models.TextField(blank=True, verbose_name='Описание')),
-                ('topic_count', models.IntegerField(default=0, verbose_name='Количество тем')),
-                ('post_count', models.IntegerField(default=0, verbose_name='Количество сообщений')),
-                ('last_post_title', models.CharField(blank=True, max_length=255, verbose_name='Заголовок последнего поста')),
-                ('last_post_username', models.CharField(blank=True, max_length=255, verbose_name='Автор последнего поста')),
-                ('last_post_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата последнего поста')),
-                ('sort_order', models.IntegerField(default=0, verbose_name='Порядок сортировки')),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subforums', to='forum.forumcategory', verbose_name='Категория')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(
+                        blank=True, null=True, unique=True, verbose_name="ID в phpBB"
+                    ),
+                ),
+                (
+                    "phpbb_parent_id",
+                    models.IntegerField(verbose_name="ID родителя в phpBB"),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="Название")),
+                ("description", models.TextField(blank=True, verbose_name="Описание")),
+                (
+                    "topic_count",
+                    models.IntegerField(default=0, verbose_name="Количество тем"),
+                ),
+                (
+                    "post_count",
+                    models.IntegerField(default=0, verbose_name="Количество сообщений"),
+                ),
+                (
+                    "last_post_title",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        verbose_name="Заголовок последнего поста",
+                    ),
+                ),
+                (
+                    "last_post_username",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        verbose_name="Автор последнего поста",
+                    ),
+                ),
+                (
+                    "last_post_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата последнего поста"
+                    ),
+                ),
+                (
+                    "sort_order",
+                    models.IntegerField(default=0, verbose_name="Порядок сортировки"),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subforums",
+                        to="forum.forumcategory",
+                        verbose_name="Категория",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Подфорум',
-                'verbose_name_plural': 'Подфорумы',
-                'ordering': ['sort_order'],
+                "verbose_name": "Подфорум",
+                "verbose_name_plural": "Подфорумы",
+                "ordering": ["sort_order"],
             },
         ),
         migrations.CreateModel(
-            name='Topic',
+            name="Topic",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(blank=True, null=True, unique=True, verbose_name='ID в phpBB')),
-                ('title', models.CharField(max_length=255, verbose_name='Заголовок')),
-                ('created_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата создания')),
-                ('views', models.IntegerField(default=0, verbose_name='Просмотры')),
-                ('post_count', models.IntegerField(default=0, verbose_name='Количество сообщений')),
-                ('subforum', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='topics', to='forum.subforum', verbose_name='Подфорум')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(
+                        blank=True, null=True, unique=True, verbose_name="ID в phpBB"
+                    ),
+                ),
+                ("title", models.CharField(max_length=255, verbose_name="Заголовок")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата создания"
+                    ),
+                ),
+                ("views", models.IntegerField(default=0, verbose_name="Просмотры")),
+                (
+                    "post_count",
+                    models.IntegerField(default=0, verbose_name="Количество сообщений"),
+                ),
+                (
+                    "subforum",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="topics",
+                        to="forum.subforum",
+                        verbose_name="Подфорум",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Тема',
-                'verbose_name_plural': 'Темы',
-                'ordering': ['-created_at'],
+                "verbose_name": "Тема",
+                "verbose_name_plural": "Темы",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Post',
+            name="Post",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(blank=True, null=True, unique=True, verbose_name='ID в phpBB')),
-                ('author_username', models.CharField(blank=True, max_length=255, verbose_name='Имя автора')),
-                ('text_bbcode', models.TextField(verbose_name='Текст (BBCode)')),
-                ('text_html', models.TextField(verbose_name='Текст (HTML)')),
-                ('created_at', models.DateTimeField(blank=True, null=True, verbose_name='Дата создания')),
-                ('author', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='posts', to='forum.forumuser', verbose_name='Автор')),
-                ('topic', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='posts', to='forum.topic', verbose_name='Тема')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(
+                        blank=True, null=True, unique=True, verbose_name="ID в phpBB"
+                    ),
+                ),
+                (
+                    "author_username",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Имя автора"
+                    ),
+                ),
+                ("text_bbcode", models.TextField(verbose_name="Текст (BBCode)")),
+                ("text_html", models.TextField(verbose_name="Текст (HTML)")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Дата создания"
+                    ),
+                ),
+                (
+                    "author",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="posts",
+                        to="forum.forumuser",
+                        verbose_name="Автор",
+                    ),
+                ),
+                (
+                    "topic",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="posts",
+                        to="forum.topic",
+                        verbose_name="Тема",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Сообщение',
-                'verbose_name_plural': 'Сообщения',
-                'ordering': ['created_at'],
+                "verbose_name": "Сообщение",
+                "verbose_name_plural": "Сообщения",
+                "ordering": ["created_at"],
             },
         ),
     ]
