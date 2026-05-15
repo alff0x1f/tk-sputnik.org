@@ -510,6 +510,38 @@ class ImportChallengeCommandTests(TestCase):
         self.assertIn("2 messages", output)
 
 
+class PhotoViewTests(TestCase):
+    def test_valid_photo_returns_200(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            photo = Path(tmpdir) / "photo_001.jpg"
+            photo.write_bytes(b"FAKEJPEG")
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/photo_001.jpg")
+        self.assertEqual(response.status_code, 200)
+
+    def test_missing_photo_returns_404(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/nonexistent.jpg")
+        self.assertEqual(response.status_code, 404)
+
+    def test_path_traversal_returns_404(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/../../etc/passwd")
+        self.assertEqual(response.status_code, 404)
+
+    def test_nested_path_valid(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subdir = Path(tmpdir) / "photos"
+            subdir.mkdir()
+            photo = subdir / "img.jpg"
+            photo.write_bytes(b"FAKEJPEG")
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/photos/img.jpg")
+        self.assertEqual(response.status_code, 200)
+
+
 class LeaderboardViewTests(TestCase):
     def setUp(self):
         self.anna = Athlete.objects.create(telegram_id="u1", name="Анна")

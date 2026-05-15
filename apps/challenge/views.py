@@ -1,7 +1,21 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.db.models import Count, Sum
+from django.http import FileResponse, Http404
 from django.shortcuts import render
 
 from .models import Athlete, Workout
+
+
+def challenge_photo(request, filename):
+    base = Path(settings.CHALLENGE_CHAT_EXPORT_DIR).resolve()
+    photo_path = (base / filename).resolve()
+    if not str(photo_path).startswith(str(base)):
+        raise Http404
+    if not photo_path.is_file():
+        raise Http404
+    return FileResponse(open(photo_path, "rb"))
 
 
 def leaderboard(request):

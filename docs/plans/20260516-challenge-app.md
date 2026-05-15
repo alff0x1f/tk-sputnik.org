@@ -172,10 +172,10 @@ def challenge_photo(request, filename):
 - Modify: `apps/challenge/views.py`
 - Modify: `apps/challenge/urls.py`
 
-- [ ] Implement `challenge_photo(request, filename)` view: resolve path within `CHALLENGE_CHAT_EXPORT_DIR`, validate no path traversal (`Path.resolve()` check), return `FileResponse`; return 404 if file not found
-- [ ] Add URL: `path("photo/<path:filename>", views.challenge_photo, name="challenge-photo")`
-- [ ] Write tests: valid file path returns 200, path traversal (`../../etc/passwd`) returns 404
-- [ ] Run tests — must pass before Task 6
+- [x] Implement `challenge_photo(request, filename)` view: resolve path within `CHALLENGE_CHAT_EXPORT_DIR`, validate no path traversal (`Path.resolve()` check), return `FileResponse`; return 404 if file not found
+- [x] Add URL: `path("photo/<path:filename>", views.challenge_photo, name="challenge-photo")`
+- [x] Write tests: valid file path returns 200, path traversal (`../../etc/passwd`) returns 404
+- [x] Run tests — must pass before Task 6
 
 ### Task 6: Review page — read-only rendering
 
