@@ -78,10 +78,10 @@ the topic list.
 **Files:**
 - Modify: `apps/forum/templates/forum/subforum.html`
 
-- [ ] wrap `.topic-title` text in `<a href="{% url 'topic-posts' topic.phpbb_id %}">...</a>`
-- [ ] ensure link inherits existing `.topic-title` color (no underline on hover or `text-decoration:none`)
+- [x] wrap `.topic-title` text in `<a href="{% url 'topic-posts' topic.phpbb_id %}">...</a>`
+- [x] ensure link inherits existing `.topic-title` color (no underline on hover or `text-decoration:none`)
   — add CSS rule if needed (see Task 3)
-- [ ] run `uv run pytest apps/forum/tests.py` — must still pass
+- [x] run `uv run pytest apps/forum/tests.py` — must still pass
 
 ### Task 3: CSS — post card and blockquote styles
 
