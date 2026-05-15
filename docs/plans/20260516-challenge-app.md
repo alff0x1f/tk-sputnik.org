@@ -13,6 +13,7 @@ Integrates with the existing site (extends `demo/base.html`, matches site CSS va
 
 ## Context (from discovery)
 
+
 - **Project**: Django 5.2 tourism club site, `apps/` pattern, uv-managed
 - **Base template**: `apps/demo/templates/demo/base.html` — blocks `content`, `extra_css`, `topbar_action`; sidebar nav with forum + contributors links
 - **CSS variables**: `--accent`, `--surface`, `--surface-2`, `--line`, `--ink`, `--muted`, `--radius`
