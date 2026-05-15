@@ -136,13 +136,13 @@ def challenge_photo(request, filename):
 - Create: `apps/challenge/management/commands/__init__.py`
 - Create: `apps/challenge/management/commands/import_challenge.py`
 
-- [ ] Read `scores.json` → upsert `Athlete` (telegram_id, name) and `Workout` records; use `update_or_create` keyed on (athlete + date + activity) or clear + reimport strategy
-- [ ] Read `messages_clean.json` → upsert `SourceMessage` (msg_id, from_name, date, text, photos list)
-- [ ] Print summary: `Imported N athletes, M workouts, K messages`
-- [ ] Handle missing files gracefully (print warning, continue)
-- [ ] Write tests using `call_command('import_challenge', ...)` with small in-memory fixture JSON (patch file paths via `--scores` and `--messages` CLI args, or monkeypatching settings)
-- [ ] Test idempotency: run twice, counts stay the same
-- [ ] Run tests — must pass before Task 4
+- [x] Read `scores.json` → upsert `Athlete` (telegram_id, name) and `Workout` records; use `update_or_create` keyed on (athlete + date + activity) or clear + reimport strategy
+- [x] Read `messages_clean.json` → upsert `SourceMessage` (msg_id, from_name, date, text, photos list)
+- [x] Print summary: `Imported N athletes, M workouts, K messages`
+- [x] Handle missing files gracefully (print warning, continue)
+- [x] Write tests using `call_command('import_challenge', ...)` with small in-memory fixture JSON (patch file paths via `--scores` and `--messages` CLI args, or monkeypatching settings)
+- [x] Test idempotency: run twice, counts stay the same
+- [x] Run tests — must pass before Task 4
 
 ### Task 4: Leaderboard view + template
 

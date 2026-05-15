@@ -1,5 +1,9 @@
 import datetime
+import json
+import tempfile
+from pathlib import Path
 
+from django.core.management import call_command
 from django.test import TestCase
 
 from .models import Athlete, SourceMessage, Workout
@@ -277,3 +281,230 @@ class RecomputeAthleteScoresTests(TestCase):
         self.assertEqual(w.base_points, 3)
         self.assertEqual(w.streak_bonus, 0)
         self.assertEqual(w.total_points, 3)
+
+
+FIXTURE_SCORES = {
+    "generated_at": "2026-01-01T00:00:00",
+    "challenge_start": "2025-12-01",
+    "challenge_end": "2026-03-31",
+    "athletes": [
+        {
+            "id": "user111",
+            "name": "Анна",
+            "total_points": 5,
+            "workout_count": 2,
+            "workouts": [
+                {
+                    "date": "2025-12-01",
+                    "activity": "running",
+                    "distance_km": 7.0,
+                    "pace_min_per_km": 6.0,
+                    "base_points": 2,
+                    "streak_bonus": 0,
+                    "total_points": 2,
+                    "msg_id": 1001,
+                },
+                {
+                    "date": "2025-12-03",
+                    "activity": "skiing",
+                    "distance_km": 10.0,
+                    "pace_min_per_km": None,
+                    "base_points": 2,
+                    "streak_bonus": 1,
+                    "total_points": 3,
+                    "msg_id": 1002,
+                },
+            ],
+        },
+        {
+            "id": "user222",
+            "name": "Борис",
+            "total_points": 2,
+            "workout_count": 1,
+            "workouts": [
+                {
+                    "date": "2025-12-05",
+                    "activity": "cycling",
+                    "distance_km": 25.0,
+                    "pace_min_per_km": None,
+                    "base_points": 2,
+                    "streak_bonus": 0,
+                    "total_points": 2,
+                    "msg_id": None,
+                },
+            ],
+        },
+    ],
+}
+
+FIXTURE_MESSAGES = [
+    {
+        "msg_id": 1001,
+        "from": "Анна",
+        "from_id": "user111",
+        "date": "2025-12-01",
+        "text": "Бег 7 км",
+        "photo": "photos/photo_001.jpg",
+    },
+    {
+        "msg_id": 1002,
+        "from": "Анна",
+        "from_id": "user111",
+        "date": "2025-12-03",
+        "text": "",
+        "photo": None,
+    },
+]
+
+
+class ImportChallengeCommandTests(TestCase):
+    def _write_fixtures(self, tmpdir, scores=None, messages=None):
+        scores_path = Path(tmpdir) / "scores.json"
+        messages_path = Path(tmpdir) / "messages.json"
+        scores_path.write_text(
+            json.dumps(scores if scores is not None else FIXTURE_SCORES),
+            encoding="utf-8",
+        )
+        messages_path.write_text(
+            json.dumps(messages if messages is not None else FIXTURE_MESSAGES),
+            encoding="utf-8",
+        )
+        return str(scores_path), str(messages_path)
+
+    def test_basic_import(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=open("/dev/null", "w"),
+            )
+
+        self.assertEqual(Athlete.objects.count(), 2)
+        self.assertEqual(Workout.objects.count(), 3)
+        self.assertEqual(SourceMessage.objects.count(), 2)
+
+        anna = Athlete.objects.get(telegram_id="user111")
+        self.assertEqual(anna.name, "Анна")
+        self.assertEqual(anna.workouts.count(), 2)
+
+    def test_athletes_and_workouts_upserted(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=open("/dev/null", "w"),
+            )
+
+        w = Workout.objects.get(
+            athlete__telegram_id="user111", date="2025-12-01", activity="running"
+        )
+        self.assertEqual(w.distance_km, 7.0)
+        self.assertEqual(w.msg_id, 1001)
+
+    def test_source_messages_photos_normalized(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=open("/dev/null", "w"),
+            )
+
+        msg1 = SourceMessage.objects.get(pk=1001)
+        self.assertEqual(msg1.photos, ["photos/photo_001.jpg"])
+        self.assertEqual(msg1.from_name, "Анна")
+
+        msg2 = SourceMessage.objects.get(pk=1002)
+        self.assertEqual(msg2.photos, [])
+
+    def test_idempotent_second_run(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            devnull = open("/dev/null", "w")
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=devnull,
+            )
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=devnull,
+            )
+
+        self.assertEqual(Athlete.objects.count(), 2)
+        self.assertEqual(Workout.objects.count(), 3)
+        self.assertEqual(SourceMessage.objects.count(), 2)
+
+    def test_missing_scores_file_continues(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _, messages_path = self._write_fixtures(tmpdir)
+            import io
+            out = io.StringIO()
+            call_command(
+                "import_challenge",
+                "--scores", "/nonexistent/scores.json",
+                "--messages", messages_path,
+                stdout=out,
+            )
+
+        self.assertEqual(Athlete.objects.count(), 0)
+        self.assertEqual(Workout.objects.count(), 0)
+        self.assertEqual(SourceMessage.objects.count(), 2)
+
+    def test_missing_messages_file_continues(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, _ = self._write_fixtures(tmpdir)
+            import io
+            out = io.StringIO()
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", "/nonexistent/messages.json",
+                stdout=out,
+            )
+
+        self.assertEqual(Athlete.objects.count(), 2)
+        self.assertEqual(Workout.objects.count(), 3)
+        self.assertEqual(SourceMessage.objects.count(), 0)
+
+    def test_scores_recomputed_after_import(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=open("/dev/null", "w"),
+            )
+
+        # Anna's second workout (skiing, Dec 3) should have streak_bonus=1 (gap=2 days)
+        w2 = Workout.objects.get(
+            athlete__telegram_id="user111", date="2025-12-03", activity="skiing"
+        )
+        self.assertEqual(w2.streak_bonus, 1)
+        self.assertEqual(w2.total_points, 3)
+
+    def test_summary_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scores_path, messages_path = self._write_fixtures(tmpdir)
+            import io
+            out = io.StringIO()
+            call_command(
+                "import_challenge",
+                "--scores", scores_path,
+                "--messages", messages_path,
+                stdout=out,
+            )
+
+        output = out.getvalue()
+        self.assertIn("2 athletes", output)
+        self.assertIn("3 workouts", output)
+        self.assertIn("2 messages", output)
