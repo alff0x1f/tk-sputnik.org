@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
         for i, row in enumerate(rows, start=1):
             try:
-                subforum = SubForum.objects.get(phpbb_id=row["forum_id"])
+                subforum = SubForum.objects.get(id=row["forum_id"])
             except SubForum.DoesNotExist:
                 self.stderr.write(
                     f"SubForum phpbb_id={row['forum_id']} not found"
@@ -40,8 +40,9 @@ class Command(BaseCommand):
                 continue
 
             Topic.objects.update_or_create(
-                phpbb_id=row["topic_id"],
+                id=row["topic_id"],
                 defaults={
+                    "phpbb_id": row["topic_id"],
                     "subforum": subforum,
                     "title": html.unescape(row["topic_title"] or ""),
                     "created_at": _unix_to_dt(row["topic_time"]),

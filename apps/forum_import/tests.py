@@ -272,9 +272,9 @@ class ImportPhpbbUsersCommandTest(TestCase):
 
 class ImportPhpbbTopicsCommandTest(TestCase):
     def setUp(self):
-        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
         self.subforum = SubForum.objects.create(
-            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
         )
 
     def _make_row(
@@ -365,12 +365,14 @@ class ImportPhpbbTopicsCommandTest(TestCase):
 
 class ImportPhpbbPostsCommandTest(TestCase):
     def setUp(self):
-        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
         subforum = SubForum.objects.create(
-            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
         )
-        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
-        self.user = ForumUser.objects.create(phpbb_id=5, username="alice")
+        self.topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+        self.user = ForumUser.objects.create(id=5, phpbb_id=5, username="alice")
 
     def _make_row(
         self,

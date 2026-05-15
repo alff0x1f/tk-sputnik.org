@@ -25,8 +25,9 @@ class Command(BaseCommand):
         count = 0
         for row in rows:
             ForumUser.objects.update_or_create(
-                phpbb_id=row["user_id"],
+                id=row["user_id"],
                 defaults={
+                    "phpbb_id": row["user_id"],
                     "username": row["username"],
                     "email": row["user_email"] or "",
                     "avatar": _avatar(row["user_avatar"]),
