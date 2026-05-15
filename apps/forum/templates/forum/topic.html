@@ -1,0 +1,27 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}{{ topic.title }} — Форум — Турклуб Спутник{% endblock %}
+
+{% block content %}
+<h1>{{ topic.title }}</h1>
+{% for post in page_obj %}
+<div class="post-card">
+  <div class="post-author">
+    {% with display_name=post.author_username %}
+    {% if display_name %}
+      <span class="post-author-name">{{ display_name }}</span>
+    {% elif post.author %}
+      <span class="post-author-name">{{ post.author.username }}</span>
+    {% else %}
+      <span class="post-author-name">—</span>
+    {% endif %}
+    {% endwith %}
+    {% if post.created_at %}
+      <span class="post-date">{{ post.created_at|date:"d M Y" }}</span>
+    {% endif %}
+  </div>
+  <div class="post-body">{{ post.text_html|safe }}</div>
+</div>
+{% endfor %}
+{% endblock %}

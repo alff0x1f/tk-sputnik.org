@@ -58,20 +58,20 @@ the topic list.
 - Modify: `apps/forum/views.py`
 - Modify: `apps/forum/urls.py`
 
-- [ ] add `topic_posts(request, phpbb_id)` to `views.py`:
+- [x] add `topic_posts(request, phpbb_id)` to `views.py`:
   - `get_object_or_404(Topic, phpbb_id=phpbb_id)`
   - `topic.posts.select_related("author").order_by("created_at")`
   - `Paginator(..., 20).get_page(request.GET.get("page"))`
   - render `forum/topic.html` with context `{"topic": topic, "page_obj": page_obj}`
-- [ ] add `path("t/<int:phpbb_id>/", views.topic_posts, name="topic-posts")` to `urls.py`
-- [ ] write tests in `apps/forum/tests.py` — class `TopicPostsViewTest`:
+- [x] add `path("t/<int:phpbb_id>/", views.topic_posts, name="topic-posts")` to `urls.py`
+- [x] write tests in `apps/forum/tests.py` — class `TopicPostsViewTest`:
   - `test_returns_200` — valid phpbb_id
   - `test_404_for_unknown_phpbb_id`
   - `test_uses_correct_template` — `forum/topic.html`
   - `test_context_has_topic_and_page_obj`
   - `test_page_obj_contains_only_topic_posts` — posts from another topic are absent
   - `test_pagination_20_per_page` — create 21 posts, check page 1 has 20, page 2 has 1
-- [ ] run `uv run pytest apps/forum/tests.py` — must pass before task 2
+- [x] run `uv run pytest apps/forum/tests.py` — must pass before task 2
 
 ### Task 2: Make topic titles clickable in `subforum.html`
 
