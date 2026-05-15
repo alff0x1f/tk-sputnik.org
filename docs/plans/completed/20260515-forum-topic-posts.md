@@ -132,7 +132,7 @@ the topic list.
 
 ### Task 6: [Final] Move plan
 
-- [ ] move this plan to `docs/plans/completed/20260515-forum-topic-posts.md`
+- [x] move this plan to `docs/plans/completed/20260515-forum-topic-posts.md`
 
 ## Post-Completion
 
