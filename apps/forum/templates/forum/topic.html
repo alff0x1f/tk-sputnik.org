@@ -23,9 +23,9 @@
 
     <div class="feed-head">
       <h1 class="feed-title">{{ topic.title }}</h1>
-      <div class="feed-sub">
-        {{ topic.post_count }} {{ topic.post_count|ru_pluralize:"сообщение,сообщения,сообщений" }}{% if topic.created_at %} · {{ topic.created_at|date:"d M Y" }}{% endif %}
-      </div>
+    </div>
+    <div class="feed-sub">
+      {{ topic.post_count }} {{ topic.post_count|ru_pluralize:"сообщение,сообщения,сообщений" }}{% if topic.created_at %} · {{ topic.created_at|date:"d M Y" }}{% endif %}
     </div>
 
     <div class="post-feed">
