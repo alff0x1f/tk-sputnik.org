@@ -244,8 +244,8 @@ def challenge_photo(request, filename):
 **Files:**
 - Modify: `CLAUDE.md`
 
-- [ ] Add `apps/challenge` section to `CLAUDE.md` (models, import command, photo setting)
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Add `apps/challenge` section to `CLAUDE.md` (models, import command, photo setting)
+- [x] Move this plan to `docs/plans/completed/`
 
 ## Post-Completion
 
