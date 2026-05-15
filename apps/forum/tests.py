@@ -252,3 +252,77 @@ class SubforumTopicsViewTest(TestCase):
         url = reverse("subforum-topics", kwargs={"phpbb_id": 42})
         response = self.client.get(url + "?page=2")
         self.assertEqual(len(response.context["page_obj"].object_list), 1)
+
+
+class TopicPostsViewTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=500, subforum=self.subforum, title="Поход на Алтай"
+        )
+        self.other_topic = Topic.objects.create(
+            phpbb_id=600, subforum=self.subforum, title="Other"
+        )
+        self.user = ForumUser.objects.create(phpbb_id=7, username="Иван")
+        self.post = Post.objects.create(
+            phpbb_id=9001,
+            topic=self.topic,
+            author=self.user,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            created_at=datetime.datetime(2010, 8, 1, tzinfo=datetime.UTC),
+        )
+        self.other_post = Post.objects.create(
+            phpbb_id=9002,
+            topic=self.other_topic,
+            author=self.user,
+            text_bbcode="other",
+            text_html="<p>other</p>",
+            created_at=datetime.datetime(2010, 8, 2, tzinfo=datetime.UTC),
+        )
+
+    def _url(self, phpbb_id=500):
+        return reverse("topic-posts", kwargs={"phpbb_id": phpbb_id})
+
+    def test_returns_200(self):
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+
+    def test_404_for_unknown_phpbb_id(self):
+        response = self.client.get(self._url(phpbb_id=9999))
+        self.assertEqual(response.status_code, 404)
+
+    def test_uses_correct_template(self):
+        response = self.client.get(self._url())
+        self.assertTemplateUsed(response, "forum/topic.html")
+
+    def test_context_has_topic_and_page_obj(self):
+        response = self.client.get(self._url())
+        self.assertIn("topic", response.context)
+        self.assertIn("page_obj", response.context)
+        self.assertEqual(response.context["topic"].phpbb_id, 500)
+
+    def test_page_obj_contains_only_topic_posts(self):
+        response = self.client.get(self._url())
+        ids = [p.phpbb_id for p in response.context["page_obj"].object_list]
+        self.assertIn(9001, ids)
+        self.assertNotIn(9002, ids)
+
+    def test_pagination_20_per_page(self):
+        for i in range(1, 22):
+            Post.objects.create(
+                phpbb_id=10000 + i,
+                topic=self.topic,
+                text_bbcode="x",
+                text_html="<p>x</p>",
+                created_at=datetime.datetime(2010, 9, 1, tzinfo=datetime.UTC),
+            )
+        response = self.client.get(self._url())
+        self.assertEqual(len(response.context["page_obj"].object_list), 20)
+        response2 = self.client.get(self._url() + "?page=2")
+        self.assertEqual(len(response2.context["page_obj"].object_list), 2)

@@ -3,7 +3,7 @@ from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.shortcuts import get_object_or_404, render
 
-from .models import ForumCategory, Post, SubForum
+from .models import ForumCategory, Post, SubForum, Topic
 
 
 def forum_index(request):
@@ -38,4 +38,15 @@ def subforum_topics(request, phpbb_id):
         request,
         "forum/subforum.html",
         {"subforum": subforum, "page_obj": page_obj},
+    )
+
+
+def topic_posts(request, phpbb_id):
+    topic = get_object_or_404(Topic, phpbb_id=phpbb_id)
+    posts_qs = topic.posts.select_related("author").order_by("created_at")
+    page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
+    return render(
+        request,
+        "forum/topic.html",
+        {"topic": topic, "page_obj": page_obj},
     )

@@ -1,5 +1,5 @@
-.feed-head{ margin-bottom:6px; }
-.feed-sub{ margin-bottom:18px; }
+.feed-head{ margin-bottom:2px; }
+.feed-sub{ margin-bottom:20px; }
 
 /* ── Categories ──────────────────────────────────────────── */
 .forum-cat{
@@ -161,6 +161,8 @@
   margin-bottom:2px;
   display:flex; align-items:center; gap:8px; flex-wrap:wrap;
 }
+.topic-title a{ color:inherit; text-decoration:none; }
+.topic-title a:hover{ text-decoration:underline; }
 .topic-meta{ font-size:12px; color:var(--muted); }
 .topic-stats{
   font-size:12px; color:var(--muted);
@@ -212,3 +214,79 @@
   color:#fff; font-weight:600;
 }
 .pagination .disabled{ color:var(--muted); pointer-events:none; }
+
+/* ── Post feed (Twitter/Threads layout) ───────────────────── */
+.post-feed{ padding-top:4px; }
+
+.post-card{
+  display:grid;
+  grid-template-columns: 44px 1fr;
+  column-gap:12px;
+  padding:16px 0 0;
+}
+
+.post-left{
+  display:flex; flex-direction:column; align-items:center;
+  flex-shrink:0;
+}
+
+.post-avatar{
+  width:44px; height:44px; border-radius:50%;
+  background:var(--accent-soft);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  font-size:16px; font-weight:700; color:var(--accent);
+  overflow:hidden; flex-shrink:0;
+}
+.post-avatar img{ width:100%; height:100%; object-fit:cover; }
+
+.post-thread-line{
+  flex:1; width:2px; min-height:16px;
+  background:var(--line);
+  margin-top:6px; margin-bottom:0;
+  border-radius:1px;
+}
+
+.post-right{
+  min-width:0;
+  padding-bottom:20px;
+  border-bottom:none;
+}
+
+.post-header{
+  display:flex; align-items:baseline; gap:8px;
+  margin-bottom:6px; flex-wrap:wrap;
+}
+.post-author-name{
+  font-size:14px; font-weight:700; color:var(--ink);
+  letter-spacing:-0.01em;
+}
+.post-date{
+  font-size:12px; color:var(--muted); white-space:nowrap;
+}
+
+.post-body{
+  font-size:14px; line-height:1.7; color:var(--ink);
+}
+.post-body p{ margin:0 0 8px; }
+.post-body p:last-child{ margin-bottom:0; }
+.post-body br + br{ display:none; }
+
+.post-body blockquote{
+  border-left:3px solid var(--line-strong);
+  background:var(--surface-2);
+  padding:8px 12px;
+  margin:10px 0;
+  color:var(--muted);
+  font-size:13px;
+  border-radius:0 4px 4px 0;
+}
+
+.post-empty{
+  padding:24px 0; color:var(--muted); font-size:14px;
+}
+
+@media (max-width:720px){
+  .post-card{ grid-template-columns: 36px 1fr; column-gap:10px; }
+  .post-avatar{ width:36px; height:36px; font-size:13px; }
+}
