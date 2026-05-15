@@ -33,10 +33,10 @@
       <div class="post-card">
         <div class="post-left">
           {% if post.author_username %}{% with dn=post.author_username %}
-            {% if post.author and post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ dn }}">
+            {% if post.author and post.author.avatar_url %}<img class="post-avatar" src="{{ post.author.avatar_url }}" alt="{{ dn }}">
             {% else %}<div class="post-avatar">{{ dn|slice:":1"|upper }}</div>{% endif %}
           {% endwith %}{% elif post.author %}
-            {% if post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ post.author.username }}">
+            {% if post.author.avatar_url %}<img class="post-avatar" src="{{ post.author.avatar_url }}" alt="{{ post.author.username }}">
             {% else %}<div class="post-avatar">{{ post.author.username|slice:":1"|upper }}</div>{% endif %}
           {% else %}
             <div class="post-avatar">—</div>

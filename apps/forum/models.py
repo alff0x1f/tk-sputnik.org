@@ -64,6 +64,20 @@ class ForumUser(models.Model):
     registered_at = models.DateTimeField("Дата регистрации", null=True, blank=True)
     post_count = models.IntegerField("Количество сообщений", default=0)
 
+    @property
+    def avatar_url(self):
+        if not self.avatar:
+            return ""
+        if self.avatar.startswith(("http://", "https://")):
+            return self.avatar
+        import re
+
+        from django.conf import settings
+
+        # phpBB stored "5_1316512958.jpg" in DB but renamed file on disk to "5.jpg"
+        filename = re.sub(r"^(\d+)_\d+(\.\w+)$", r"\1\2", self.avatar)
+        return f"{settings.MEDIA_URL}forum/avatars/{filename}"
+
     class Meta:
         verbose_name = "Пользователь форума"
         verbose_name_plural = "Пользователи форума"

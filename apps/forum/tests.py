@@ -69,6 +69,24 @@ class ForumUserModelTests(TestCase):
         self.assertEqual(user.avatar, "")
         self.assertIsNone(user.registered_at)
 
+    def test_avatar_url_empty(self):
+        user = ForumUser(avatar="")
+        self.assertEqual(user.avatar_url, "")
+
+    def test_avatar_url_local(self):
+        user = ForumUser(avatar="168.jpg")
+        self.assertIn("/forum/avatars/168.jpg", user.avatar_url)
+        self.assertTrue(user.avatar_url.startswith("/media/"))
+
+    def test_avatar_url_timestamp_format(self):
+        user = ForumUser(avatar="5_1316512958.jpg")
+        self.assertIn("/forum/avatars/5.jpg", user.avatar_url)
+
+    def test_avatar_url_remote(self):
+        url = "https://example.com/avatar.jpg"
+        user = ForumUser(avatar=url)
+        self.assertEqual(user.avatar_url, url)
+
 
 class TopicModelTests(TestCase):
     def setUp(self):
