@@ -52,6 +52,18 @@
   text-align: center;
 }
 
+.save-status {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  min-width: 90px;
+  transition: opacity 0.3s;
+}
+.save-status.saving { color: var(--muted); }
+.save-status.saved { color: #2d7a36; }
+.save-status.error { color: #c0392b; }
+.save-status.hidden { opacity: 0; }
+
 .review-filters {
   display: flex;
   align-items: center;
@@ -150,41 +162,6 @@
   margin-bottom: 10px;
 }
 
-.workout-list-readonly {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.workout-item-ro {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  font-size: 13px;
-}
-
-.workout-item-ro .wi-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.workout-item-ro .wi-activity {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.workout-item-ro .wi-pts {
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.workout-item-ro .wi-details {
-  color: var(--muted);
-}
-
 .review-no-workouts {
   font-size: 13px;
   color: var(--muted);
@@ -208,6 +185,8 @@
       <button id="btn-next" onclick="navigateCard(1)">След &#8594;</button>
     </div>
 
+    <span class="save-status hidden" id="save-status"></span>
+
     <div class="review-filters">
       <select id="user-filter" onchange="applyFilters()">
         <option value="">Все участники</option>
@@ -220,7 +199,6 @@
 
   <div class="review-panels">
     <div class="review-left" id="left-panel">
-      <div class="review-empty" id="empty-msg" style="display:none">Нет сообщений</div>
       <div id="photo-gallery" class="review-photos"></div>
       <div class="review-meta" id="msg-meta"></div>
       <div class="review-text" id="msg-text"></div>
@@ -228,16 +206,47 @@
 
     <div class="review-right" id="right-panel">
       <div class="review-section-title">Тренировки</div>
-      <div class="workout-list-readonly" id="workout-list"></div>
+      <div id="workout-list"></div>
+      <button class="btn-add-workout" id="btn-add-workout" onclick="addWorkout()" style="display:none">+ Добавить тренировку</button>
     </div>
   </div>
 </div>
 
 <script>
 const CARDS = {{ cards_json|safe }};
+const ATHLETES = {{ athletes_json|safe }};
 let filteredCards = [];
 let currentIndex = 0;
 let statusFilter = 'all';
+
+const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
+
+function getCsrfToken() {
+  return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+}
+
+let saveStatusTimer = null;
+function showSaveStatus(msg, type) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status ' + type;
+  clearTimeout(saveStatusTimer);
+  if (type === 'saved') {
+    saveStatusTimer = setTimeout(() => { el.className = 'save-status hidden'; }, 2000);
+  }
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 function buildUserFilter() {
   const names = new Set(CARDS.map(c => c.from_name));
@@ -277,17 +286,21 @@ function navigateCard(delta) {
 
 function renderCard() {
   const counter = document.getElementById('card-counter');
+  const addBtn = document.getElementById('btn-add-workout');
+
   if (!filteredCards.length) {
     counter.textContent = '0 / 0';
     document.getElementById('photo-gallery').innerHTML = '';
     document.getElementById('msg-meta').textContent = '';
     document.getElementById('msg-text').textContent = '';
-    document.getElementById('workout-list').innerHTML = '<p class="review-no-workouts">Нет сообщений</p>';
+    document.getElementById('workout-list').innerHTML = '';
+    addBtn.style.display = 'none';
     return;
   }
 
   const card = filteredCards[currentIndex];
   counter.textContent = (currentIndex + 1) + ' / ' + filteredCards.length;
+  addBtn.style.display = '';
 
   const gallery = document.getElementById('photo-gallery');
   gallery.innerHTML = '';
@@ -307,29 +320,228 @@ function renderCard() {
     card.from_name + ' · ' + card.date + ' · #' + card.msg_id;
   document.getElementById('msg-text').textContent = card.text || '';
 
+  renderWorkoutList(card);
+  history.replaceState(null, '', '?msg=' + card.msg_id);
+}
+
+function renderWorkoutList(card) {
   const list = document.getElementById('workout-list');
   list.innerHTML = '';
   if (!card.workouts.length) {
     list.innerHTML = '<p class="review-no-workouts">Нет тренировок</p>';
-  } else {
-    card.workouts.forEach(w => {
-      const div = document.createElement('div');
-      div.className = 'workout-item-ro';
-      let details = '';
-      if (w.distance_km != null) details += w.distance_km.toFixed(1) + ' км';
-      if (w.pace_min_per_km != null) details += (details ? ' · ' : '') + w.pace_min_per_km.toFixed(1) + ' мин/км';
-      const pts = w.base_points + (w.streak_bonus ? '+' + w.streak_bonus : '');
-      div.innerHTML =
-        '<div class="wi-header">' +
-          '<span class="wi-activity">' + w.activity_display + '</span>' +
-          '<span class="wi-pts">' + pts + ' очк.</span>' +
-        '</div>' +
-        '<div class="wi-details">' + w.athlete_name + ' · ' + w.date + (details ? ' · ' + details : '') + '</div>';
-      list.appendChild(div);
-    });
+    return;
   }
+  card.workouts.forEach(w => list.appendChild(buildWorkoutForm(w, card)));
+}
 
-  history.replaceState(null, '', '?msg=' + card.msg_id);
+function buildWorkoutForm(w, card) {
+  const div = document.createElement('div');
+  div.className = 'workout-form';
+  div.dataset.workoutId = w.id;
+
+  const actOptions = Object.entries(ACT_NAMES).map(([val, label]) =>
+    `<option value="${val}"${val === w.activity ? ' selected' : ''}>${label}</option>`
+  ).join('');
+
+  const athleteOptions = ATHLETES.map(a =>
+    `<option value="${escHtml(a.telegram_id)}"${a.telegram_id === w.athlete_id ? ' selected' : ''}>${escHtml(a.name)}</option>`
+  ).join('');
+
+  const pts = w.base_points + (w.streak_bonus ? '+' + w.streak_bonus : '');
+
+  div.innerHTML = `
+    <div class="form-row">
+      <div class="form-field">
+        <label>Участник</label>
+        <select data-field="athlete_id">${athleteOptions}</select>
+      </div>
+      <div class="form-field">
+        <label>Дата</label>
+        <input type="date" data-field="date" value="${w.date}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Активность</label>
+        <select data-field="activity">${actOptions}</select>
+      </div>
+      <div class="form-field">
+        <label>Км</label>
+        <input type="number" step="0.1" min="0" data-field="distance_km"
+          value="${w.distance_km != null ? w.distance_km : ''}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Темп мин/км</label>
+        <input type="number" step="0.1" min="0" data-field="pace_min_per_km"
+          value="${w.pace_min_per_km != null ? w.pace_min_per_km : ''}">
+      </div>
+      <div class="form-field form-field-pts">
+        <label>Очки</label>
+        <span class="workout-pts-display" id="pts-${w.id}">${pts}</span>
+      </div>
+    </div>
+    <div class="workout-form-footer">
+      <button class="btn-delete" type="button">Удалить</button>
+    </div>
+  `;
+
+  div.querySelector('.btn-delete').addEventListener('click', () => deleteWorkout(w.id, card));
+
+  const debouncedSave = debounce(function() {
+    saveWorkout(w, collectFormData(div));
+  }, 500);
+
+  div.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', debouncedSave);
+    el.addEventListener('input', debouncedSave);
+  });
+
+  return div;
+}
+
+function collectFormData(formDiv) {
+  const data = {};
+  formDiv.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    let val = el.value;
+    if (el.type === 'number') {
+      val = val === '' ? null : parseFloat(val);
+    }
+    data[field] = val;
+  });
+  return data;
+}
+
+async function saveWorkout(w, data) {
+  showSaveStatus('Сохранение…', 'saving');
+  try {
+    const resp = await fetch(`/challenge/review/api/workout/${w.id}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || resp.statusText);
+    }
+    const result = await resp.json();
+
+    if (data.athlete_id !== undefined) {
+      const athlete = ATHLETES.find(a => a.telegram_id === data.athlete_id);
+      w.athlete_id = data.athlete_id;
+      w.athlete_name = athlete ? athlete.name : data.athlete_id;
+    }
+    if (data.date !== undefined) w.date = data.date;
+    if (data.activity !== undefined) {
+      w.activity = data.activity;
+      w.activity_display = ACT_NAMES[data.activity] || data.activity;
+    }
+    if (data.distance_km !== undefined) w.distance_km = data.distance_km;
+    if (data.pace_min_per_km !== undefined) w.pace_min_per_km = data.pace_min_per_km;
+
+    w.base_points = result.workout.base_points;
+    w.streak_bonus = result.workout.streak_bonus;
+    w.total_points = result.workout.total_points;
+
+    const pts = result.workout.base_points + (result.workout.streak_bonus ? '+' + result.workout.streak_bonus : '');
+    const ptsEl = document.getElementById('pts-' + w.id);
+    if (ptsEl) ptsEl.textContent = pts;
+
+    showSaveStatus('Сохранено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка: ' + err.message, 'error');
+  }
+}
+
+async function deleteWorkout(workoutId, card) {
+  if (!confirm('Удалить тренировку?')) return;
+  showSaveStatus('Удаление…', 'saving');
+  try {
+    const resp = await fetch(`/challenge/review/api/workout/${workoutId}/`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+    });
+    if (resp.status !== 204) throw new Error('Delete failed');
+
+    const idx = card.workouts.findIndex(w => w.id === workoutId);
+    if (idx !== -1) card.workouts.splice(idx, 1);
+
+    const formDiv = document.querySelector(`[data-workout-id="${workoutId}"]`);
+    if (formDiv) formDiv.remove();
+
+    const list = document.getElementById('workout-list');
+    if (!card.workouts.length) {
+      list.innerHTML = '<p class="review-no-workouts">Нет тренировок</p>';
+    }
+    showSaveStatus('Удалено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка удаления', 'error');
+  }
+}
+
+async function addWorkout() {
+  const card = filteredCards[currentIndex];
+  if (!card) return;
+
+  let athleteId = ATHLETES.length ? ATHLETES[0].telegram_id : '';
+  const matched = ATHLETES.find(a => a.name === card.from_name);
+  if (matched) athleteId = matched.telegram_id;
+
+  const data = {
+    athlete_id: athleteId,
+    date: card.date,
+    activity: 'running',
+    distance_km: null,
+    pace_min_per_km: null,
+    msg_id: card.msg_id,
+  };
+
+  showSaveStatus('Сохранение…', 'saving');
+  try {
+    const resp = await fetch('/challenge/review/api/workout/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || resp.statusText);
+    }
+    const result = await resp.json();
+
+    const athlete = ATHLETES.find(a => a.telegram_id === athleteId);
+    const newWorkout = {
+      id: result.workout.id,
+      athlete_id: athleteId,
+      athlete_name: athlete ? athlete.name : athleteId,
+      date: data.date,
+      activity: 'running',
+      activity_display: 'Бег',
+      distance_km: null,
+      pace_min_per_km: null,
+      base_points: result.workout.base_points,
+      streak_bonus: result.workout.streak_bonus,
+      total_points: result.workout.total_points,
+    };
+
+    const list = document.getElementById('workout-list');
+    const noWorkoutsEl = list.querySelector('.review-no-workouts');
+    if (noWorkoutsEl) noWorkoutsEl.remove();
+
+    card.workouts.push(newWorkout);
+    list.appendChild(buildWorkoutForm(newWorkout, card));
+    showSaveStatus('Добавлено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка: ' + err.message, 'error');
+  }
 }
 
 function jumpToMsg(msgId) {

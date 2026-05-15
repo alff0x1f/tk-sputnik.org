@@ -57,8 +57,11 @@ def review(request):
             ],
         })
 
+    athletes = list(Athlete.objects.order_by("name").values("telegram_id", "name"))
+
     return render(request, "challenge/review.html", {
         "cards_json": json.dumps(cards, ensure_ascii=False),
+        "athletes_json": json.dumps(athletes, ensure_ascii=False),
     })
 
 
@@ -117,11 +120,11 @@ def api_workout_create(request):
 @require_http_methods(["PUT", "DELETE"])
 def api_workout_detail(request, pk):
     workout = get_object_or_404(Workout, pk=pk)
-    athlete = workout.athlete
+    old_athlete = workout.athlete
 
     if request.method == "DELETE":
         workout.delete()
-        recompute_athlete_scores(athlete)
+        recompute_athlete_scores(old_athlete)
         return JsonResponse({}, status=204)
 
     # PUT
@@ -129,6 +132,12 @@ def api_workout_detail(request, pk):
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if "athlete_id" in data:
+        try:
+            workout.athlete = Athlete.objects.get(pk=data["athlete_id"])
+        except Athlete.DoesNotExist:
+            return JsonResponse({"error": "Athlete not found"}, status=400)
 
     updatable = ["activity", "distance_km", "pace_min_per_km", "msg_id"]
     for field in updatable:
@@ -142,9 +151,12 @@ def api_workout_detail(request, pk):
             return JsonResponse({"error": "Invalid date"}, status=400)
 
     workout.save()
-    recompute_athlete_scores(athlete)
+    new_athlete = workout.athlete
+    recompute_athlete_scores(new_athlete)
+    if old_athlete != new_athlete:
+        recompute_athlete_scores(old_athlete)
     workout.refresh_from_db()
-    return _workout_response(workout, athlete)
+    return _workout_response(workout, new_athlete)
 
 
 def leaderboard(request):

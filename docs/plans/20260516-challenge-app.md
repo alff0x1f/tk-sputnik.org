@@ -215,17 +215,17 @@ def challenge_photo(request, filename):
 - Modify: `apps/challenge/templates/challenge/review.html`
 - Modify: `apps/challenge/static/challenge/css/challenge.css`
 
-- [ ] Wire up prev/next navigation + counter in JS (client-side card switching)
-- [ ] User filter dropdown: re-filters card list client-side
-- [ ] Status filter buttons: all / has_workout / no_workout (client-side)
-- [ ] Right panel: render editable workout forms (activity select, distance, pace, date, athlete name inputs)
-- [ ] "Delete workout" button → `fetch DELETE /challenge/review/api/workout/<id>/`, remove card from DOM
-- [ ] "Add workout" button → `fetch POST /challenge/review/api/workout/`, append form
-- [ ] Auto-save on field change (debounced, 500ms) → `fetch PUT /challenge/review/api/workout/<id>/`
-- [ ] Save status indicator (saving… / saved ✓ / error ✗)
-- [ ] `?msg=<id>` URL param: find card index and set as initial card on load
-- [ ] No new tests needed for pure JS (covered by API tests in Task 7); verify manually that save/delete round-trip works
-- [ ] Run full test suite — must pass before Task 9
+- [x] Wire up prev/next navigation + counter in JS (client-side card switching)
+- [x] User filter dropdown: re-filters card list client-side
+- [x] Status filter buttons: all / has_workout / no_workout (client-side)
+- [x] Right panel: render editable workout forms (activity select, distance, pace, date, athlete name inputs)
+- [x] "Delete workout" button → `fetch DELETE /challenge/review/api/workout/<id>/`, remove card from DOM
+- [x] "Add workout" button → `fetch POST /challenge/review/api/workout/`, append form
+- [x] Auto-save on field change (debounced, 500ms) → `fetch PUT /challenge/review/api/workout/<id>/`
+- [x] Save status indicator (saving… / saved ✓ / error ✗)
+- [x] `?msg=<id>` URL param: find card index and set as initial card on load
+- [x] No new tests needed for pure JS (covered by API tests in Task 7); verify manually that save/delete round-trip works
+- [x] Run full test suite — must pass before Task 9
 
 ### Task 9: Verify acceptance criteria
 

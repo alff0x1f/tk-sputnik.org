@@ -598,6 +598,12 @@ class ReviewViewTests(TestCase):
         self.assertIn(b"CARDS", response.content)
         self.assertIn(b"1001", response.content)
 
+    def test_athletes_json_in_response(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/review/")
+        self.assertIn(b"ATHLETES", response.content)
+        self.assertIn(b"u1", response.content)
+
     def test_cards_json_contains_workout(self):
         self.client.login(username="admin", password="password")
         response = self.client.get("/challenge/review/")
@@ -790,6 +796,17 @@ class ReviewAPITests(TestCase):
     def test_update_not_found_returns_404(self):
         resp = self._put(99999, {"distance_km": 5.0}, user=self.staff)
         self.assertEqual(resp.status_code, 404)
+
+    def test_update_athlete_changes_athlete(self):
+        Athlete.objects.create(telegram_id="u2", name="Борис")
+        resp = self._put(self.workout.pk, {"athlete_id": "u2"}, user=self.staff)
+        self.assertEqual(resp.status_code, 200)
+        self.workout.refresh_from_db()
+        self.assertEqual(self.workout.athlete_id, "u2")
+
+    def test_update_invalid_athlete_returns_400(self):
+        resp = self._put(self.workout.pk, {"athlete_id": "no_such_id"}, user=self.staff)
+        self.assertEqual(resp.status_code, 400)
 
     def test_update_returns_athlete_total(self):
         resp = self._put(self.workout.pk, {"distance_km": 15.0}, user=self.staff)
