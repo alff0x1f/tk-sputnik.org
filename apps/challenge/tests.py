@@ -508,3 +508,89 @@ class ImportChallengeCommandTests(TestCase):
         self.assertIn("2 athletes", output)
         self.assertIn("3 workouts", output)
         self.assertIn("2 messages", output)
+
+
+class LeaderboardViewTests(TestCase):
+    def setUp(self):
+        self.anna = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.boris = Athlete.objects.create(telegram_id="u2", name="Борис")
+        self.vova = Athlete.objects.create(telegram_id="u3", name="Вова")
+
+        Workout.objects.create(
+            athlete=self.anna,
+            date=datetime.date(2026, 1, 1),
+            activity="running",
+            distance_km=10.0,
+            pace_min_per_km=5.0,
+            base_points=3,
+            streak_bonus=0,
+            total_points=3,
+        )
+        Workout.objects.create(
+            athlete=self.anna,
+            date=datetime.date(2026, 1, 5),
+            activity="skiing",
+            distance_km=8.0,
+            base_points=2,
+            streak_bonus=1,
+            total_points=3,
+        )
+        Workout.objects.create(
+            athlete=self.boris,
+            date=datetime.date(2026, 1, 2),
+            activity="cycling",
+            distance_km=25.0,
+            base_points=2,
+            streak_bonus=0,
+            total_points=2,
+        )
+        # Vova has no workouts → score 0
+
+    def test_leaderboard_returns_200(self):
+        response = self.client.get("/challenge/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_leaderboard_athletes_in_context(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        self.assertEqual(len(athletes), 3)
+
+    def test_leaderboard_ranking_order(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        scores = [a.total_score for a in athletes]
+        self.assertEqual(scores, sorted(scores, reverse=True))
+
+    def test_leaderboard_top_is_anna(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        self.assertEqual(athletes[0].name, "Анна")
+        self.assertEqual(athletes[0].total_score, 6)
+        self.assertEqual(athletes[0].rank, 1)
+
+    def test_leaderboard_boris_second(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        self.assertEqual(athletes[1].name, "Борис")
+        self.assertEqual(athletes[1].total_score, 2)
+        self.assertEqual(athletes[1].rank, 2)
+
+    def test_leaderboard_zero_score_athlete_last(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        last = athletes[-1]
+        self.assertEqual(last.name, "Вова")
+        self.assertEqual(last.total_score, 0)
+
+    def test_leaderboard_athlete_has_workout_list(self):
+        response = self.client.get("/challenge/")
+        athletes = response.context["athletes"]
+        anna = next(a for a in athletes if a.name == "Анна")
+        self.assertEqual(len(anna.workout_list), 2)
+
+    def test_leaderboard_no_athletes(self):
+        Workout.objects.all().delete()
+        Athlete.objects.all().delete()
+        response = self.client.get("/challenge/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["athletes"]), 0)

@@ -154,17 +154,17 @@ def challenge_photo(request, filename):
 - Modify: `config/urls.py`
 - Modify: `apps/demo/templates/demo/base.html`
 
-- [ ] Create `leaderboard` view: query all Athletes ordered by total `Workout.total_points` sum descending, pass ranked list + per-athlete workout list to template
-- [ ] Create `apps/challenge/urls.py` with `path("", views.leaderboard, name="challenge-leaderboard")` and photo view stub
-- [ ] Include in `config/urls.py`: `path("challenge/", include("apps.challenge.urls"))`
-- [ ] Create `leaderboard.html` extending `demo/base.html`:
+- [x] Create `leaderboard` view: query all Athletes ordered by total `Workout.total_points` sum descending, pass ranked list + per-athlete workout list to template
+- [x] Create `apps/challenge/urls.py` with `path("", views.leaderboard, name="challenge-leaderboard")` and photo view stub
+- [x] Include in `config/urls.py`: `path("challenge/", include("apps.challenge.urls"))`
+- [x] Create `leaderboard.html` extending `demo/base.html`:
   - Title row with challenge name + date range
   - Rank table: place / name / points / workout count
   - Each row expandable (JS toggle): workout chip per entry with date, activity icon, distance, pace, base pts + streak bonus; last column is link to `/challenge/review/?msg=<msg_id>` (shown only if msg_id exists)
-- [ ] Add CSS in `challenge.css` using site variables (no new colours except from palette)
-- [ ] Add "Челлендж" nav-item to sidebar in `apps/demo/templates/demo/base.html`
-- [ ] Write view tests: response 200, correct number of athletes in context, correct ranking order
-- [ ] Run tests — must pass before Task 5
+- [x] Add CSS in `challenge.css` using site variables (no new colours except from palette)
+- [x] Add "Челлендж" nav-item to sidebar in `apps/demo/templates/demo/base.html`
+- [x] Write view tests: response 200, correct number of athletes in context, correct ranking order
+- [x] Run tests — must pass before Task 5
 
 ### Task 5: Photo serving view
 
