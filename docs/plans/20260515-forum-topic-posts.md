@@ -88,19 +88,19 @@ the topic list.
 **Files:**
 - Modify: `apps/forum/static/forum/css/forum.css`
 
-- [ ] add `.post-card` — card container with bottom border separator, no heavy box shadow
-- [ ] add `.post-author` — flex row: avatar circle + username (`.post-author-name`) + date
+- [x] add `.post-card` — card container with bottom border separator, no heavy box shadow
+- [x] add `.post-author` — flex row: avatar circle + username (`.post-author-name`) + date
   (`.post-date`) spaced apart
-- [ ] add `.post-avatar` — circle `36px`, `background: var(--accent-soft)`, centered initial letter,
+- [x] add `.post-avatar` — circle `36px`, `background: var(--accent-soft)`, centered initial letter,
   font-size `14px`, `font-weight:600`
-- [ ] add `.post-body` — rendered HTML area; set `font-size:14px`, `line-height:1.65`,
+- [x] add `.post-body` — rendered HTML area; set `font-size:14px`, `line-height:1.65`,
   `color:var(--ink)`; handle `p`, `br` spacing
-- [ ] add `.post-body blockquote` — Reddit-style: `border-left: 3px solid var(--line-strong)`,
+- [x] add `.post-body blockquote` — Reddit-style: `border-left: 3px solid var(--line-strong)`,
   `background: var(--surface-2)`, `padding: 8px 12px`, `margin: 10px 0`,
   `color: var(--muted)`, `font-size:13px`
-- [ ] add `.topic-title a` rule — `color:inherit; text-decoration:none` with `:hover` underline
-- [ ] responsive: on `max-width:720px` shrink avatar to `30px`
-- [ ] no tests needed for CSS; visually verify in browser after task 4
+- [x] add `.topic-title a` rule — `color:inherit; text-decoration:none` with `:hover` underline
+- [x] responsive: on `max-width:720px` shrink avatar to `30px`
+- [x] no tests needed for CSS; visually verify in browser after task 4
 
 ### Task 4: Create `topic.html` template
 
