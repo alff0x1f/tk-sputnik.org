@@ -28,32 +28,33 @@
       </div>
     </div>
 
-    <div class="forum-cat">
+    <div class="post-feed">
       {% for post in page_obj %}
       <div class="post-card">
-        <div class="post-author">
-          {% if post.author_username %}
-          {% with dn=post.author_username %}
-          {% if post.author and post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ dn }}">
-          {% else %}<div class="post-avatar">{{ dn|slice:":1"|upper }}</div>
-          {% endif %}
-          <span class="post-author-name">{{ dn }}</span>
-          {% endwith %}
-          {% elif post.author %}
-          {% if post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ post.author.username }}">
-          {% else %}<div class="post-avatar">{{ post.author.username|slice:":1"|upper }}</div>
-          {% endif %}
-          <span class="post-author-name">{{ post.author.username }}</span>
+        <div class="post-left">
+          {% if post.author_username %}{% with dn=post.author_username %}
+            {% if post.author and post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ dn }}">
+            {% else %}<div class="post-avatar">{{ dn|slice:":1"|upper }}</div>{% endif %}
+          {% endwith %}{% elif post.author %}
+            {% if post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ post.author.username }}">
+            {% else %}<div class="post-avatar">{{ post.author.username|slice:":1"|upper }}</div>{% endif %}
           {% else %}
-          <div class="post-avatar">—</div>
-          <span class="post-author-name">—</span>
+            <div class="post-avatar">—</div>
           {% endif %}
-          {% if post.created_at %}<span class="post-date">{{ post.created_at|date:"d M Y" }}</span>{% endif %}
+          {% if not forloop.last %}<div class="post-thread-line"></div>{% endif %}
         </div>
-        <div class="post-body">{{ post.text_html|safe }}</div>
+        <div class="post-right">
+          <div class="post-header">
+            {% if post.author_username %}<span class="post-author-name">{{ post.author_username }}</span>
+            {% elif post.author %}<span class="post-author-name">{{ post.author.username }}</span>
+            {% else %}<span class="post-author-name">—</span>{% endif %}
+            {% if post.created_at %}<span class="post-date">{{ post.created_at|date:"d M Y" }}</span>{% endif %}
+          </div>
+          <div class="post-body">{{ post.text_html|safe }}</div>
+        </div>
       </div>
       {% empty %}
-      <div style="padding:24px 16px; color:var(--muted); font-size:14px;">Сообщений нет</div>
+      <div class="post-empty">Сообщений нет</div>
       {% endfor %}
     </div>
 
