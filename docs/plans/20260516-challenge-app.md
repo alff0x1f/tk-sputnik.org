@@ -123,11 +123,11 @@ def challenge_photo(request, filename):
 - Create: `apps/challenge/scoring.py`
 - Create: `apps/challenge/tests.py`
 
-- [ ] Implement `compute_base_points(activity, distance_km, pace_min_per_km) -> int` in `apps/challenge/scoring.py`
-- [ ] Implement `recompute_athlete_scores(athlete)` — queries all Workouts for athlete ordered by date, recomputes base_points + streak_bonus + total_points, bulk-updates DB
-- [ ] Write unit tests for `compute_base_points`: all five activities, boundary values (exactly at threshold, just below, just above), None distance, pace too slow
-- [ ] Write unit tests for `recompute_athlete_scores`: streak chain, gap > 4 days resets bonus, same-day deduplication is handled at import time (not here — note in test)
-- [ ] Run tests — must pass before Task 3
+- [x] Implement `compute_base_points(activity, distance_km, pace_min_per_km) -> int` in `apps/challenge/scoring.py`
+- [x] Implement `recompute_athlete_scores(athlete)` — queries all Workouts for athlete ordered by date, recomputes base_points + streak_bonus + total_points, bulk-updates DB
+- [x] Write unit tests for `compute_base_points`: all five activities, boundary values (exactly at threshold, just below, just above), None distance, pace too slow
+- [x] Write unit tests for `recompute_athlete_scores`: streak chain, gap > 4 days resets bonus, same-day deduplication is handled at import time (not here — note in test)
+- [x] Run tests — must pass before Task 3
 
 ### Task 3: Import management command
 
