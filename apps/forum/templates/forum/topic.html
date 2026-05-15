@@ -3,25 +3,83 @@
 
 {% block title %}{{ topic.title }} — Форум — Турклуб Спутник{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
+{% endblock %}
+
+{% block topbar_action %}{% endblock %}
+
 {% block content %}
-<h1>{{ topic.title }}</h1>
-{% for post in page_obj %}
-<div class="post-card">
-  <div class="post-author">
-    {% with display_name=post.author_username %}
-    {% if display_name %}
-      <span class="post-author-name">{{ display_name }}</span>
-    {% elif post.author %}
-      <span class="post-author-name">{{ post.author.username }}</span>
-    {% else %}
-      <span class="post-author-name">—</span>
+  <main class="feed">
+    <div class="crumbs">
+      <a href="{% url 'forum-index' %}">Форум</a>
+      <span class="sep">›</span>
+      <span>{{ topic.subforum.category.name }}</span>
+      <span class="sep">›</span>
+      <a href="{% url 'subforum-topics' topic.subforum.phpbb_id %}">{{ topic.subforum.name }}</a>
+      <span class="sep">›</span>
+      <span>{{ topic.title }}</span>
+    </div>
+
+    <div class="feed-head">
+      <h1 class="feed-title">{{ topic.title }}</h1>
+      <div class="feed-sub">
+        {{ topic.post_count }} сообщени{{ topic.post_count|pluralize:"е,я,й" }}{% if topic.created_at %} · {{ topic.created_at|date:"d M Y" }}{% endif %}
+      </div>
+    </div>
+
+    <div class="forum-cat">
+      {% for post in page_obj %}
+      <div class="post-card">
+        <div class="post-author">
+          {% if post.author_username %}
+          {% with dn=post.author_username %}
+          {% if post.author and post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ dn }}">
+          {% else %}<div class="post-avatar">{{ dn|slice:":1"|upper }}</div>
+          {% endif %}
+          <span class="post-author-name">{{ dn }}</span>
+          {% endwith %}
+          {% elif post.author %}
+          {% if post.author.avatar %}<img class="post-avatar" src="{{ post.author.avatar }}" alt="{{ post.author.username }}">
+          {% else %}<div class="post-avatar">{{ post.author.username|slice:":1"|upper }}</div>
+          {% endif %}
+          <span class="post-author-name">{{ post.author.username }}</span>
+          {% else %}
+          <div class="post-avatar">—</div>
+          <span class="post-author-name">—</span>
+          {% endif %}
+          {% if post.created_at %}<span class="post-date">{{ post.created_at|date:"d M Y" }}</span>{% endif %}
+        </div>
+        <div class="post-body">{{ post.text_html|safe }}</div>
+      </div>
+      {% empty %}
+      <div style="padding:24px 16px; color:var(--muted); font-size:14px;">Сообщений нет</div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo;</a>
+      {% else %}
+        <span class="disabled">&lsaquo;</span>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="current">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">&rsaquo;</a>
+      {% else %}
+        <span class="disabled">&rsaquo;</span>
+      {% endif %}
+    </div>
     {% endif %}
-    {% endwith %}
-    {% if post.created_at %}
-      <span class="post-date">{{ post.created_at|date:"d M Y" }}</span>
-    {% endif %}
-  </div>
-  <div class="post-body">{{ post.text_html|safe }}</div>
-</div>
-{% endfor %}
+
+  </main>
 {% endblock %}

@@ -107,17 +107,17 @@ the topic list.
 **Files:**
 - Create: `apps/forum/templates/forum/topic.html`
 
-- [ ] extend `demo/base.html`, load static, link `forum/css/forum.css`
-- [ ] breadcrumbs: Форум → category name → subforum name → topic title (last item not linked)
-- [ ] `<h1>` with topic title + meta line (автор первого поста, дата создания, кол-во сообщений)
-- [ ] loop `page_obj`: for each post render `.post-card`:
+- [x] extend `demo/base.html`, load static, link `forum/css/forum.css`
+- [x] breadcrumbs: Форум → category name → subforum name → topic title (last item not linked)
+- [x] `<h1>` with topic title + meta line (автор первого поста, дата создания, кол-во сообщений)
+- [x] loop `page_obj`: for each post render `.post-card`:
   - `.post-author`: avatar circle (first letter of display name, or `<img>` if `post.author.avatar`),
     author display name, dot separator, formatted date (`d M Y`)
   - `.post-body`: `{{ post.text_html|safe }}`
-- [ ] pagination (reuse `.pagination` CSS already in `forum.css`)
-- [ ] display name helper: use `post.author_username` if non-empty, else `post.author.username`,
+- [x] pagination (reuse `.pagination` CSS already in `forum.css`)
+- [x] display name helper: use `post.author_username` if non-empty, else `post.author.username`,
   else `"—"` — implement as template `{% with %}` block or template tag (prefer `{% with %}`)
-- [ ] run `uv run pytest apps/forum/tests.py` — must pass
+- [x] run `uv run pytest apps/forum/tests.py` — must pass
 
 ### Task 5: Verify acceptance criteria
 
