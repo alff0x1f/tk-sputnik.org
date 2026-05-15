@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.forum",
     "apps.forum_import",
+    "apps.challenge",
 ]
 
 MIDDLEWARE = [
@@ -166,3 +167,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+CHALLENGE_CHAT_EXPORT_DIR = BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"

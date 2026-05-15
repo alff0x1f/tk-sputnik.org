@@ -107,15 +107,15 @@ def challenge_photo(request, filename):
 - Create: `apps/challenge/migrations/0001_initial.py` (via makemigrations)
 - Modify: `config/settings.py`
 
-- [ ] Create `apps/challenge/__init__.py`, `apps/challenge/apps.py` (name = `apps.challenge`)
-- [ ] Define `Athlete`, `Workout`, `SourceMessage` models in `apps/challenge/models.py`
-- [ ] Register models in `apps/challenge/admin.py` with basic `list_display`
-- [ ] Add `apps.challenge` to `INSTALLED_APPS` in `config/settings.py`
-- [ ] Add `CHALLENGE_CHAT_EXPORT_DIR = BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"` to `config/settings.py`
-- [ ] Run `uv run python manage.py makemigrations challenge` and verify migration file
-- [ ] Run `uv run python manage.py migrate` — must succeed
-- [ ] Write model tests: create Athlete + Workout instances, check str(), check FK cascade
-- [ ] Run tests — must pass before Task 2
+- [x] Create `apps/challenge/__init__.py`, `apps/challenge/apps.py` (name = `apps.challenge`)
+- [x] Define `Athlete`, `Workout`, `SourceMessage` models in `apps/challenge/models.py`
+- [x] Register models in `apps/challenge/admin.py` with basic `list_display`
+- [x] Add `apps.challenge` to `INSTALLED_APPS` in `config/settings.py`
+- [x] Add `CHALLENGE_CHAT_EXPORT_DIR = BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"` to `config/settings.py`
+- [x] Run `uv run python manage.py makemigrations challenge` and verify migration file
+- [x] Run `uv run python manage.py migrate` — must succeed
+- [x] Write model tests: create Athlete + Workout instances, check str(), check FK cascade
+- [x] Run tests — must pass before Task 2
 
 ### Task 2: Scoring utility
 
