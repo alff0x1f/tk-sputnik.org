@@ -36,7 +36,7 @@
       {% if group.photos %}
       <div class="msg-photos">
         {% for photo in group.photos %}
-        <a href="{% url 'challenge-photo' photo %}" target="_blank" class="msg-photo-link">
+        <a href="{% url 'challenge-photo' photo %}" class="msg-photo-link" onclick="openLightbox(this, event)">
           <img class="msg-photo-img" src="{% url 'challenge-photo' photo %}" alt="фото">
         </a>
         {% endfor %}
@@ -150,9 +150,29 @@
   </div>
 </main>
 
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <img class="lightbox-img" src="" alt="">
+</div>
+
 <script>
 const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
 const ATHLETE_ID = '{{ athlete.telegram_id }}';
+
+function openLightbox(link, e) {
+  e.preventDefault();
+  const lb = document.getElementById('lightbox');
+  lb.querySelector('.lightbox-img').src = link.href;
+  lb.classList.add('active');
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('active');
+  lb.querySelector('.lightbox-img').src = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
 function getCsrfToken() {
   return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
