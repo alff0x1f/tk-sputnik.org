@@ -271,6 +271,17 @@
 .post-body p{ margin:0 0 8px; }
 .post-body p:last-child{ margin-bottom:0; }
 .post-body br + br{ display:none; }
+.post-body a{
+  color:#2470d4;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  text-decoration-thickness:1px;
+  text-decoration-color:color-mix(in srgb, #2470d4 35%, transparent);
+}
+.post-body a:hover{
+  color:#1a5cb8;
+  text-decoration-color:#1a5cb8;
+}
 
 .post-body blockquote{
   border-left:3px solid var(--line-strong);

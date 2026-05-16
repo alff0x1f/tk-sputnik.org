@@ -11,7 +11,59 @@ from apps.forum.models import ForumUser, Post, Topic
 POSTS_TABLE = "vu2_posts"
 
 _SAFE_URL_RE = re.compile(r"^https?://", re.IGNORECASE)
+_SAFE_SCHEME_RE = re.compile(r"^(https?://|mailto:)", re.IGNORECASE)
 _HREF_RE = re.compile(r'<a[^>]+href="([^"]+)"')
+_LINK_INNER_RE = re.compile(
+    r'<a\b[^>]+href="([^"]*)"[^>]*>(.*?)</a\s*>',
+    re.DOTALL | re.IGNORECASE,
+)
+
+_SMILEY_RE = re.compile(
+    r"<!-- s[^>]* -->"
+    r'<img\s+src="\{SMILIES_PATH\}/([^"]+)"[^>]*/>'
+    r"<!-- s[^>]* -->"
+)
+_URL_MARKER_RE = re.compile(r"<!-- m -->(.*?)<!-- m -->", re.DOTALL)
+_EMAIL_MARKER_RE = re.compile(r"<!-- e -->(.*?)<!-- e -->", re.DOTALL)
+_ALT_RE = re.compile(r'\salt="([^"]*)"')
+
+
+def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
+    replacements = {}
+    counter = 0
+
+    def store(html_replacement):
+        nonlocal counter
+        key = f"\x00P{counter}\x00"
+        replacements[key] = html_replacement
+        counter += 1
+        return key
+
+    def replace_smiley(m):
+        filename = m.group(1)
+        alt_m = _ALT_RE.search(m.group(0))
+        alt = alt_m.group(1) if alt_m else ""
+        src = f"/media/forum/smilies/{html.escape(filename)}"
+        return store(f'<img src="{src}" alt="{html.escape(alt)}">')
+
+    def replace_link_marker(m):
+        inner = m.group(1).strip()
+        link_m = _LINK_INNER_RE.fullmatch(inner)
+        if not link_m:
+            return ""
+        href = html.unescape(link_m.group(1))
+        if not _SAFE_SCHEME_RE.match(href):
+            return ""
+        link_text = re.sub(r"<[^>]+>", "", link_m.group(2))
+        link_text = html.unescape(link_text)
+        safe_href = html.escape(href, quote=True)
+        safe_text = html.escape(link_text)
+        return store(f'<a href="{safe_href}" rel="nofollow">{safe_text}</a>')
+
+    text = _SMILEY_RE.sub(replace_smiley, text)
+    text = _URL_MARKER_RE.sub(replace_link_marker, text)
+    text = _EMAIL_MARKER_RE.sub(replace_link_marker, text)
+    return text, replacements
 
 
 def _render_img(tag_name, value, options, parent, context):
@@ -48,7 +100,11 @@ def _to_html(raw: str, uid: str) -> str:
     text = re.sub(r"\[list:o\]", "[list=1]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/list:[uo]\]", "[/list]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/\*:m\]", "", text, flags=re.IGNORECASE)
-    return _parser.format(text)
+    text, replacements = _extract_phpbb_markers(text)
+    result = _parser.format(text)
+    for key, value in replacements.items():
+        result = result.replace(key, value)
+    return result
 
 
 def _unix_to_dt(ts):

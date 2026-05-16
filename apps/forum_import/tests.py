@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from apps.forum.models import ForumCategory, ForumUser, Post, SubForum, Topic
+from apps.forum_import.management.commands.import_phpbb_posts import _to_html
 
 
 class ForumImportAppConfigTest(TestCase):
@@ -595,3 +596,84 @@ class ImportPhpbbPostsCommandTest(TestCase):
         self.assertIn("big text", post.text_html)
         self.assertIn("font-size:150%", post.text_html)
         self.assertNotIn("[size", post.text_html)
+
+
+class ToHtmlSmiliesMarkersTest(TestCase):
+    def test_smiley_renders_to_img_tag(self):
+        raw = (
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn('<img src="/media/forum/smilies/smile.gif"', result)
+        self.assertIn('alt=":)"', result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertNotIn("<!-- s", result)
+
+    def test_url_marker_renders_with_rel_nofollow(self):
+        raw = (
+            '<!-- m --><a class="postlink" href="https://example.com">'
+            "text</a><!-- m -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('rel="nofollow"', result)
+        self.assertIn(">text<", result)
+        self.assertNotIn("<!-- m -->", result)
+
+    def test_email_marker_renders_with_rel_nofollow(self):
+        raw = (
+            '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="mailto:user@example.com"', result)
+        self.assertIn('rel="nofollow"', result)
+        self.assertNotIn("<!-- e -->", result)
+
+    def test_multiple_smileys_all_rendered(self):
+        raw = (
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+            " and "
+            '<!-- s:D --><img src="{SMILIES_PATH}/grin.gif"'
+            ' alt=":D" title="Grin" /><!-- s:D -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("/media/forum/smilies/smile.gif", result)
+        self.assertIn("/media/forum/smilies/grin.gif", result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertEqual(result.count("<img"), 2)
+
+    def test_bbcode_and_smiley_mixed(self):
+        raw = (
+            "[b]hello[/b] "
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("<strong>hello</strong>", result)
+        self.assertIn("/media/forum/smilies/smile.gif", result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertNotIn("<!-- s", result)
+
+    def test_smiley_with_slash_in_alt_renders(self):
+        raw = (
+            '<!-- s:/ --><img src="{SMILIES_PATH}/neutral.gif"'
+            ' alt=":/" title="Neutral" /><!-- s:/ -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("/media/forum/smilies/neutral.gif", result)
+        self.assertIn('alt=":/"', result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+
+    def test_malformed_url_marker_produces_no_html(self):
+        raw = "<!-- m --><img src=x onerror=alert(1)><!-- m -->"
+        result = _to_html(raw, "")
+        self.assertNotIn("<img", result)
+        self.assertNotIn("onerror", result)
+
+    def test_unsafe_scheme_in_url_marker_suppressed(self):
+        raw = '<!-- m --><a href="javascript:alert(1)">click</a><!-- m -->'
+        result = _to_html(raw, "")
+        self.assertNotIn("javascript", result)
+        self.assertNotIn("<a", result)
