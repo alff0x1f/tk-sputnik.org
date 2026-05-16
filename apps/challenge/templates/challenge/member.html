@@ -1,0 +1,77 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}{{ athlete.name }} — Челлендж{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'challenge/css/challenge.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="feed member-page">
+  <div class="member-head">
+    <a href="{% url 'challenge-leaderboard' %}" class="member-back">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Таблица лидеров
+    </a>
+    <h1 class="member-name">{{ athlete.name }}</h1>
+    <div class="member-stats">
+      <span class="member-stat-pts">{{ total_points }} очков</span>
+      <span class="member-stat-sep">·</span>
+      <span class="member-stat-cnt">{{ workout_count }} активностей</span>
+    </div>
+  </div>
+
+  <div class="msg-list">
+    {% for msg, workout in cards %}
+    {% ifchanged msg.date %}
+    <div class="msg-date-sep">{{ msg.date|date:"d.m.Y" }}</div>
+    {% endifchanged %}
+
+    <div class="msg-bubble{% if workout %} has-workout{% endif %}">
+      {% if msg.text %}
+      <div class="msg-text">{{ msg.text|linebreaksbr }}</div>
+      {% endif %}
+
+      {% if msg.photos %}
+      <div class="msg-photos">
+        {% for photo in msg.photos %}
+        <a href="{% url 'challenge-photo' photo %}" target="_blank" class="msg-photo-link">
+          <img class="msg-photo-img" src="{% url 'challenge-photo' photo %}" alt="фото">
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if workout %}
+      <div class="workout-info-card act-{{ workout.activity }}">
+        <div class="wic-header">
+          <span class="wc-icon">
+            {% if workout.activity == 'running' %}<svg viewBox="0 0 24 24"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="m7 21 3-3-1-4 3 2 2-4"/><path d="M15.5 9.5 14 14l3 4"/><path d="M9 11.5 11 13l2-3.5"/></svg>
+            {% elif workout.activity == 'skiing' %}<svg viewBox="0 0 24 24"><path d="M4 20 L20 4"/><path d="M16 4h4v4"/><path d="M4 20h4"/><circle cx="11" cy="7" r="1.5"/></svg>
+            {% elif workout.activity == 'cycling' %}<svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 0 0-1-1h-1l-3 6h5.5l1-5z"/><path d="m5.5 17.5 5-10 1.5 4 2 4"/></svg>
+            {% elif workout.activity == 'swimming' %}<svg viewBox="0 0 24 24"><path d="M2 12c.6.5 1.2 1 2.5 1s1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1 1.2 1 2.5 1 1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1"/><path d="M2 17c.6.5 1.2 1 2.5 1s1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1 1.2 1 2.5 1 1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1"/><circle cx="12" cy="5" r="2"/><path d="M14 5.5V8l2 2"/></svg>
+            {% elif workout.activity == 'hiking' %}<svg viewBox="0 0 24 24"><path d="m3 17 3-8 3 4 3-6 3 8"/><path d="M21 17H3"/></svg>
+            {% endif %}
+          </span>
+          <span class="wic-activity">{{ workout.get_activity_display }}</span>
+          <span class="wic-date">{{ workout.date|date:"d.m" }}</span>
+        </div>
+        <div class="wic-details">
+          {% if workout.distance_km %}<span class="wic-dist">{{ workout.distance_km|floatformat:1 }} км</span>{% endif %}
+          {% if workout.pace_min_per_km %}<span class="wic-pace">{{ workout.pace_min_per_km|floatformat:1 }} мин/км</span>{% endif %}
+          <span class="wic-pts">
+            {{ workout.base_points }}{% if workout.streak_bonus %}+{{ workout.streak_bonus }}{% endif %} = {{ workout.total_points }} очков
+          </span>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="msg-meta">#{{ msg.msg_id }}</div>
+    </div>
+    {% empty %}
+    <div class="msg-empty">Нет сообщений</div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

@@ -87,12 +87,12 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 **Files:**
 - Create: `apps/challenge/templates/challenge/member.html`
 
-- [ ] extend `demo/base.html`, load `{% static %}`, link `challenge.css`
-- [ ] header section: athlete name, back link to leaderboard, total points, workout count
-- [ ] loop over `cards` with `{% ifchanged msg.date %}` for date separator headings
-- [ ] message bubble: show `msg.text` (if non-empty) and photos via `{% url 'challenge-photo' filename %}`
-- [ ] workout card (inside bubble when `workout` is not None): activity display, date, distance + pace (if set), points breakdown (`base + streak = total`)
-- [ ] visually distinguish messages with workout (e.g. highlighted border/background) from plain messages
+- [x] extend `demo/base.html`, load `{% static %}`, link `challenge.css`
+- [x] header section: athlete name, back link to leaderboard, total points, workout count
+- [x] loop over `cards` with `{% ifchanged msg.date %}` for date separator headings
+- [x] message bubble: show `msg.text` (if non-empty) and photos via `{% url 'challenge-photo' filename %}`
+- [x] workout card (inside bubble when `workout` is not None): activity display, date, distance + pace (if set), points breakdown (`base + streak = total`)
+- [x] visually distinguish messages with workout (e.g. highlighted border/background) from plain messages
 
 ### Task 4: Update leaderboard template
 

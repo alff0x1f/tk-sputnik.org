@@ -58,6 +58,7 @@
   background: var(--surface-2);
   border-top: 1px solid var(--line);
 }
+.lb-workouts[hidden] { display: none; }
 
 .workout-chip {
   display: inline-flex;
@@ -206,6 +207,180 @@
 .btn-add-workout:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* Member detail page */
+.member-page { max-width: 680px; }
+
+.member-head {
+  margin-bottom: 24px;
+}
+
+.member-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.member-back:hover { color: var(--accent); }
+.member-back svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+}
+
+.member-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.member-stats {
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.member-stat-pts {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Message list */
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msg-date-sep {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 0 4px;
+}
+
+.msg-bubble {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 12px 14px;
+  position: relative;
+}
+
+.msg-bubble.has-workout {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.msg-text {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-bubble:not(:has(.msg-text)) .msg-photos:first-child,
+.msg-text:last-child { margin-bottom: 0; }
+
+.msg-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.msg-photo-link {
+  display: block;
+  flex-shrink: 0;
+}
+
+.msg-photo-img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  display: block;
+}
+
+/* Workout info card (inside bubble) */
+.workout-info-card {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.wic-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.wic-activity {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+}
+
+.wic-date {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.wic-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+  align-items: center;
+}
+
+.wic-dist { color: var(--ink-2); }
+.wic-pace { color: var(--muted); }
+.wic-pts { font-weight: 700; color: var(--accent); margin-left: auto; }
+
+.workout-info-card .wc-icon {
+  width: 18px; height: 18px;
+}
+.workout-info-card .wc-icon svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; fill: none; stroke-width: 1.6;
+}
+
+.workout-info-card.act-running .wc-icon { color: var(--orange); }
+.workout-info-card.act-skiing .wc-icon { color: var(--snow); }
+.workout-info-card.act-cycling .wc-icon { color: var(--earth); }
+.workout-info-card.act-swimming .wc-icon { color: var(--steel); }
+.workout-info-card.act-hiking .wc-icon { color: var(--accent); }
+
+.msg-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.msg-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 /* Responsive */
