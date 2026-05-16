@@ -61,10 +61,10 @@ Server-renders the page as before. Each `.workout-info-card` gains two small act
 **Files:**
 - Modify: `apps/challenge/templates/challenge/member.html`
 
-- [ ] Add `data-workout-id`, `data-workout-date`, `data-workout-activity`, `data-workout-distance`, `data-workout-pace` attributes to `.workout-info-card`
-- [ ] Add **Ред.** and **Дел.** buttons to `.wic-header` (only rendered when `workout` exists, so no guard needed)
-- [ ] Add hidden `.wic-edit-form` div inside the card with `<select>` for activity, `<input type="date">`, two `<input type="number">` for distance and pace, plus Save/Cancel buttons
-- [ ] Add `<script>` block at bottom of `{% block content %}` with:
+- [x] Add `data-workout-id`, `data-workout-date`, `data-workout-activity`, `data-workout-distance`, `data-workout-pace` attributes to `.workout-info-card`
+- [x] Add **Ред.** and **Дел.** buttons to `.wic-header` (only rendered when `workout` exists, so no guard needed)
+- [x] Add hidden `.wic-edit-form` div inside the card with `<select>` for activity, `<input type="date">`, two `<input type="number">` for distance and pace, plus Save/Cancel buttons
+- [x] Add `<script>` block at bottom of `{% block content %}` with:
   - `getCsrfToken()` (cookie extraction — same as review.html)
   - `ACT_NAMES` dict
   - `editWorkout(id)` — hide `.wic-view`, show `.wic-edit-form`, pre-fill fields from data attributes

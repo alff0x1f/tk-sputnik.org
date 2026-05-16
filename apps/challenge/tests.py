@@ -939,7 +939,7 @@ class MemberDetailViewTests(TestCase):
         content = response.content.decode("utf-8")
         # Only msg 1001 has a workout — exactly one has-workout bubble and one info card
         self.assertEqual(content.count("has-workout"), 1)
-        self.assertEqual(content.count("workout-info-card"), 1)
+        self.assertEqual(content.count("wic-header"), 1)
 
     def test_athlete_stats_in_response(self):
         self.client.login(username="admin", password="password")

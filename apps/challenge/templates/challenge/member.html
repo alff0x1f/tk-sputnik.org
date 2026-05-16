@@ -45,7 +45,12 @@
 
       {% with workout=group.workout %}
       {% if workout %}
-      <div class="workout-info-card act-{{ workout.activity }}">
+      <div class="workout-info-card act-{{ workout.activity }}"
+           data-workout-id="{{ workout.pk }}"
+           data-workout-date="{{ workout.date|date:'Y-m-d' }}"
+           data-workout-activity="{{ workout.activity }}"
+           data-workout-distance="{{ workout.distance_km|default:'' }}"
+           data-workout-pace="{{ workout.pace_min_per_km|default:'' }}">
         <div class="wic-header">
           <span class="wc-icon">
             {% if workout.activity == 'running' %}<svg viewBox="0 0 24 24"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="m7 21 3-3-1-4 3 2 2-4"/><path d="M15.5 9.5 14 14l3 4"/><path d="M9 11.5 11 13l2-3.5"/></svg>
@@ -57,13 +62,47 @@
           </span>
           <span class="wic-activity">{{ workout.get_activity_display }}</span>
           <span class="wic-date">{{ workout.date|date:"d.m" }}</span>
-        </div>
-        <div class="wic-details">
-          {% if workout.distance_km %}<span class="wic-dist">{{ workout.distance_km|floatformat:1 }} км</span>{% endif %}
-          {% if workout.pace_min_per_km %}<span class="wic-pace">{{ workout.pace_min_per_km|floatformat:1 }} мин/км</span>{% endif %}
-          <span class="wic-pts">
-            {{ workout.base_points }}{% if workout.streak_bonus %}+{{ workout.streak_bonus }}{% endif %} = {{ workout.total_points }} очков
+          <span class="wic-actions">
+            <button class="wic-btn-edit" onclick="editWorkout({{ workout.pk }})">Ред.</button>
+            <button class="wic-btn-delete" onclick="deleteWorkout({{ workout.pk }})">Дел.</button>
           </span>
+        </div>
+        <div class="wic-view">
+          <div class="wic-details">
+            {% if workout.distance_km %}<span class="wic-dist">{{ workout.distance_km|floatformat:1 }} км</span>{% endif %}
+            {% if workout.pace_min_per_km %}<span class="wic-pace">{{ workout.pace_min_per_km|floatformat:1 }} мин/км</span>{% endif %}
+            <span class="wic-pts">
+              {{ workout.base_points }}{% if workout.streak_bonus %}+{{ workout.streak_bonus }}{% endif %} = {{ workout.total_points }} очков
+            </span>
+          </div>
+        </div>
+        <div class="wic-edit-form" style="display:none">
+          <div class="wic-form-row">
+            <label>Активность
+              <select class="wic-field-activity">
+                <option value="running">Бег</option>
+                <option value="skiing">Лыжи</option>
+                <option value="cycling">Велосипед</option>
+                <option value="swimming">Плавание</option>
+                <option value="hiking">Пеший поход</option>
+              </select>
+            </label>
+            <label>Дата
+              <input type="date" class="wic-field-date">
+            </label>
+          </div>
+          <div class="wic-form-row">
+            <label>Расстояние (км)
+              <input type="number" step="0.1" min="0" class="wic-field-distance">
+            </label>
+            <label>Темп (мин/км)
+              <input type="number" step="0.1" min="0" class="wic-field-pace">
+            </label>
+          </div>
+          <div class="wic-form-actions">
+            <button class="wic-btn-save" onclick="saveWorkout({{ workout.pk }})">Сохранить</button>
+            <button class="wic-btn-cancel" onclick="cancelEdit({{ workout.pk }})">Отмена</button>
+          </div>
         </div>
       </div>
       {% endif %}
@@ -76,4 +115,89 @@
     {% endfor %}
   </div>
 </main>
+
+<script>
+const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
+
+function getCsrfToken() {
+  return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+}
+
+function editWorkout(id) {
+  const card = document.querySelector(`.workout-info-card[data-workout-id="${id}"]`);
+  card.querySelector('.wic-field-activity').value = card.dataset.workoutActivity;
+  card.querySelector('.wic-field-date').value = card.dataset.workoutDate;
+  card.querySelector('.wic-field-distance').value = card.dataset.workoutDistance;
+  card.querySelector('.wic-field-pace').value = card.dataset.workoutPace;
+  card.querySelector('.wic-view').style.display = 'none';
+  card.querySelector('.wic-edit-form').style.display = '';
+}
+
+function cancelEdit(id) {
+  const card = document.querySelector(`.workout-info-card[data-workout-id="${id}"]`);
+  card.querySelector('.wic-view').style.display = '';
+  card.querySelector('.wic-edit-form').style.display = 'none';
+}
+
+async function saveWorkout(id) {
+  const card = document.querySelector(`.workout-info-card[data-workout-id="${id}"]`);
+  const activity = card.querySelector('.wic-field-activity').value;
+  const date = card.querySelector('.wic-field-date').value;
+  const distance = card.querySelector('.wic-field-distance').value;
+  const pace = card.querySelector('.wic-field-pace').value;
+
+  const body = {activity, date};
+  if (distance !== '') body.distance_km = parseFloat(distance);
+  if (pace !== '') body.pace_min_per_km = parseFloat(pace);
+
+  const resp = await fetch(`/challenge/review/api/workout/${id}/`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) { alert('Ошибка сохранения'); return; }
+
+  const data = await resp.json();
+  const w = data.workout;
+
+  card.dataset.workoutActivity = activity;
+  card.dataset.workoutDate = date;
+  card.dataset.workoutDistance = distance;
+  card.dataset.workoutPace = pace;
+
+  card.querySelector('.wic-activity').textContent = ACT_NAMES[activity] || activity;
+  const [, month] = date.split('-');
+  const day = date.split('-')[2];
+  card.querySelector('.wic-date').textContent = `${day}.${month}`;
+
+  const distEl = card.querySelector('.wic-dist');
+  if (distance !== '') {
+    const fmt = parseFloat(distance).toFixed(1);
+    if (distEl) distEl.textContent = `${fmt} км`;
+    else card.querySelector('.wic-details').insertAdjacentHTML('afterbegin', `<span class="wic-dist">${fmt} км</span>`);
+  } else if (distEl) distEl.remove();
+
+  const paceEl = card.querySelector('.wic-pace');
+  if (pace !== '') {
+    const fmt = parseFloat(pace).toFixed(1);
+    if (paceEl) paceEl.textContent = `${fmt} мин/км`;
+    else card.querySelector('.wic-pts').insertAdjacentHTML('beforebegin', `<span class="wic-pace">${fmt} мин/км</span>`);
+  } else if (paceEl) paceEl.remove();
+
+  const pts = w.base_points + (w.streak_bonus ? `+${w.streak_bonus}` : '') + ` = ${w.total_points} очков`;
+  card.querySelector('.wic-pts').textContent = `${w.base_points}${w.streak_bonus ? '+' + w.streak_bonus : ''} = ${w.total_points} очков`;
+
+  cancelEdit(id);
+}
+
+async function deleteWorkout(id) {
+  if (!confirm('Удалить тренировку?')) return;
+  const resp = await fetch(`/challenge/review/api/workout/${id}/`, {
+    method: 'DELETE',
+    headers: {'X-CSRFToken': getCsrfToken()},
+  });
+  if (resp.status !== 204) { alert('Ошибка удаления'); return; }
+  location.reload();
+}
+</script>
 {% endblock %}
