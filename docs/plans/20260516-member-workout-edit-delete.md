@@ -77,10 +77,10 @@ Server-renders the page as before. Each `.workout-info-card` gains two small act
 **Files:**
 - Modify: `apps/challenge/static/challenge/css/challenge.css`
 
-- [ ] Add `.wic-actions` flex container (positioned top-right in `.wic-header`)
-- [ ] Style `.wic-btn-edit` and `.wic-btn-delete` (small, muted, hover state)
-- [ ] Style `.wic-edit-form` (padding, gap, label+input layout matching the `.workout-form` style from review page)
-- [ ] Ensure `.wic-view` and `.wic-edit-form` are toggled via `display:none` (no additional CSS transition needed)
+- [x] Add `.wic-actions` flex container (positioned top-right in `.wic-header`)
+- [x] Style `.wic-btn-edit` and `.wic-btn-delete` (small, muted, hover state)
+- [x] Style `.wic-edit-form` (padding, gap, label+input layout matching the `.workout-form` style from review page)
+- [x] Ensure `.wic-view` and `.wic-edit-form` are toggled via `display:none` (no additional CSS transition needed)
 
 ### Task 3: Add tests for edit/delete button presence
 

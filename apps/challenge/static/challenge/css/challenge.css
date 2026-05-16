@@ -370,6 +370,111 @@
 .workout-info-card.act-swimming .wc-icon { color: var(--steel); }
 .workout-info-card.act-hiking .wc-icon { color: var(--accent); }
 
+.wic-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.wic-btn-edit,
+.wic-btn-delete {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.wic-btn-edit:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.wic-btn-delete:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+  background: #fef2f2;
+}
+
+.wic-edit-form {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+}
+
+.wic-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.wic-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wic-form-row input,
+.wic-form-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.wic-form-row input:focus,
+.wic-form-row select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.wic-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.wic-btn-save {
+  padding: 4px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wic-btn-save:hover {
+  opacity: 0.85;
+}
+
+.wic-btn-cancel {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wic-btn-cancel:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
 .msg-meta {
   font-size: 11px;
   color: var(--muted);

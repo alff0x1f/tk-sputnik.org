@@ -112,7 +112,7 @@ class Command(BaseCommand):
 
             ts = msg.get("date_unixtime")
             msg_datetime = (
-                datetime.datetime.fromtimestamp(int(ts), tz=datetime.timezone.utc)
+                datetime.datetime.fromtimestamp(int(ts), tz=datetime.UTC)
                 if ts
                 else None
             )
