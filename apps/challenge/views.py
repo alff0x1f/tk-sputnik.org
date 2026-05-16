@@ -33,49 +33,57 @@ def review(request):
     cards = []
     for msg in messages:
         msg_workouts = workouts_by_msg.get(msg.msg_id, [])
-        cards.append({
-            "msg_id": msg.msg_id,
-            "from_name": msg.from_name,
-            "date": str(msg.date),
-            "text": msg.text,
-            "photos": msg.photos,
-            "workouts": [
-                {
-                    "id": w.pk,
-                    "athlete_id": w.athlete_id,
-                    "athlete_name": w.athlete.name,
-                    "date": str(w.date),
-                    "activity": w.activity,
-                    "activity_display": w.get_activity_display(),
-                    "distance_km": w.distance_km,
-                    "pace_min_per_km": w.pace_min_per_km,
-                    "base_points": w.base_points,
-                    "streak_bonus": w.streak_bonus,
-                    "total_points": w.total_points,
-                }
-                for w in msg_workouts
-            ],
-        })
+        cards.append(
+            {
+                "msg_id": msg.msg_id,
+                "from_name": msg.from_name,
+                "date": str(msg.date),
+                "text": msg.text,
+                "photos": msg.photos,
+                "workouts": [
+                    {
+                        "id": w.pk,
+                        "athlete_id": w.athlete_id,
+                        "athlete_name": w.athlete.name,
+                        "date": str(w.date),
+                        "activity": w.activity,
+                        "activity_display": w.get_activity_display(),
+                        "distance_km": w.distance_km,
+                        "pace_min_per_km": w.pace_min_per_km,
+                        "base_points": w.base_points,
+                        "streak_bonus": w.streak_bonus,
+                        "total_points": w.total_points,
+                    }
+                    for w in msg_workouts
+                ],
+            }
+        )
 
     athletes = list(Athlete.objects.order_by("name").values("telegram_id", "name"))
 
-    return render(request, "challenge/review.html", {
-        "cards_json": json.dumps(cards, ensure_ascii=False),
-        "athletes_json": json.dumps(athletes, ensure_ascii=False),
-    })
+    return render(
+        request,
+        "challenge/review.html",
+        {
+            "cards_json": json.dumps(cards, ensure_ascii=False),
+            "athletes_json": json.dumps(athletes, ensure_ascii=False),
+        },
+    )
 
 
 def _workout_response(workout, athlete):
     total = athlete.workouts.aggregate(t=Sum("total_points"))["t"] or 0
-    return JsonResponse({
-        "workout": {
-            "id": workout.pk,
-            "base_points": workout.base_points,
-            "streak_bonus": workout.streak_bonus,
-            "total_points": workout.total_points,
-        },
-        "athlete_total": total,
-    })
+    return JsonResponse(
+        {
+            "workout": {
+                "id": workout.pk,
+                "base_points": workout.base_points,
+                "streak_bonus": workout.streak_bonus,
+                "total_points": workout.total_points,
+            },
+            "athlete_total": total,
+        }
+    )
 
 
 @staff_member_required
@@ -88,12 +96,12 @@ def api_workout_create(request):
 
     try:
         athlete = Athlete.objects.get(pk=data["athlete_id"])
-    except (Athlete.DoesNotExist, KeyError):
+    except Athlete.DoesNotExist, KeyError:
         return JsonResponse({"error": "Athlete not found"}, status=400)
 
     try:
         date = datetime.date.fromisoformat(data["date"])
-    except (KeyError, ValueError):
+    except KeyError, ValueError:
         return JsonResponse({"error": "Invalid date"}, status=400)
 
     activity = data.get("activity", "")
@@ -181,14 +189,16 @@ def _group_messages(messages, workouts_by_msg):
             (workouts_by_msg[m.msg_id] for m in group if m.msg_id in workouts_by_msg),
             None,
         )
-        groups.append({
-            "msgs": group,
-            "primary_msg_id": group[0].msg_id,
-            "photos": photos,
-            "text": text,
-            "workout": workout,
-            "date": group[0].date,
-        })
+        groups.append(
+            {
+                "msgs": group,
+                "primary_msg_id": group[0].msg_id,
+                "photos": photos,
+                "text": text,
+                "workout": workout,
+                "date": group[0].date,
+            }
+        )
         i = j
     return groups
 
@@ -208,12 +218,16 @@ def member_detail(request, telegram_id):
         athlete.workouts.aggregate(Sum("total_points"))["total_points__sum"] or 0
     )
     workout_count = athlete.workouts.count()
-    return render(request, "challenge/member.html", {
-        "athlete": athlete,
-        "groups": groups,
-        "total_points": total_points,
-        "workout_count": workout_count,
-    })
+    return render(
+        request,
+        "challenge/member.html",
+        {
+            "athlete": athlete,
+            "groups": groups,
+            "total_points": total_points,
+            "workout_count": workout_count,
+        },
+    )
 
 
 def leaderboard(request):

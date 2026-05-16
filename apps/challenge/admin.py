@@ -11,8 +11,14 @@ class AthleteAdmin(admin.ModelAdmin):
 @admin.register(Workout)
 class WorkoutAdmin(admin.ModelAdmin):
     list_display = [
-        "athlete", "date", "activity", "distance_km",
-        "base_points", "streak_bonus", "total_points", "msg_id",
+        "athlete",
+        "date",
+        "activity",
+        "distance_km",
+        "base_points",
+        "streak_bonus",
+        "total_points",
+        "msg_id",
     ]
     list_filter = ["activity", "date"]
 

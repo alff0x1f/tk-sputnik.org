@@ -14,8 +14,7 @@ def _extract_text(raw):
         return raw
     if isinstance(raw, list):
         return "".join(
-            part if isinstance(part, str) else part.get("text", "")
-            for part in raw
+            part if isinstance(part, str) else part.get("text", "") for part in raw
         )
     return ""
 

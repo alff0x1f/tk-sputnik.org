@@ -24,6 +24,7 @@ class AthleteModelTests(TestCase):
     def test_duplicate_telegram_id_raises(self):
         Athlete.objects.create(telegram_id="u111", name="First")
         from django.db import IntegrityError
+
         with self.assertRaises(IntegrityError):
             Athlete.objects.create(telegram_id="u111", name="Duplicate")
 
@@ -381,8 +382,10 @@ class ImportChallengeCommandTests(TestCase):
             scores_path, messages_path = self._write_fixtures(tmpdir)
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -399,8 +402,10 @@ class ImportChallengeCommandTests(TestCase):
             scores_path, messages_path = self._write_fixtures(tmpdir)
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -415,8 +420,10 @@ class ImportChallengeCommandTests(TestCase):
             scores_path, messages_path = self._write_fixtures(tmpdir)
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -433,14 +440,18 @@ class ImportChallengeCommandTests(TestCase):
             devnull = open("/dev/null", "w")
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=devnull,
             )
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=devnull,
             )
 
@@ -452,11 +463,14 @@ class ImportChallengeCommandTests(TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             _, messages_path = self._write_fixtures(tmpdir)
             import io
+
             out = io.StringIO()
             call_command(
                 "import_challenge",
-                "--scores", "/nonexistent/scores.json",
-                "--telegram-export", messages_path,
+                "--scores",
+                "/nonexistent/scores.json",
+                "--telegram-export",
+                messages_path,
                 stdout=out,
             )
 
@@ -468,11 +482,14 @@ class ImportChallengeCommandTests(TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             scores_path, _ = self._write_fixtures(tmpdir)
             import io
+
             out = io.StringIO()
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", "/nonexistent/result.json",
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                "/nonexistent/result.json",
                 stdout=out,
             )
 
@@ -485,8 +502,10 @@ class ImportChallengeCommandTests(TestCase):
             scores_path, messages_path = self._write_fixtures(tmpdir)
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -501,11 +520,14 @@ class ImportChallengeCommandTests(TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             scores_path, messages_path = self._write_fixtures(tmpdir)
             import io
+
             out = io.StringIO()
             call_command(
                 "import_challenge",
-                "--scores", scores_path,
-                "--telegram-export", messages_path,
+                "--scores",
+                scores_path,
+                "--telegram-export",
+                messages_path,
                 stdout=out,
             )
 
@@ -572,12 +594,14 @@ class ReviewViewTests(TestCase):
 
     def _make_staff(self):
         from django.contrib.auth.models import User
+
         return User.objects.create_user(
             username="admin", password="password", is_staff=True
         )
 
     def _make_regular_user(self):
         from django.contrib.auth.models import User
+
         return User.objects.create_user(
             username="regular", password="password", is_staff=False
         )
@@ -650,6 +674,7 @@ class ReviewAPITests(TestCase):
             msg_id=1001,
         )
         from django.contrib.auth.models import User
+
         self.staff = User.objects.create_user(
             username="admin", password="password", is_staff=True
         )
