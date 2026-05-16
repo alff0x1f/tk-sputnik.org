@@ -46,6 +46,15 @@ class SubForum(models.Model):
     )
     last_post_at = models.DateTimeField("Дата последнего поста", null=True, blank=True)
     sort_order = models.IntegerField("Порядок сортировки", default=0)
+    is_private = models.BooleanField("Приватный", default=False)
+    allowed_group = models.ForeignKey(
+        "auth.Group",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Группа доступа",
+        related_name="private_subforums",
+    )
 
     class Meta:
         ordering = ["sort_order"]

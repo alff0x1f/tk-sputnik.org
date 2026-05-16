@@ -54,6 +54,16 @@ class SubForumModelTests(TestCase):
         )
         self.assertEqual(nested.category, self.category)
 
+    def test_subforum_private_defaults(self):
+        sub = SubForum.objects.create(
+            phpbb_id=103,
+            phpbb_parent_id=10,
+            category=self.category,
+            name="Открытый",
+        )
+        self.assertFalse(sub.is_private)
+        self.assertIsNone(sub.allowed_group)
+
 
 class ForumUserModelTests(TestCase):
     def test_create_and_retrieve(self):

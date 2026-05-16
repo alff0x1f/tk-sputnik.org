@@ -77,12 +77,12 @@ def _can_access(request, subforum):
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/0002_subforum_private.py` (автогенерация)
 
-- [ ] добавить `is_private = models.BooleanField("Приватный", default=False)` в `SubForum`
-- [ ] добавить `allowed_group = models.ForeignKey("auth.Group", on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Группа доступа", related_name="private_subforums")` в `SubForum`
-- [ ] сгенерировать миграцию: `uv run python manage.py makemigrations forum`
-- [ ] применить миграцию: `uv run python manage.py migrate`
-- [ ] написать тест: `SubForum` по умолчанию `is_private=False`, `allowed_group=None`
-- [ ] запустить тесты — должны проходить
+- [x] добавить `is_private = models.BooleanField("Приватный", default=False)` в `SubForum`
+- [x] добавить `allowed_group = models.ForeignKey("auth.Group", on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Группа доступа", related_name="private_subforums")` в `SubForum`
+- [x] сгенерировать миграцию: `uv run python manage.py makemigrations forum`
+- [x] применить миграцию: `uv run python manage.py migrate`
+- [x] написать тест: `SubForum` по умолчанию `is_private=False`, `allowed_group=None`
+- [x] запустить тесты — должны проходить
 
 ### Task 2: Добавить ACL-логику в import_phpbb_forums
 
