@@ -949,6 +949,21 @@ class MemberDetailViewTests(TestCase):
         self.assertIn("3 очков", content)
         self.assertIn("1 активностей", content)
 
+    def test_workout_card_has_edit_button(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn(f"editWorkout({self.workout.pk})", content)
+        self.assertIn(f"deleteWorkout({self.workout.pk})", content)
+
+    def test_workout_card_buttons_absent_without_workout(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        # msg_plain (msg_id=1002) has no workout — only the one workout bubble should have buttons
+        self.assertEqual(content.count("wic-btn-edit"), 1)
+        self.assertEqual(content.count("wic-btn-delete"), 1)
+
 
 class LeaderboardViewTests(TestCase):
     def setUp(self):

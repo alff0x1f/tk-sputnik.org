@@ -87,9 +87,9 @@ Server-renders the page as before. Each `.workout-info-card` gains two small act
 **Files:**
 - Modify: `apps/challenge/tests.py`
 
-- [ ] Add `test_workout_card_has_edit_button` — staff GET returns HTML containing `editWorkout` and `deleteWorkout` JS calls for the workout's pk
-- [ ] Add `test_workout_card_buttons_absent_without_workout` — message bubble without a workout has no edit/delete buttons
-- [ ] Run tests: `uv run pytest apps/challenge/tests.py::MemberDetailViewTests` — must all pass
+- [x] Add `test_workout_card_has_edit_button` — staff GET returns HTML containing `editWorkout` and `deleteWorkout` JS calls for the workout's pk
+- [x] Add `test_workout_card_buttons_absent_without_workout` — message bubble without a workout has no edit/delete buttons
+- [x] Run tests: `uv run pytest apps/challenge/tests.py::MemberDetailViewTests` — must all pass
 
 ### Task 4: Verify acceptance criteria
 
