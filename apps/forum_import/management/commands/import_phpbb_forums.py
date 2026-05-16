@@ -131,7 +131,10 @@ def _fetch_private_forum_ids(cursor):
     forum_acl: dict[int, dict] = {}
     for row in cursor.fetchall():
         forum_id, group_name, auth_setting = row[0], row[1], row[2]
-        forum_acl.setdefault(forum_id, {})[group_name] = auth_setting
+        # phpBB rule: NEVER (0) overrides YES (1) — use min() so a direct NEVER
+        # can't be overridden by a role-based YES for the same (forum, group).
+        d = forum_acl.setdefault(forum_id, {})
+        d[group_name] = min(d.get(group_name, 1), auth_setting)
 
     private: set[int] = set()
     for forum_id, group_settings in forum_acl.items():
