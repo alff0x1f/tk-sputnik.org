@@ -89,15 +89,15 @@ def _can_access(request, subforum):
 **Files:**
 - Modify: `apps/forum_import/management/commands/import_phpbb_forums.py`
 
-- [ ] добавить функцию `_fetch_private_forum_ids(cursor)` → запрашивает `vu2_acl_options`, `vu2_groups`, `vu2_acl_groups`; возвращает `set[int]` forum_id приватных форумов
-- [ ] в `handle()` вызвать `_fetch_private_forum_ids` и передавать `is_private` и `allowed_group` в `update_or_create` для `SubForum`
-- [ ] при создании `allowed_group`: `Group.objects.get_or_create(name=row["forum_name"].lower()[:150])` только для приватных форумов
-- [ ] добавить в импорт-команду вывод: сколько форумов помечено приватными
+- [x] добавить функцию `_fetch_private_forum_ids(cursor)` → запрашивает `vu2_acl_options`, `vu2_groups`, `vu2_acl_groups`; возвращает `set[int]` forum_id приватных форумов
+- [x] в `handle()` вызвать `_fetch_private_forum_ids` и передавать `is_private` и `allowed_group` в `update_or_create` для `SubForum`
+- [x] при создании `allowed_group`: `Group.objects.get_or_create(name=row["forum_name"].lower()[:150])` только для приватных форумов
+- [x] добавить в импорт-команду вывод: сколько форумов помечено приватными
 
 > Note: эту задачу нельзя протестировать unit-тестами без MySQL. Тест написать как интеграционный скелет с комментарием TODO или покрыть `_fetch_private_forum_ids` mock-тестом в `apps/forum_import/tests.py`.
 
-- [ ] написать unit-тест для `_fetch_private_forum_ids` с mock-курсором, проверяющий логику приватности
-- [ ] запустить тесты — должны проходить
+- [x] написать unit-тест для `_fetch_private_forum_ids` с mock-курсором, проверяющий логику приватности
+- [x] запустить тесты — должны проходить
 
 ### Task 3: Добавить контроль доступа в views
 
