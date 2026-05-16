@@ -30,7 +30,7 @@
            role="{% if athlete.workout_list %}button{% endif %}"
            aria-expanded="false">
         <span class="lb-col col-rank">{{ athlete.rank }}</span>
-        <span class="lb-col col-name">{{ athlete.name }}</span>
+        <span class="lb-col col-name">{% if request.user.is_staff %}<a href="{% url 'challenge-member' athlete.telegram_id %}">{{ athlete.name }}</a>{% else %}{{ athlete.name }}{% endif %}</span>
         <span class="lb-col col-pts">{{ athlete.total_score }}</span>
         <span class="lb-col col-cnt">{{ athlete.workout_count }}</span>
         <span class="lb-col col-toggle">

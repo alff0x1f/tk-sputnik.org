@@ -99,8 +99,8 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 **Files:**
 - Modify: `apps/challenge/templates/challenge/leaderboard.html`
 
-- [ ] wrap athlete name `<span>` with `{% if request.user.is_staff %}<a href="{% url 'challenge-member' athlete.telegram_id %}">...</a>{% else %}...{% endif %}`
-- [ ] verify leaderboard still renders correctly for non-staff (name shown without link)
+- [x] wrap athlete name `<span>` with `{% if request.user.is_staff %}<a href="{% url 'challenge-member' athlete.telegram_id %}">...</a>{% else %}...{% endif %}`
+- [x] verify leaderboard still renders correctly for non-staff (name shown without link)
 
 ### Task 5: Write tests
 
