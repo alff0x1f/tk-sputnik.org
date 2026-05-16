@@ -842,6 +842,109 @@ class ReviewAPITests(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
+class MemberDetailViewTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.other_athlete = Athlete.objects.create(telegram_id="u2", name="Борис")
+
+        self.msg_with_workout = SourceMessage.objects.create(
+            msg_id=1001,
+            from_name="Анна",
+            date=datetime.date(2026, 1, 10),
+            text="Пробежала 10 км",
+            photos=[],
+        )
+        self.msg_plain = SourceMessage.objects.create(
+            msg_id=1002,
+            from_name="Анна",
+            date=datetime.date(2026, 1, 11),
+            text="Просто сообщение",
+            photos=[],
+        )
+        self.msg_other = SourceMessage.objects.create(
+            msg_id=1003,
+            from_name="Борис",
+            date=datetime.date(2026, 1, 10),
+            text="Борис бежит",
+            photos=[],
+        )
+
+        self.workout = Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 10),
+            activity="running",
+            distance_km=10.0,
+            pace_min_per_km=5.0,
+            base_points=3,
+            streak_bonus=0,
+            total_points=3,
+            msg_id=1001,
+        )
+
+        self.staff = User.objects.create_user(
+            username="admin", password="password", is_staff=True
+        )
+        self.regular = User.objects.create_user(
+            username="regular", password="password", is_staff=False
+        )
+
+    def _url(self, telegram_id="u1"):
+        return f"/challenge/member/{telegram_id}/"
+
+    def test_anonymous_redirected(self):
+        response = self.client.get(self._url())
+        self.assertIn(response.status_code, [301, 302])
+
+    def test_non_staff_redirected(self):
+        self.client.login(username="regular", password="password")
+        response = self.client.get(self._url())
+        self.assertIn(response.status_code, [301, 302])
+
+    def test_staff_gets_200(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+
+    def test_unknown_telegram_id_returns_404(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url("no_such_id"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_only_athlete_messages_shown(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("Пробежала 10 км", content)
+        self.assertIn("Просто сообщение", content)
+        self.assertNotIn("Борис бежит", content)
+
+    def test_message_with_workout_has_workout_card(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("has-workout", content)
+        self.assertIn("Бег", content)
+        self.assertIn("= 3 очков", content)
+
+    def test_message_without_workout_no_workout_card(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        # Only msg 1001 has a workout — exactly one has-workout bubble and one info card
+        self.assertEqual(content.count("has-workout"), 1)
+        self.assertEqual(content.count("workout-info-card"), 1)
+
+    def test_athlete_stats_in_response(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("Анна", content)
+        self.assertIn("3 очков", content)
+        self.assertIn("1 активностей", content)
+
+
 class LeaderboardViewTests(TestCase):
     def setUp(self):
         self.anna = Athlete.objects.create(telegram_id="u1", name="Анна")

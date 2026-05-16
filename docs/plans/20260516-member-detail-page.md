@@ -107,15 +107,15 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 **Files:**
 - Modify: `apps/challenge/tests.py`
 
-- [ ] add `MemberDetailViewTests(TestCase)` with `setUp`: create staff user, athlete, 2 SourceMessages (one with workout, one plain), one message from different athlete
-- [ ] test: anonymous user GET → 302 redirect to login
-- [ ] test: non-staff authenticated user GET → 302 redirect to login
-- [ ] test: staff user GET `/challenge/member/<id>/` → 200 OK
-- [ ] test: 404 for unknown telegram_id
-- [ ] test: only messages matching `from_name` appear in response (other athlete's message absent)
-- [ ] test: message with linked workout contains workout info (activity, points) in response content
-- [ ] test: message without workout does not contain workout card class/marker
-- [ ] run `uv run pytest apps/challenge/tests.py` — all pass
+- [x] add `MemberDetailViewTests(TestCase)` with `setUp`: create staff user, athlete, 2 SourceMessages (one with workout, one plain), one message from different athlete
+- [x] test: anonymous user GET → 302 redirect to login
+- [x] test: non-staff authenticated user GET → 302 redirect to login
+- [x] test: staff user GET `/challenge/member/<id>/` → 200 OK
+- [x] test: 404 for unknown telegram_id
+- [x] test: only messages matching `from_name` appear in response (other athlete's message absent)
+- [x] test: message with linked workout contains workout info (activity, points) in response content
+- [x] test: message without workout does not contain workout card class/marker
+- [x] run `uv run pytest apps/challenge/tests.py` — all pass
 
 ### Task 6: Verify acceptance criteria
 
