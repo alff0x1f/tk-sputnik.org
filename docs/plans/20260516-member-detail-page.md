@@ -66,14 +66,14 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 **Files:**
 - Modify: `apps/challenge/views.py`
 
-- [ ] import `Sum` from `django.db.models` (already imported — verify)
-- [ ] add `member_detail(request, telegram_id)` view with `@staff_member_required`
-- [ ] fetch athlete via `get_object_or_404(Athlete, pk=telegram_id)`
-- [ ] query messages filtered by `from_name=athlete.name`, ordered by `("date", "msg_id")`
-- [ ] build `workouts_by_msg` dict from athlete's workouts with non-null `msg_id`
-- [ ] build `cards` list of `(msg, workout_or_none)` tuples
-- [ ] compute `total_points` and `workout_count` aggregates
-- [ ] render `challenge/member.html` with context
+- [x] import `Sum` from `django.db.models` (already imported — verify)
+- [x] add `member_detail(request, telegram_id)` view with `@staff_member_required`
+- [x] fetch athlete via `get_object_or_404(Athlete, pk=telegram_id)`
+- [x] query messages filtered by `from_name=athlete.name`, ordered by `("date", "msg_id")`
+- [x] build `workouts_by_msg` dict from athlete's workouts with non-null `msg_id`
+- [x] build `cards` list of `(msg, workout_or_none)` tuples
+- [x] compute `total_points` and `workout_count` aggregates
+- [x] render `challenge/member.html` with context
 
 ### Task 2: Register URL
 

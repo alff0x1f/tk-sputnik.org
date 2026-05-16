@@ -159,6 +159,29 @@ def api_workout_detail(request, pk):
     return _workout_response(workout, new_athlete)
 
 
+@staff_member_required
+def member_detail(request, telegram_id):
+    athlete = get_object_or_404(Athlete, pk=telegram_id)
+    messages = SourceMessage.objects.filter(from_name=athlete.name).order_by(
+        "date", "msg_id"
+    )
+    workouts_by_msg = {
+        w.msg_id: w
+        for w in Workout.objects.filter(athlete=athlete, msg_id__isnull=False)
+    }
+    cards = [(msg, workouts_by_msg.get(msg.msg_id)) for msg in messages]
+    total_points = (
+        athlete.workouts.aggregate(Sum("total_points"))["total_points__sum"] or 0
+    )
+    workout_count = athlete.workouts.count()
+    return render(request, "challenge/member.html", {
+        "athlete": athlete,
+        "cards": cards,
+        "total_points": total_points,
+        "workout_count": workout_count,
+    })
+
+
 def leaderboard(request):
     athletes = list(
         Athlete.objects.annotate(
