@@ -101,8 +101,8 @@ Server-renders the page as before. Each `.workout-info-card` gains two small act
 
 ### Task 5: Update documentation
 
-- [ ] Update CLAUDE.md if new patterns were introduced (likely not needed — no new API/view)
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md if new patterns were introduced (updated member detail page description — no longer "read-only")
+- [x] Move this plan to `docs/plans/completed/`
 
 ## Post-Completion
 

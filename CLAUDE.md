@@ -97,7 +97,7 @@ uv run python manage.py import_challenge \
 
 **Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
 
-**Member detail page:** `/challenge/member/<telegram_id>/` — staff-only read-only chat view of all messages from one athlete; messages linked to a workout show an embedded info card.
+**Member detail page:** `/challenge/member/<telegram_id>/` — staff-only chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (PUT/DELETE to the same API as the review page).
 
 ## Branch naming
 
