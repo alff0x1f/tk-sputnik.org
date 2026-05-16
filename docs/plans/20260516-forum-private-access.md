@@ -104,17 +104,17 @@ def _can_access(request, subforum):
 **Files:**
 - Modify: `apps/forum/views.py`
 
-- [ ] добавить хелпер `_can_access(request, subforum) -> bool` согласно дизайну
-- [ ] в `subforum_topics`: после `get_object_or_404` — проверить `_can_access`; не аутентифицирован → `redirect(f"{settings.LOGIN_URL}?next={request.path}")`; аутентифицирован без доступа → `HttpResponseForbidden()`
-- [ ] в `topic_posts`: загрузить `topic.subforum` через `select_related("subforum")` и проверить `_can_access`
-- [ ] в `forum_index`: передавать в контекст `user_group_ids = set(request.user.groups.values_list("id", flat=True)) if request.user.is_authenticated else set()`
-- [ ] написать тесты в `SubforumTopicsViewTest`:
+- [x] добавить хелпер `_can_access(request, subforum) -> bool` согласно дизайну
+- [x] в `subforum_topics`: после `get_object_or_404` — проверить `_can_access`; не аутентифицирован → `redirect(f"{settings.LOGIN_URL}?next={request.path}")`; аутентифицирован без доступа → `HttpResponseForbidden()`
+- [x] в `topic_posts`: загрузить `topic.subforum` через `select_related("subforum")` и проверить `_can_access`
+- [x] в `forum_index`: передавать в контекст `user_group_ids = set(request.user.groups.values_list("id", flat=True)) if request.user.is_authenticated else set()`
+- [x] написать тесты в `SubforumTopicsViewTest`:
   - анонимный на приватный subforum → 302 redirect на login
   - залогиненный без группы → 403
   - залогиненный в нужной группе → 200
   - `is_staff` → 200 без группы
-- [ ] написать тесты в `TopicPostsViewTest` (те же 4 сценария)
-- [ ] запустить тесты — должны проходить
+- [x] написать тесты в `TopicPostsViewTest` (те же 4 сценария)
+- [x] запустить тесты — должны проходить
 
 ### Task 4: Показать замок в шаблоне
 

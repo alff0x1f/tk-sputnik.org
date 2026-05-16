@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 
@@ -365,3 +366,135 @@ class TopicPostsViewTest(TestCase):
         self.assertEqual(len(response.context["page_obj"].object_list), 20)
         response2 = self.client.get(self._url() + "?page=2")
         self.assertEqual(len(response2.context["page_obj"].object_list), 2)
+
+
+class SubforumTopicsAccessControlTest(TestCase):
+    def setUp(self):
+        self.group = Group.objects.create(name="орг")
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.private_subforum = SubForum.objects.create(
+            id=19,
+            phpbb_id=19,
+            phpbb_parent_id=1,
+            category=self.category,
+            name="Орг",
+            is_private=True,
+            allowed_group=self.group,
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=200, subforum=self.private_subforum, title="Private Topic"
+        )
+        self.url = reverse("subforum-topics", kwargs={"pk": 19})
+
+    def test_anonymous_redirects_to_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_logged_in_without_group_gets_403(self):
+        User.objects.create_user(username="nogroup", password="pass")
+        self.client.login(username="nogroup", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_logged_in_with_group_gets_200(self):
+        user = User.objects.create_user(username="member", password="pass")
+        user.groups.add(self.group)
+        self.client.login(username="member", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_gets_200_without_group(self):
+        User.objects.create_user(
+            username="admin", password="pass", is_staff=True
+        )
+        self.client.login(username="admin", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_public_subforum_accessible_to_anonymous(self):
+        SubForum.objects.create(
+            id=20, phpbb_id=20, phpbb_parent_id=1, category=self.category, name="Public"
+        )
+        url = reverse("subforum-topics", kwargs={"pk": 20})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+
+class TopicPostsAccessControlTest(TestCase):
+    def setUp(self):
+        self.group = Group.objects.create(name="орг")
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.private_subforum = SubForum.objects.create(
+            id=19,
+            phpbb_id=19,
+            phpbb_parent_id=1,
+            category=self.category,
+            name="Орг",
+            is_private=True,
+            allowed_group=self.group,
+        )
+        self.topic = Topic.objects.create(
+            id=300, phpbb_id=300, subforum=self.private_subforum, title="Private Topic"
+        )
+        self.url = reverse("topic-posts", kwargs={"pk": 300})
+
+    def test_anonymous_redirects_to_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_logged_in_without_group_gets_403(self):
+        User.objects.create_user(username="nogroup", password="pass")
+        self.client.login(username="nogroup", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_logged_in_with_group_gets_200(self):
+        user = User.objects.create_user(username="member", password="pass")
+        user.groups.add(self.group)
+        self.client.login(username="member", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_gets_200_without_group(self):
+        User.objects.create_user(username="admin", password="pass", is_staff=True)
+        self.client.login(username="admin", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_public_subforum_topic_accessible_to_anonymous(self):
+        public = SubForum.objects.create(
+            id=20, phpbb_id=20, phpbb_parent_id=1, category=self.category, name="Public"
+        )
+        Topic.objects.create(
+            id=400, phpbb_id=400, subforum=public, title="Public Topic"
+        )
+        url = reverse("topic-posts", kwargs={"pk": 400})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+
+class ForumIndexContextTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+
+    def test_context_has_user_group_ids_anonymous(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertIn("user_group_ids", response.context)
+        self.assertEqual(response.context["user_group_ids"], set())
+
+    def test_context_has_user_group_ids_for_logged_in_user(self):
+        group = Group.objects.create(name="test_group")
+        user = User.objects.create_user(username="tester", password="pass")
+        user.groups.add(group)
+        self.client.login(username="tester", password="pass")
+        response = self.client.get(reverse("forum-index"))
+        self.assertIn("user_group_ids", response.context)
+        self.assertIn(group.id, response.context["user_group_ids"])

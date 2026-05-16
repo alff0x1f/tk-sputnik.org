@@ -1,9 +1,23 @@
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import ForumCategory, Post, SubForum, Topic
+
+
+def _can_access(request, subforum):
+    if not subforum.is_private:
+        return True
+    if not request.user.is_authenticated:
+        return False
+    if request.user.is_staff:
+        return True
+    if subforum.allowed_group_id is None:
+        return False
+    return request.user.groups.filter(pk=subforum.allowed_group_id).exists()
 
 
 def forum_index(request):
@@ -15,7 +29,15 @@ def forum_index(request):
         cat.direct_subforums = by_parent.get(cat.id, [])
         for sf in cat.direct_subforums:
             sf.children = by_parent.get(sf.id, [])
-    return render(request, "forum/forum.html", {"categories": categories})
+    if request.user.is_authenticated:
+        user_group_ids = set(request.user.groups.values_list("id", flat=True))
+    else:
+        user_group_ids = set()
+    return render(
+        request,
+        "forum/forum.html",
+        {"categories": categories, "user_group_ids": user_group_ids},
+    )
 
 
 def _display_name(qs):
@@ -26,6 +48,10 @@ def _display_name(qs):
 
 def subforum_topics(request, pk):
     subforum = get_object_or_404(SubForum, pk=pk)
+    if not _can_access(request, subforum):
+        if not request.user.is_authenticated:
+            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+        return HttpResponseForbidden()
     first_post = Post.objects.filter(topic=OuterRef("pk")).order_by("created_at")
     last_post = Post.objects.filter(topic=OuterRef("pk")).order_by("-created_at")
     topics_qs = subforum.topics.annotate(
@@ -42,7 +68,11 @@ def subforum_topics(request, pk):
 
 
 def topic_posts(request, pk):
-    topic = get_object_or_404(Topic, pk=pk)
+    topic = get_object_or_404(Topic.objects.select_related("subforum"), pk=pk)
+    if not _can_access(request, topic.subforum):
+        if not request.user.is_authenticated:
+            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+        return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at")
     page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
     return render(
