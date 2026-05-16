@@ -235,6 +235,16 @@ class FetchPrivateForumIdsTest(TestCase):
         result = self._call([])
         self.assertEqual(result, set())
 
+    def test_query_includes_role_based_acl_table(self):
+        cursor = self._acl_cursor([])
+        from apps.forum_import.management.commands.import_phpbb_forums import (
+            _fetch_private_forum_ids,
+        )
+
+        _fetch_private_forum_ids(cursor)
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("acl_roles_data", executed_sql)
+
 
 class ImportPhpbbUsersCommandTest(TestCase):
     def _make_user_row(

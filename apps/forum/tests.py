@@ -508,3 +508,23 @@ class ForumIndexContextTest(TestCase):
         response = self.client.get(reverse("forum-index"))
         self.assertIn("user_group_ids", response.context)
         self.assertIn(group.id, response.context["user_group_ids"])
+
+    def test_private_child_subforum_shows_lock_for_anonymous(self):
+        group = Group.objects.create(name="secret")
+        cat = ForumCategory.objects.create(
+            id=50, phpbb_id=50, name="TestCat", sort_order=1
+        )
+        SubForum.objects.create(
+            id=60, phpbb_id=60, phpbb_parent_id=50, category=cat, name="ParentSub"
+        )
+        SubForum.objects.create(
+            id=61,
+            phpbb_id=61,
+            phpbb_parent_id=60,
+            category=cat,
+            name="PrivateChild",
+            is_private=True,
+            allowed_group=group,
+        )
+        response = self.client.get(reverse("forum-index"))
+        self.assertContains(response, "sf-lock")

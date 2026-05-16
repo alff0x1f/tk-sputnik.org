@@ -10,6 +10,7 @@ from apps.forum.models import ForumCategory, SubForum
 FORUM_TABLE = "vu2_forums"
 ACL_GROUPS_TABLE = "vu2_acl_groups"
 ACL_OPTIONS_TABLE = "vu2_acl_options"
+ACL_ROLES_DATA_TABLE = "vu2_acl_roles_data"
 GROUPS_TABLE = "vu2_groups"
 
 
@@ -111,12 +112,21 @@ class Command(BaseCommand):
 
 def _fetch_private_forum_ids(cursor):
     """Return set of forum IDs that guests cannot read but some other group can."""
+    # phpBB stores permissions two ways: direct (auth_role_id=0) and role-based
+    # (auth_role_id!=0, actual settings in vu2_acl_roles_data). Both must be checked.
     cursor.execute(  # noqa: S608
         f"SELECT ag.forum_id, g.group_name, ag.auth_setting"
         f" FROM {ACL_GROUPS_TABLE} ag"
         f" JOIN {ACL_OPTIONS_TABLE} ao ON ag.auth_option_id = ao.auth_option_id"
         f" JOIN {GROUPS_TABLE} g ON ag.group_id = g.group_id"
-        f" WHERE ao.auth_option = 'f_read'"
+        f" WHERE ao.auth_option = 'f_read' AND ag.auth_role_id = 0"
+        f" UNION"
+        f" SELECT ag.forum_id, g.group_name, rd.auth_setting"
+        f" FROM {ACL_GROUPS_TABLE} ag"
+        f" JOIN {GROUPS_TABLE} g ON ag.group_id = g.group_id"
+        f" JOIN {ACL_ROLES_DATA_TABLE} rd ON ag.auth_role_id = rd.role_id"
+        f" JOIN {ACL_OPTIONS_TABLE} ao ON rd.auth_option_id = ao.auth_option_id"
+        f" WHERE ao.auth_option = 'f_read' AND ag.auth_role_id != 0"
     )
     forum_acl: dict[int, dict] = {}
     for row in cursor.fetchall():
