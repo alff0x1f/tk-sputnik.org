@@ -655,3 +655,25 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertIn("/media/forum/smilies/smile.gif", result)
         self.assertNotIn("{SMILIES_PATH}", result)
         self.assertNotIn("<!-- s", result)
+
+    def test_smiley_with_slash_in_alt_renders(self):
+        raw = (
+            '<!-- s:/ --><img src="{SMILIES_PATH}/neutral.gif"'
+            ' alt=":/" title="Neutral" /><!-- s:/ -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("/media/forum/smilies/neutral.gif", result)
+        self.assertIn('alt=":/"', result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+
+    def test_malformed_url_marker_produces_no_html(self):
+        raw = "<!-- m --><img src=x onerror=alert(1)><!-- m -->"
+        result = _to_html(raw, "")
+        self.assertNotIn("<img", result)
+        self.assertNotIn("onerror", result)
+
+    def test_unsafe_scheme_in_url_marker_suppressed(self):
+        raw = '<!-- m --><a href="javascript:alert(1)">click</a><!-- m -->'
+        result = _to_html(raw, "")
+        self.assertNotIn("javascript", result)
+        self.assertNotIn("<a", result)
