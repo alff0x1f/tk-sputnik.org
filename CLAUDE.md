@@ -70,6 +70,7 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Categories and subforums (`ForumCategory`, `SubForum`) — done
 - [x] Users (`ForumUser`) — done
 - [x] Topics (`Topic`), posts (`Post`) — done
+- [x] Private subforum access control (is_private + allowed_group)
 
 ## Branch naming
 

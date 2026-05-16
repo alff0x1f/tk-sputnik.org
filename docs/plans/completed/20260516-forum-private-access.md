@@ -141,8 +141,8 @@ def _can_access(request, subforum):
 **Files:**
 - Modify: `CLAUDE.md`
 
-- [ ] добавить в раздел **Import status** пункт: `- [x] Private subforum access control (is_private + allowed_group)`
-- [ ] переместить план в `docs/plans/completed/`
+- [x] добавить в раздел **Import status** пункт: `- [x] Private subforum access control (is_private + allowed_group)`
+- [x] переместить план в `docs/plans/completed/`
 
 ## Post-Completion
 
