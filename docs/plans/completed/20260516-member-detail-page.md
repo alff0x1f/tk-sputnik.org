@@ -130,8 +130,8 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 - Modify: `CLAUDE.md`
 - Move: this plan to `docs/plans/completed/`
 
-- [ ] add `member_detail` to the challenge app section in `CLAUDE.md` under "Review page" bullet (one line)
-- [ ] move plan: `mkdir -p docs/plans/completed && mv docs/plans/20260516-member-detail-page.md docs/plans/completed/`
+- [x] add `member_detail` to the challenge app section in `CLAUDE.md` under "Review page" bullet (one line)
+- [x] move plan: `mkdir -p docs/plans/completed && mv docs/plans/20260516-member-detail-page.md docs/plans/completed/`
 
 ## Post-Completion
 
