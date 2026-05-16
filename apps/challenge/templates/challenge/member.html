@@ -108,7 +108,41 @@
       {% endif %}
       {% endwith %}
 
-      <div class="msg-meta">#{{ group.primary_msg_id }}</div>
+      <div class="wic-create-form" data-create-msg="{{ group.primary_msg_id }}" style="display:none">
+        <div class="wic-form-row">
+          <label>Активность
+            <select class="wic-field-activity">
+              <option value="running">Бег</option>
+              <option value="skiing">Лыжи</option>
+              <option value="cycling">Велосипед</option>
+              <option value="swimming">Плавание</option>
+              <option value="hiking">Пеший поход</option>
+            </select>
+          </label>
+          <label>Дата
+            <input type="date" class="wic-field-date">
+          </label>
+        </div>
+        <div class="wic-form-row">
+          <label>Расстояние (км)
+            <input type="number" step="0.1" min="0" class="wic-field-distance" placeholder="необяз.">
+          </label>
+          <label>Темп (мин/км)
+            <input type="number" step="0.1" min="0" class="wic-field-pace" placeholder="необяз.">
+          </label>
+        </div>
+        <div class="wic-form-actions">
+          <button class="wic-btn-save" onclick="createWorkout('{{ group.primary_msg_id }}')">Добавить</button>
+          <button class="wic-btn-cancel" onclick="cancelCreate('{{ group.primary_msg_id }}')">Отмена</button>
+        </div>
+      </div>
+
+      <div class="msg-meta">
+        <span>#{{ group.primary_msg_id }}</span>
+        <button class="msg-add-btn" onclick="openCreateForm('{{ group.primary_msg_id }}', '{{ group.date|date:'Y-m-d' }}')" title="Добавить тренировку">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
     </div>
     {% empty %}
     <div class="msg-empty">Нет сообщений</div>
@@ -118,6 +152,7 @@
 
 <script>
 const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
+const ATHLETE_ID = '{{ athlete.telegram_id }}';
 
 function getCsrfToken() {
   return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
@@ -188,6 +223,39 @@ async function saveWorkout(id) {
   card.querySelector('.wic-pts').textContent = `${w.base_points}${w.streak_bonus ? '+' + w.streak_bonus : ''} = ${w.total_points} очков`;
 
   cancelEdit(id);
+}
+
+function openCreateForm(msgId, defaultDate) {
+  const form = document.querySelector(`.wic-create-form[data-create-msg="${msgId}"]`);
+  form.querySelector('.wic-field-activity').value = 'running';
+  form.querySelector('.wic-field-date').value = defaultDate;
+  form.querySelector('.wic-field-distance').value = '';
+  form.querySelector('.wic-field-pace').value = '';
+  form.style.display = '';
+}
+
+function cancelCreate(msgId) {
+  document.querySelector(`.wic-create-form[data-create-msg="${msgId}"]`).style.display = 'none';
+}
+
+async function createWorkout(msgId) {
+  const form = document.querySelector(`.wic-create-form[data-create-msg="${msgId}"]`);
+  const activity = form.querySelector('.wic-field-activity').value;
+  const date = form.querySelector('.wic-field-date').value;
+  const distance = form.querySelector('.wic-field-distance').value;
+  const pace = form.querySelector('.wic-field-pace').value;
+
+  const body = {athlete_id: ATHLETE_ID, date, activity, msg_id: parseInt(msgId)};
+  if (distance !== '') body.distance_km = parseFloat(distance);
+  if (pace !== '') body.pace_min_per_km = parseFloat(pace);
+
+  const resp = await fetch('/challenge/review/api/workout/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) { alert('Ошибка создания тренировки'); return; }
+  location.reload();
 }
 
 async function deleteWorkout(id) {

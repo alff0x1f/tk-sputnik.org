@@ -479,6 +479,44 @@
   font-size: 11px;
   color: var(--muted);
   margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.msg-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.msg-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.msg-add-btn svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.wic-create-form {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  margin-top: 8px;
 }
 
 .msg-empty {
