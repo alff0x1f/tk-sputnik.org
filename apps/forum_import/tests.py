@@ -600,7 +600,10 @@ class ImportPhpbbPostsCommandTest(TestCase):
 
 class ToHtmlSmiliesMarkersTest(TestCase):
     def test_smiley_renders_to_img_tag(self):
-        raw = '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif" alt=":)" title="Smile" /><!-- s:) -->'
+        raw = (
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
         result = _to_html(raw, "")
         self.assertIn('<img src="/media/forum/smilies/smile.gif"', result)
         self.assertIn('alt=":)"', result)
@@ -608,7 +611,10 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn("<!-- s", result)
 
     def test_url_marker_renders_with_rel_nofollow(self):
-        raw = '<!-- m --><a class="postlink" href="https://example.com">text</a><!-- m -->'
+        raw = (
+            '<!-- m --><a class="postlink" href="https://example.com">'
+            "text</a><!-- m -->"
+        )
         result = _to_html(raw, "")
         self.assertIn('href="https://example.com"', result)
         self.assertIn('rel="nofollow"', result)
@@ -616,7 +622,9 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn("<!-- m -->", result)
 
     def test_email_marker_renders_with_rel_nofollow(self):
-        raw = '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
+        raw = (
+            '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
+        )
         result = _to_html(raw, "")
         self.assertIn('href="mailto:user@example.com"', result)
         self.assertIn('rel="nofollow"', result)
@@ -624,9 +632,11 @@ class ToHtmlSmiliesMarkersTest(TestCase):
 
     def test_multiple_smileys_all_rendered(self):
         raw = (
-            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif" alt=":)" title="Smile" /><!-- s:) -->'
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
             " and "
-            '<!-- s:D --><img src="{SMILIES_PATH}/grin.gif" alt=":D" title="Grin" /><!-- s:D -->'
+            '<!-- s:D --><img src="{SMILIES_PATH}/grin.gif"'
+            ' alt=":D" title="Grin" /><!-- s:D -->'
         )
         result = _to_html(raw, "")
         self.assertIn("/media/forum/smilies/smile.gif", result)
@@ -635,7 +645,11 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertEqual(result.count("<img"), 2)
 
     def test_bbcode_and_smiley_mixed(self):
-        raw = '[b]hello[/b] <!-- s:) --><img src="{SMILIES_PATH}/smile.gif" alt=":)" title="Smile" /><!-- s:) -->'
+        raw = (
+            "[b]hello[/b] "
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
         result = _to_html(raw, "")
         self.assertIn("<strong>hello</strong>", result)
         self.assertIn("/media/forum/smilies/smile.gif", result)

@@ -14,14 +14,14 @@ _SAFE_URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 _HREF_RE = re.compile(r'<a[^>]+href="([^"]+)"')
 
 _SMILEY_RE = re.compile(
-    r'<!-- s[^>]* -->'
+    r"<!-- s[^>]* -->"
     r'<img\s+src="\{SMILIES_PATH\}/([^"]+)"[^/]*/>'
-    r'<!-- s[^>]* -->'
+    r"<!-- s[^>]* -->"
 )
-_URL_MARKER_RE = re.compile(r'<!-- m -->(.*?)<!-- m -->', re.DOTALL)
-_EMAIL_MARKER_RE = re.compile(r'<!-- e -->(.*?)<!-- e -->', re.DOTALL)
+_URL_MARKER_RE = re.compile(r"<!-- m -->(.*?)<!-- m -->", re.DOTALL)
+_EMAIL_MARKER_RE = re.compile(r"<!-- e -->(.*?)<!-- e -->", re.DOTALL)
 _ALT_RE = re.compile(r'\salt="([^"]*)"')
-_REL_RE = re.compile(r'(<a\b)', re.IGNORECASE)
+_REL_RE = re.compile(r"(<a\b)", re.IGNORECASE)
 
 
 def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
@@ -39,7 +39,8 @@ def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
         filename = m.group(1)
         alt_m = _ALT_RE.search(m.group(0))
         alt = alt_m.group(1) if alt_m else ""
-        return store(f'<img src="/media/forum/smilies/{html.escape(filename)}" alt="{html.escape(alt)}">')
+        src = f"/media/forum/smilies/{html.escape(filename)}"
+        return store(f'<img src="{src}" alt="{html.escape(alt)}">')
 
     def replace_link_marker(m):
         inner = m.group(1)
