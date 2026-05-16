@@ -159,6 +159,40 @@ def api_workout_detail(request, pk):
     return _workout_response(workout, new_athlete)
 
 
+def _group_messages(messages, workouts_by_msg):
+    groups = []
+    msgs = list(messages)
+    i = 0
+    while i < len(msgs):
+        msg = msgs[i]
+        group = [msg]
+        j = i + 1
+        while (
+            j < len(msgs)
+            and msg.datetime is not None
+            and msgs[j].datetime == msg.datetime
+        ):
+            group.append(msgs[j])
+            j += 1
+
+        photos = [p for m in group for p in m.photos]
+        text = next((m.text for m in group if m.text), "")
+        workout = next(
+            (workouts_by_msg[m.msg_id] for m in group if m.msg_id in workouts_by_msg),
+            None,
+        )
+        groups.append({
+            "msgs": group,
+            "primary_msg_id": group[0].msg_id,
+            "photos": photos,
+            "text": text,
+            "workout": workout,
+            "date": group[0].date,
+        })
+        i = j
+    return groups
+
+
 @staff_member_required
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
@@ -169,14 +203,14 @@ def member_detail(request, telegram_id):
         w.msg_id: w
         for w in Workout.objects.filter(athlete=athlete, msg_id__isnull=False)
     }
-    cards = [(msg, workouts_by_msg.get(msg.msg_id)) for msg in messages]
+    groups = _group_messages(messages, workouts_by_msg)
     total_points = (
         athlete.workouts.aggregate(Sum("total_points"))["total_points__sum"] or 0
     )
     workout_count = athlete.workouts.count()
     return render(request, "challenge/member.html", {
         "athlete": athlete,
-        "cards": cards,
+        "groups": groups,
         "total_points": total_points,
         "workout_count": workout_count,
     })

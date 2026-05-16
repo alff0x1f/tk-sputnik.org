@@ -50,6 +50,7 @@ class SourceMessage(models.Model):
     msg_id = models.IntegerField("ID сообщения", primary_key=True)
     from_name = models.CharField("Отправитель", max_length=255)
     date = models.DateField("Дата")
+    datetime = models.DateTimeField("Дата и время", null=True, blank=True)
     text = models.TextField("Текст", blank=True)
     photos = models.JSONField("Фото", default=list)
 

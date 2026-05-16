@@ -1,3 +1,4 @@
+import datetime
 import json
 from pathlib import Path
 
@@ -6,6 +7,17 @@ from django.core.management.base import BaseCommand
 
 from apps.challenge.models import Athlete, SourceMessage, Workout
 from apps.challenge.scoring import recompute_athlete_scores
+
+
+def _extract_text(raw):
+    if isinstance(raw, str):
+        return raw
+    if isinstance(raw, list):
+        return "".join(
+            part if isinstance(part, str) else part.get("text", "")
+            for part in raw
+        )
+    return ""
 
 
 class Command(BaseCommand):
@@ -19,17 +31,14 @@ class Command(BaseCommand):
             help="Path to scores.json (default: scratch/challenge/scores.json)",
         )
         parser.add_argument(
-            "--messages",
-            default=str(default_base / "messages_clean.json"),
-            help=(
-                "Path to messages_clean.json"
-                " (default: scratch/challenge/messages_clean.json)"
-            ),
+            "--telegram-export",
+            default=str(default_base / "ChatExport_2026-04-02" / "result.json"),
+            help="Path to Telegram chat export result.json",
         )
 
     def handle(self, *args, **options):
         scores_path = Path(options["scores"])
-        messages_path = Path(options["messages"])
+        export_path = Path(options["telegram_export"])
 
         athlete_count = workout_count = message_count = 0
 
@@ -40,14 +49,14 @@ class Command(BaseCommand):
         else:
             athlete_count, workout_count = self._import_scores(scores_path)
 
-        if not messages_path.exists():
+        if not export_path.exists():
             self.stdout.write(
                 self.style.WARNING(
-                    f"Messages file not found: {messages_path}, skipping"
+                    f"Telegram export not found: {export_path}, skipping"
                 )
             )
         else:
-            message_count = self._import_messages(messages_path)
+            message_count = self._import_messages(export_path)
 
         self.stdout.write(
             f"Imported {athlete_count} athletes, {workout_count} workouts,"
@@ -92,16 +101,37 @@ class Command(BaseCommand):
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
+        messages = data.get("messages", data) if isinstance(data, dict) else data
+
         message_count = 0
-        for msg in data:
+        for msg in messages:
+            if msg.get("type") != "message":
+                continue
+            if not msg.get("from_id"):
+                continue
+
+            ts = msg.get("date_unixtime")
+            msg_datetime = (
+                datetime.datetime.fromtimestamp(int(ts), tz=datetime.timezone.utc)
+                if ts
+                else None
+            )
+            msg_date = (
+                msg_datetime.date()
+                if msg_datetime
+                else datetime.date.fromisoformat(msg["date"][:10])
+            )
+
             photo = msg.get("photo")
             photos = [photo] if isinstance(photo, str) else []
+
             SourceMessage.objects.update_or_create(
-                msg_id=msg["msg_id"],
+                msg_id=msg["id"],
                 defaults={
                     "from_name": msg.get("from", ""),
-                    "date": msg["date"],
-                    "text": msg.get("text", ""),
+                    "date": msg_date,
+                    "datetime": msg_datetime,
+                    "text": _extract_text(msg.get("text", "")),
                     "photos": photos,
                 },
             )

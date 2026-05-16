@@ -23,19 +23,19 @@
   </div>
 
   <div class="msg-list">
-    {% for msg, workout in cards %}
-    {% ifchanged msg.date %}
-    <div class="msg-date-sep">{{ msg.date|date:"d.m.Y" }}</div>
+    {% for group in groups %}
+    {% ifchanged group.date %}
+    <div class="msg-date-sep">{{ group.date|date:"d.m.Y" }}</div>
     {% endifchanged %}
 
-    <div class="msg-bubble{% if workout %} has-workout{% endif %}">
-      {% if msg.text %}
-      <div class="msg-text">{{ msg.text|linebreaksbr }}</div>
+    <div class="msg-bubble{% if group.workout %} has-workout{% endif %}">
+      {% if group.text %}
+      <div class="msg-text">{{ group.text|linebreaksbr }}</div>
       {% endif %}
 
-      {% if msg.photos %}
+      {% if group.photos %}
       <div class="msg-photos">
-        {% for photo in msg.photos %}
+        {% for photo in group.photos %}
         <a href="{% url 'challenge-photo' photo %}" target="_blank" class="msg-photo-link">
           <img class="msg-photo-img" src="{% url 'challenge-photo' photo %}" alt="фото">
         </a>
@@ -43,6 +43,7 @@
       </div>
       {% endif %}
 
+      {% with workout=group.workout %}
       {% if workout %}
       <div class="workout-info-card act-{{ workout.activity }}">
         <div class="wic-header">
@@ -66,8 +67,9 @@
         </div>
       </div>
       {% endif %}
+      {% endwith %}
 
-      <div class="msg-meta">#{{ msg.msg_id }}</div>
+      <div class="msg-meta">#{{ group.primary_msg_id }}</div>
     </div>
     {% empty %}
     <div class="msg-empty">Нет сообщений</div>

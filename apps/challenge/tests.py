@@ -337,39 +337,44 @@ FIXTURE_SCORES = {
     ],
 }
 
-FIXTURE_MESSAGES = [
-    {
-        "msg_id": 1001,
-        "from": "Анна",
-        "from_id": "user111",
-        "date": "2025-12-01",
-        "text": "Бег 7 км",
-        "photo": "photos/photo_001.jpg",
-    },
-    {
-        "msg_id": 1002,
-        "from": "Анна",
-        "from_id": "user111",
-        "date": "2025-12-03",
-        "text": "",
-        "photo": None,
-    },
-]
+FIXTURE_MESSAGES = {
+    "messages": [
+        {
+            "id": 1001,
+            "type": "message",
+            "date": "2025-12-01T14:03:55",
+            "date_unixtime": "1764608635",
+            "from": "Анна",
+            "from_id": "user111",
+            "photo": "photos/photo_001.jpg",
+            "text": "Бег 7 км",
+        },
+        {
+            "id": 1002,
+            "type": "message",
+            "date": "2025-12-03T14:03:55",
+            "date_unixtime": "1764781435",
+            "from": "Анна",
+            "from_id": "user111",
+            "text": "",
+        },
+    ]
+}
 
 
 class ImportChallengeCommandTests(TestCase):
     def _write_fixtures(self, tmpdir, scores=None, messages=None):
         scores_path = Path(tmpdir) / "scores.json"
-        messages_path = Path(tmpdir) / "messages.json"
+        export_path = Path(tmpdir) / "result.json"
         scores_path.write_text(
             json.dumps(scores if scores is not None else FIXTURE_SCORES),
             encoding="utf-8",
         )
-        messages_path.write_text(
+        export_path.write_text(
             json.dumps(messages if messages is not None else FIXTURE_MESSAGES),
             encoding="utf-8",
         )
-        return str(scores_path), str(messages_path)
+        return str(scores_path), str(export_path)
 
     def test_basic_import(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -377,7 +382,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -395,7 +400,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -411,7 +416,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -429,13 +434,13 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=devnull,
             )
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=devnull,
             )
 
@@ -451,7 +456,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", "/nonexistent/scores.json",
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=out,
             )
 
@@ -467,7 +472,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", "/nonexistent/messages.json",
+                "--telegram-export", "/nonexistent/result.json",
                 stdout=out,
             )
 
@@ -481,7 +486,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=open("/dev/null", "w"),
             )
 
@@ -500,7 +505,7 @@ class ImportChallengeCommandTests(TestCase):
             call_command(
                 "import_challenge",
                 "--scores", scores_path,
-                "--messages", messages_path,
+                "--telegram-export", messages_path,
                 stdout=out,
             )
 
