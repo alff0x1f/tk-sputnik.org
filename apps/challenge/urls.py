@@ -16,4 +16,5 @@ urlpatterns = [
         name="challenge-api-workout-detail",
     ),
     path("photo/<path:filename>", views.challenge_photo, name="challenge-photo"),
+    path("member/<str:telegram_id>/", views.member_detail, name="challenge-member"),
 ]

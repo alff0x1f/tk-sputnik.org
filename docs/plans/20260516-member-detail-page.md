@@ -80,7 +80,7 @@ Server-rendered Django template, no JavaScript. View fetches messages by `from_n
 **Files:**
 - Modify: `apps/challenge/urls.py`
 
-- [ ] add `path("member/<str:telegram_id>/", views.member_detail, name="challenge-member")` to `urlpatterns`
+- [x] add `path("member/<str:telegram_id>/", views.member_detail, name="challenge-member")` to `urlpatterns`
 
 ### Task 3: Create `member.html` template
 
