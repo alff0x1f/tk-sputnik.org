@@ -1,0 +1,571 @@
+/* Leaderboard */
+.lb-table {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.lb-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 80px 100px 32px;
+  padding: 10px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.lb-row {
+  border-bottom: 1px solid var(--line);
+}
+.lb-row:last-child { border-bottom: none; }
+
+.lb-athlete {
+  display: grid;
+  grid-template-columns: 48px 1fr 80px 100px 32px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface);
+  transition: background 0.1s;
+}
+.lb-athlete.expandable { cursor: pointer; }
+.lb-athlete.expandable:hover { background: var(--surface-2); }
+.lb-athlete.open .toggle-icon { transform: rotate(180deg); }
+
+.col-rank { font-size: 13px; font-weight: 700; color: var(--muted); }
+.lb-row:nth-child(-n+4) .col-rank { color: var(--accent); }
+
+.col-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+.col-pts { font-size: 16px; font-weight: 700; color: var(--accent); }
+.col-cnt { font-size: 13px; color: var(--muted); }
+.col-toggle { display: flex; align-items: center; justify-content: center; }
+
+.toggle-icon {
+  width: 16px; height: 16px;
+  stroke: var(--muted); fill: none; stroke-width: 2;
+  transition: transform 0.2s;
+}
+
+/* Workout chips */
+.lb-workouts {
+  padding: 8px 16px 12px 64px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+}
+.lb-workouts[hidden] { display: none; }
+
+.workout-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.wc-icon {
+  width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.wc-icon svg {
+  width: 14px; height: 14px;
+  stroke: currentColor; fill: none; stroke-width: 1.6;
+}
+
+.act-running .wc-icon { color: var(--orange); }
+.act-skiing .wc-icon { color: var(--snow); }
+.act-cycling .wc-icon { color: var(--earth); }
+.act-swimming .wc-icon { color: var(--steel); }
+.act-hiking .wc-icon { color: var(--accent); }
+
+.wc-date { color: var(--muted); }
+.wc-act { font-weight: 500; }
+.wc-dist { color: var(--ink-2); }
+.wc-pace { color: var(--muted); }
+.wc-pts { font-weight: 700; color: var(--accent); margin-left: 2px; }
+
+.wc-link {
+  display: inline-flex; align-items: center;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+.wc-link:hover { color: var(--accent); }
+.wc-link svg {
+  width: 13px; height: 13px;
+  stroke: currentColor; fill: none; stroke-width: 1.6;
+}
+
+.lb-empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Review form */
+.workout-form {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  margin-bottom: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.form-field label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-field input,
+.form-field select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.form-field-pts {
+  justify-content: center;
+}
+
+.workout-pts-display {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 4px 0;
+}
+
+.workout-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-delete {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+  background: #fef2f2;
+}
+
+.btn-add-workout {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-add-workout:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Member detail page */
+.member-page { max-width: 680px; }
+
+.member-head {
+  margin-bottom: 24px;
+}
+
+.member-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.member-back:hover { color: var(--accent); }
+.member-back svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+}
+
+.member-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.member-stats {
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.member-stat-pts {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Message list */
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msg-date-sep {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 0 4px;
+}
+
+.msg-bubble {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 12px 14px;
+  position: relative;
+}
+
+.msg-bubble.has-workout {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.msg-text {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-bubble:not(:has(.msg-text)) .msg-photos:first-child,
+.msg-text:last-child { margin-bottom: 0; }
+
+.msg-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.msg-photo-link {
+  display: block;
+  flex-shrink: 0;
+}
+
+.msg-photo-img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  display: block;
+}
+
+/* Workout info card (inside bubble) */
+.workout-info-card {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.wic-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.wic-activity {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+}
+
+.wic-date {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.wic-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+  align-items: center;
+}
+
+.wic-dist { color: var(--ink-2); }
+.wic-pace { color: var(--muted); }
+.wic-pts { font-weight: 700; color: var(--accent); margin-left: auto; }
+
+.workout-info-card .wc-icon {
+  width: 18px; height: 18px;
+}
+.workout-info-card .wc-icon svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; fill: none; stroke-width: 1.6;
+}
+
+.workout-info-card.act-running .wc-icon { color: var(--orange); }
+.workout-info-card.act-skiing .wc-icon { color: var(--snow); }
+.workout-info-card.act-cycling .wc-icon { color: var(--earth); }
+.workout-info-card.act-swimming .wc-icon { color: var(--steel); }
+.workout-info-card.act-hiking .wc-icon { color: var(--accent); }
+
+.wic-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.wic-btn-edit,
+.wic-btn-delete {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.wic-btn-edit:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.wic-btn-delete:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+  background: #fef2f2;
+}
+
+.wic-edit-form {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+}
+
+.wic-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.wic-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wic-form-row input,
+.wic-form-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.wic-form-row input:focus,
+.wic-form-row select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.wic-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.wic-btn-save {
+  padding: 4px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wic-btn-save:hover {
+  opacity: 0.85;
+}
+
+.wic-btn-cancel {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wic-btn-cancel:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
+.msg-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.msg-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.msg-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.msg-add-btn svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.wic-create-form {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox.active { display: flex; }
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0;
+}
+.lightbox-close:hover { opacity: 1; }
+
+.msg-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .lb-header,
+  .lb-athlete {
+    grid-template-columns: 36px 1fr 60px 0 24px;
+  }
+  .col-cnt { display: none; }
+  .lb-workouts { padding-left: 16px; }
+}

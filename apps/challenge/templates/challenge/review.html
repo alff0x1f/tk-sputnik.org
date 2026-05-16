@@ -1,0 +1,560 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}Проверка — Челлендж — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'challenge/css/challenge.css' %}">
+<style>
+.review-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.review-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.review-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-nav button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.review-nav button:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+.review-counter {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 80px;
+  text-align: center;
+}
+
+.save-status {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  min-width: 90px;
+  transition: opacity 0.3s;
+}
+.save-status.saving { color: var(--muted); }
+.save-status.saved { color: #2d7a36; }
+.save-status.error { color: #c0392b; }
+.save-status.hidden { opacity: 0; }
+
+.review-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.review-filters select,
+.review-filters button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.review-filters select:focus,
+.review-filters button:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.review-panels {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.review-left,
+.review-right {
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.review-left {
+  flex: 1;
+  border-right: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.review-right {
+  width: 340px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.review-photos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.review-photo {
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  display: block;
+}
+
+.review-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.review-text {
+  font-size: 14px;
+  color: var(--ink);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.review-no-photo {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.review-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.review-no-workouts {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.review-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-wrap">
+  <div class="review-toolbar">
+    <div class="review-nav">
+      <button id="btn-prev" onclick="navigateCard(-1)">&#8592; Пред</button>
+      <span class="review-counter" id="card-counter">—</span>
+      <button id="btn-next" onclick="navigateCard(1)">След &#8594;</button>
+    </div>
+
+    <span class="save-status hidden" id="save-status"></span>
+
+    <div class="review-filters">
+      <select id="user-filter" onchange="applyFilters()">
+        <option value="">Все участники</option>
+      </select>
+      <button class="filter-btn active" data-status="all" onclick="setStatusFilter('all', this)">Все</button>
+      <button class="filter-btn" data-status="has_workout" onclick="setStatusFilter('has_workout', this)">С тренировкой</button>
+      <button class="filter-btn" data-status="no_workout" onclick="setStatusFilter('no_workout', this)">Без тренировки</button>
+    </div>
+  </div>
+
+  <div class="review-panels">
+    <div class="review-left" id="left-panel">
+      <div id="photo-gallery" class="review-photos"></div>
+      <div class="review-meta" id="msg-meta"></div>
+      <div class="review-text" id="msg-text"></div>
+    </div>
+
+    <div class="review-right" id="right-panel">
+      <div class="review-section-title">Тренировки</div>
+      <div id="workout-list"></div>
+      <button class="btn-add-workout" id="btn-add-workout" onclick="addWorkout()" style="display:none">+ Добавить тренировку</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS = {{ cards_json|safe }};
+const ATHLETES = {{ athletes_json|safe }};
+let filteredCards = [];
+let currentIndex = 0;
+let statusFilter = 'all';
+
+const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
+
+function getCsrfToken() {
+  return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+}
+
+let saveStatusTimer = null;
+function showSaveStatus(msg, type) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status ' + type;
+  clearTimeout(saveStatusTimer);
+  if (type === 'saved') {
+    saveStatusTimer = setTimeout(() => { el.className = 'save-status hidden'; }, 2000);
+  }
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildUserFilter() {
+  const names = new Set(CARDS.map(c => c.from_name));
+  const sel = document.getElementById('user-filter');
+  names.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function applyFilters() {
+  const user = document.getElementById('user-filter').value;
+  filteredCards = CARDS.filter(c => {
+    if (user && c.from_name !== user) return false;
+    if (statusFilter === 'has_workout') return c.workouts.length > 0;
+    if (statusFilter === 'no_workout') return c.workouts.length === 0;
+    return true;
+  });
+  if (currentIndex >= filteredCards.length) currentIndex = 0;
+  renderCard();
+}
+
+function setStatusFilter(status, btn) {
+  statusFilter = status;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function navigateCard(delta) {
+  if (!filteredCards.length) return;
+  currentIndex = (currentIndex + delta + filteredCards.length) % filteredCards.length;
+  renderCard();
+}
+
+function renderCard() {
+  const counter = document.getElementById('card-counter');
+  const addBtn = document.getElementById('btn-add-workout');
+
+  if (!filteredCards.length) {
+    counter.textContent = '0 / 0';
+    document.getElementById('photo-gallery').innerHTML = '';
+    document.getElementById('msg-meta').textContent = '';
+    document.getElementById('msg-text').textContent = '';
+    document.getElementById('workout-list').innerHTML = '';
+    addBtn.style.display = 'none';
+    return;
+  }
+
+  const card = filteredCards[currentIndex];
+  counter.textContent = (currentIndex + 1) + ' / ' + filteredCards.length;
+  addBtn.style.display = '';
+
+  const gallery = document.getElementById('photo-gallery');
+  gallery.innerHTML = '';
+  if (card.photos && card.photos.length) {
+    card.photos.forEach(p => {
+      const img = document.createElement('img');
+      img.src = '/challenge/photo/' + p;
+      img.className = 'review-photo';
+      img.alt = 'Фото';
+      gallery.appendChild(img);
+    });
+  } else {
+    gallery.innerHTML = '<div class="review-no-photo">Нет фото</div>';
+  }
+
+  document.getElementById('msg-meta').textContent =
+    card.from_name + ' · ' + card.date + ' · #' + card.msg_id;
+  document.getElementById('msg-text').textContent = card.text || '';
+
+  renderWorkoutList(card);
+  history.replaceState(null, '', '?msg=' + card.msg_id);
+}
+
+function renderWorkoutList(card) {
+  const list = document.getElementById('workout-list');
+  list.innerHTML = '';
+  if (!card.workouts.length) {
+    list.innerHTML = '<p class="review-no-workouts">Нет тренировок</p>';
+    return;
+  }
+  card.workouts.forEach(w => list.appendChild(buildWorkoutForm(w, card)));
+}
+
+function buildWorkoutForm(w, card) {
+  const div = document.createElement('div');
+  div.className = 'workout-form';
+  div.dataset.workoutId = w.id;
+
+  const actOptions = Object.entries(ACT_NAMES).map(([val, label]) =>
+    `<option value="${val}"${val === w.activity ? ' selected' : ''}>${label}</option>`
+  ).join('');
+
+  const athleteOptions = ATHLETES.map(a =>
+    `<option value="${escHtml(a.telegram_id)}"${a.telegram_id === w.athlete_id ? ' selected' : ''}>${escHtml(a.name)}</option>`
+  ).join('');
+
+  const pts = w.base_points + (w.streak_bonus ? '+' + w.streak_bonus : '');
+
+  div.innerHTML = `
+    <div class="form-row">
+      <div class="form-field">
+        <label>Участник</label>
+        <select data-field="athlete_id">${athleteOptions}</select>
+      </div>
+      <div class="form-field">
+        <label>Дата</label>
+        <input type="date" data-field="date" value="${w.date}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Активность</label>
+        <select data-field="activity">${actOptions}</select>
+      </div>
+      <div class="form-field">
+        <label>Км</label>
+        <input type="number" step="0.1" min="0" data-field="distance_km"
+          value="${w.distance_km != null ? w.distance_km : ''}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Темп мин/км</label>
+        <input type="number" step="0.1" min="0" data-field="pace_min_per_km"
+          value="${w.pace_min_per_km != null ? w.pace_min_per_km : ''}">
+      </div>
+      <div class="form-field form-field-pts">
+        <label>Очки</label>
+        <span class="workout-pts-display" id="pts-${w.id}">${pts}</span>
+      </div>
+    </div>
+    <div class="workout-form-footer">
+      <button class="btn-delete" type="button">Удалить</button>
+    </div>
+  `;
+
+  div.querySelector('.btn-delete').addEventListener('click', () => deleteWorkout(w.id, card));
+
+  const debouncedSave = debounce(function() {
+    saveWorkout(w, collectFormData(div));
+  }, 500);
+
+  div.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', debouncedSave);
+    el.addEventListener('input', debouncedSave);
+  });
+
+  return div;
+}
+
+function collectFormData(formDiv) {
+  const data = {};
+  formDiv.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    let val = el.value;
+    if (el.type === 'number') {
+      val = val === '' ? null : parseFloat(val);
+    }
+    data[field] = val;
+  });
+  return data;
+}
+
+async function saveWorkout(w, data) {
+  showSaveStatus('Сохранение…', 'saving');
+  try {
+    const resp = await fetch(`/challenge/review/api/workout/${w.id}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || resp.statusText);
+    }
+    const result = await resp.json();
+
+    if (data.athlete_id !== undefined) {
+      const athlete = ATHLETES.find(a => a.telegram_id === data.athlete_id);
+      w.athlete_id = data.athlete_id;
+      w.athlete_name = athlete ? athlete.name : data.athlete_id;
+    }
+    if (data.date !== undefined) w.date = data.date;
+    if (data.activity !== undefined) {
+      w.activity = data.activity;
+      w.activity_display = ACT_NAMES[data.activity] || data.activity;
+    }
+    if (data.distance_km !== undefined) w.distance_km = data.distance_km;
+    if (data.pace_min_per_km !== undefined) w.pace_min_per_km = data.pace_min_per_km;
+
+    w.base_points = result.workout.base_points;
+    w.streak_bonus = result.workout.streak_bonus;
+    w.total_points = result.workout.total_points;
+
+    const pts = result.workout.base_points + (result.workout.streak_bonus ? '+' + result.workout.streak_bonus : '');
+    const ptsEl = document.getElementById('pts-' + w.id);
+    if (ptsEl) ptsEl.textContent = pts;
+
+    showSaveStatus('Сохранено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка: ' + err.message, 'error');
+  }
+}
+
+async function deleteWorkout(workoutId, card) {
+  if (!confirm('Удалить тренировку?')) return;
+  showSaveStatus('Удаление…', 'saving');
+  try {
+    const resp = await fetch(`/challenge/review/api/workout/${workoutId}/`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+    });
+    if (resp.status !== 204) throw new Error('Delete failed');
+
+    const idx = card.workouts.findIndex(w => w.id === workoutId);
+    if (idx !== -1) card.workouts.splice(idx, 1);
+
+    const formDiv = document.querySelector(`[data-workout-id="${workoutId}"]`);
+    if (formDiv) formDiv.remove();
+
+    const list = document.getElementById('workout-list');
+    if (!card.workouts.length) {
+      list.innerHTML = '<p class="review-no-workouts">Нет тренировок</p>';
+    }
+    showSaveStatus('Удалено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка удаления', 'error');
+  }
+}
+
+async function addWorkout() {
+  const card = filteredCards[currentIndex];
+  if (!card) return;
+
+  let athleteId = ATHLETES.length ? ATHLETES[0].telegram_id : '';
+  const matched = ATHLETES.find(a => a.name === card.from_name);
+  if (matched) athleteId = matched.telegram_id;
+
+  const data = {
+    athlete_id: athleteId,
+    date: card.date,
+    activity: 'running',
+    distance_km: null,
+    pace_min_per_km: null,
+    msg_id: card.msg_id,
+  };
+
+  showSaveStatus('Сохранение…', 'saving');
+  try {
+    const resp = await fetch('/challenge/review/api/workout/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || resp.statusText);
+    }
+    const result = await resp.json();
+
+    const athlete = ATHLETES.find(a => a.telegram_id === athleteId);
+    const newWorkout = {
+      id: result.workout.id,
+      athlete_id: athleteId,
+      athlete_name: athlete ? athlete.name : athleteId,
+      date: data.date,
+      activity: 'running',
+      activity_display: 'Бег',
+      distance_km: null,
+      pace_min_per_km: null,
+      base_points: result.workout.base_points,
+      streak_bonus: result.workout.streak_bonus,
+      total_points: result.workout.total_points,
+    };
+
+    const list = document.getElementById('workout-list');
+    const noWorkoutsEl = list.querySelector('.review-no-workouts');
+    if (noWorkoutsEl) noWorkoutsEl.remove();
+
+    card.workouts.push(newWorkout);
+    list.appendChild(buildWorkoutForm(newWorkout, card));
+    showSaveStatus('Добавлено ✓', 'saved');
+  } catch (err) {
+    showSaveStatus('Ошибка: ' + err.message, 'error');
+  }
+}
+
+function jumpToMsg(msgId) {
+  const idx = filteredCards.findIndex(c => c.msg_id === msgId);
+  if (idx !== -1) currentIndex = idx;
+}
+
+buildUserFilter();
+applyFilters();
+
+const params = new URLSearchParams(location.search);
+const msgParam = params.get('msg');
+if (msgParam) jumpToMsg(parseInt(msgParam, 10));
+renderCard();
+</script>
+{% endblock %}

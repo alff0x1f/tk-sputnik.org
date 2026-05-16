@@ -1,0 +1,89 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}Челлендж — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'challenge/css/challenge.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="feed">
+  <div class="feed-head">
+    <h1 class="feed-title">Зимний челлендж</h1>
+  </div>
+  <div class="feed-sub">Декабрь 2025 — Март 2026</div>
+
+  <div class="lb-table">
+    <div class="lb-header">
+      <span class="lb-col col-rank">#</span>
+      <span class="lb-col col-name">Участник</span>
+      <span class="lb-col col-pts">Очки</span>
+      <span class="lb-col col-cnt">Активностей</span>
+      <span class="lb-col col-toggle"></span>
+    </div>
+
+    {% for athlete in athletes %}
+    <div class="lb-row" id="athlete-{{ athlete.telegram_id }}">
+      <div class="lb-athlete{% if athlete.workout_list %} expandable{% endif %}"
+           {% if athlete.workout_list %}onclick="toggleWorkouts(this)"{% endif %}
+           role="{% if athlete.workout_list %}button{% endif %}"
+           aria-expanded="false">
+        <span class="lb-col col-rank">{{ athlete.rank }}</span>
+        <span class="lb-col col-name">{% if request.user.is_staff %}<a href="{% url 'challenge-member' athlete.telegram_id %}">{{ athlete.name }}</a>{% else %}{{ athlete.name }}{% endif %}</span>
+        <span class="lb-col col-pts">{{ athlete.total_score }}</span>
+        <span class="lb-col col-cnt">{{ athlete.workout_count }}</span>
+        <span class="lb-col col-toggle">
+          {% if athlete.workout_list %}
+          <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          {% endif %}
+        </span>
+      </div>
+
+      {% if athlete.workout_list %}
+      <div class="lb-workouts" hidden>
+        {% for w in athlete.workout_list %}
+        <div class="workout-chip">
+          <span class="wc-icon act-{{ w.activity }}">
+            {% if w.activity == 'running' %}<svg viewBox="0 0 24 24"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="m7 21 3-3-1-4 3 2 2-4"/><path d="M15.5 9.5 14 14l3 4"/><path d="M9 11.5 11 13l2-3.5"/></svg>
+            {% elif w.activity == 'skiing' %}<svg viewBox="0 0 24 24"><path d="M4 20 L20 4"/><path d="M16 4h4v4"/><path d="M4 20h4"/><circle cx="11" cy="7" r="1.5"/></svg>
+            {% elif w.activity == 'cycling' %}<svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 0 0-1-1h-1l-3 6h5.5l1-5z"/><path d="m5.5 17.5 5-10 1.5 4 2 4"/></svg>
+            {% elif w.activity == 'swimming' %}<svg viewBox="0 0 24 24"><path d="M2 12c.6.5 1.2 1 2.5 1s1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1 1.2 1 2.5 1 1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1"/><path d="M2 17c.6.5 1.2 1 2.5 1s1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1 1.2 1 2.5 1 1.9-.5 2.5-1 1.2-1 2.5-1 1.9.5 2.5 1"/><circle cx="12" cy="5" r="2"/><path d="M14 5.5V8l2 2"/></svg>
+            {% elif w.activity == 'hiking' %}<svg viewBox="0 0 24 24"><path d="m3 17 3-8 3 4 3-6 3 8"/><path d="M21 17H3"/></svg>
+            {% endif %}
+          </span>
+          <span class="wc-date">{{ w.date|date:"d.m" }}</span>
+          <span class="wc-act">{{ w.get_activity_display }}</span>
+          {% if w.distance_km %}<span class="wc-dist">{{ w.distance_km|floatformat:1 }} км</span>{% endif %}
+          {% if w.pace_min_per_km %}<span class="wc-pace">{{ w.pace_min_per_km|floatformat:1 }} мин/км</span>{% endif %}
+          <span class="wc-pts">
+            {{ w.base_points }}{% if w.streak_bonus %}+{{ w.streak_bonus }}{% endif %}
+          </span>
+          {% if w.msg_id %}
+          <a class="wc-link" href="/challenge/review/?msg={{ w.msg_id }}" title="Исходное сообщение">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="lb-empty">Нет данных</div>
+    {% endfor %}
+  </div>
+</main>
+
+<script>
+function toggleWorkouts(el) {
+  var row = el.closest('.lb-row');
+  var panel = row.querySelector('.lb-workouts');
+  if (!panel) return;
+  var open = panel.hidden;
+  panel.hidden = !open;
+  el.setAttribute('aria-expanded', String(open));
+  el.classList.toggle('open', open);
+}
+</script>
+{% endblock %}

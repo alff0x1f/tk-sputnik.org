@@ -71,6 +71,34 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Users (`ForumUser`) — done
 - [x] Topics (`Topic`), posts (`Post`) — done
 
+## Challenge app
+
+Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
+
+**Apps:**
+- `apps/challenge` — models `Athlete`, `Workout`, `SourceMessage`; leaderboard, review page, photo serving
+
+**Models:**
+- `Athlete` — `telegram_id` (PK CharField), `name`
+- `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `total_points`, `msg_id`
+- `SourceMessage` — `msg_id` (PK), `from_name`, `date`, `text`, `photos` (JSONField)
+
+**Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`
+
+**Import command (one-time or re-run to refresh):**
+```bash
+uv run python manage.py import_challenge \
+    --scores scratch/challenge/scores.json \
+    --messages scratch/challenge/messages_clean.json
+# expected output: Imported N athletes, M workouts, K messages
+```
+
+**Photo serving:** `CHALLENGE_CHAT_EXPORT_DIR` in `config/settings.py` (and `.env`) points to the `ChatExport_*` directory. Photos served at `/challenge/photo/<filename>` with path-traversal protection.
+
+**Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
+
+**Member detail page:** `/challenge/member/<telegram_id>/` — staff-only chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (PUT/DELETE to the same API as the review page).
+
 ## Branch naming
 
 `feat/`, `fix/`, `chore/`, `refactor/`, `docs/`, `test/` — followed by issue number and slug, e.g. `feat/4-add-demo-app`.
