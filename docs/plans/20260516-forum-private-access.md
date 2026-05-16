@@ -121,10 +121,10 @@ def _can_access(request, subforum):
 **Files:**
 - Modify: `apps/forum/templates/forum/forum.html`
 
-- [ ] в цикле `{% for subforum in category.direct_subforums %}` добавить проверку `{% if subforum.is_private and subforum.allowed_group_id not in user_group_ids %}` → показать SVG-иконку замка рядом с названием (аналогично существующим SVG в шаблоне)
-- [ ] учесть `is_staff`: в `forum_index` передавать `user_is_staff = request.user.is_staff`; у staff замок не показывать
-- [ ] написать тест в `ForumIndexViewTests`: контекст содержит `user_group_ids`
-- [ ] запустить тесты — должны проходить
+- [x] в цикле `{% for subforum in category.direct_subforums %}` добавить проверку `{% if subforum.is_private and subforum.allowed_group_id not in user_group_ids %}` → показать SVG-иконку замка рядом с названием (аналогично существующим SVG в шаблоне)
+- [x] учесть `is_staff`: в `forum_index` передавать `user_is_staff = request.user.is_staff`; у staff замок не показывать
+- [x] написать тест в `ForumIndexViewTests`: контекст содержит `user_group_ids`
+- [x] запустить тесты — должны проходить
 
 ### Task 5: Verify acceptance criteria
 

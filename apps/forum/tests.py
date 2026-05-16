@@ -214,6 +214,16 @@ class ForumIndexViewTests(TestCase):
         response = self.client.get(reverse("forum-index"))
         self.assertTemplateUsed(response, "forum/forum.html")
 
+    def test_forum_index_context_has_user_group_ids(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertIn("user_group_ids", response.context)
+        self.assertIsInstance(response.context["user_group_ids"], set)
+
+    def test_forum_index_context_has_user_is_staff(self):
+        response = self.client.get(reverse("forum-index"))
+        self.assertIn("user_is_staff", response.context)
+        self.assertFalse(response.context["user_is_staff"])
+
 
 class SubforumTopicsViewTest(TestCase):
     def setUp(self):

@@ -36,7 +36,11 @@ def forum_index(request):
     return render(
         request,
         "forum/forum.html",
-        {"categories": categories, "user_group_ids": user_group_ids},
+        {
+            "categories": categories,
+            "user_group_ids": user_group_ids,
+            "user_is_staff": request.user.is_staff,
+        },
     )
 
 
