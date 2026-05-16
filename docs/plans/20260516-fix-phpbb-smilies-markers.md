@@ -112,13 +112,13 @@ _EMAIL_MARKER_RE = re.compile(r'<!-- e -->(.*?)<!-- e -->', re.DOTALL)
 **Files:**
 - Modify: `apps/forum_import/tests.py`
 
-- [ ] Add class `ToHtmlSmiliesMarkersTest(TestCase)` with direct imports of `_to_html`
-- [ ] Test: smiley `<!-- s:) --><img src="{SMILIES_PATH}/smile.gif" alt=":)" title="Smile" /><!-- s:) -->` → `<img src="/media/forum/smilies/smile.gif" alt=":)">`
-- [ ] Test: URL marker `<!-- m --><a class="postlink" href="https://example.com">text</a><!-- m -->` → `<a ... rel="nofollow">text</a>` (no `<!-- m -->` in output)
-- [ ] Test: email marker `<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->` → `<a href="mailto:..." rel="nofollow">...</a>` (no `<!-- e -->` in output)
-- [ ] Test: text with multiple smileys renders all of them correctly
-- [ ] Test: text mixing BBCode and smiley (e.g. `[b]hello[/b] <!-- s:) -->...<!-- s:) -->`) → both BBCode and smiley render correctly, no `{SMILIES_PATH}` in output
-- [ ] Run `uv run pytest apps/forum_import/tests.py -v` — all tests must pass
+- [x] Add class `ToHtmlSmiliesMarkersTest(TestCase)` with direct imports of `_to_html`
+- [x] Test: smiley `<!-- s:) --><img src="{SMILIES_PATH}/smile.gif" alt=":)" title="Smile" /><!-- s:) -->` → `<img src="/media/forum/smilies/smile.gif" alt=":)">`
+- [x] Test: URL marker `<!-- m --><a class="postlink" href="https://example.com">text</a><!-- m -->` → `<a ... rel="nofollow">text</a>` (no `<!-- m -->` in output)
+- [x] Test: email marker `<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->` → `<a href="mailto:..." rel="nofollow">...</a>` (no `<!-- e -->` in output)
+- [x] Test: text with multiple smileys renders all of them correctly
+- [x] Test: text mixing BBCode and smiley (e.g. `[b]hello[/b] <!-- s:) -->...<!-- s:) -->`) → both BBCode and smiley render correctly, no `{SMILIES_PATH}` in output
+- [x] Run `uv run pytest apps/forum_import/tests.py -v` — all tests must pass
 
 ### Task 3: Verify acceptance criteria
 
