@@ -97,15 +97,15 @@ _EMAIL_MARKER_RE = re.compile(r'<!-- e -->(.*?)<!-- e -->', re.DOTALL)
 **Files:**
 - Modify: `apps/forum_import/management/commands/import_phpbb_posts.py`
 
-- [ ] Add `_SMILEY_RE`, `_URL_MARKER_RE`, `_EMAIL_MARKER_RE` regex constants at module level
-- [ ] Add `_extract_phpbb_markers(text)` helper that:
+- [x] Add `_SMILEY_RE`, `_URL_MARKER_RE`, `_EMAIL_MARKER_RE` regex constants at module level
+- [x] Add `_extract_phpbb_markers(text)` helper that:
   - iterates over all three patterns with a shared counter
   - builds a `{placeholder: html_replacement}` dict
   - returns `(modified_text, replacements_dict)`
   - for smileys: replacement is `<img src="/media/forum/smilies/<file>" alt="<alt>">`
   - for URL/email markers: replacement is inner `<a>` with `rel="nofollow"` injected
-- [ ] Modify `_to_html()` to call `_extract_phpbb_markers()` before `_parser.format()` and restore placeholders after
-- [ ] Run `uv run pytest apps/forum_import/tests.py -v` — existing tests must still pass
+- [x] Modify `_to_html()` to call `_extract_phpbb_markers()` before `_parser.format()` and restore placeholders after
+- [x] Run `uv run pytest apps/forum_import/tests.py -v` — existing tests must still pass
 
 ### Task 2: Add unit tests for phpBB marker handling
 
