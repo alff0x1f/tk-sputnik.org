@@ -5,7 +5,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
 from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
-from django.http import FileResponse, HttpResponseForbidden
+from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
@@ -103,9 +103,11 @@ def serve_attachment(request, pk):
         / "attachments"
         / os.path.basename(att.physical_filename)
     )
+    if not path.is_file():
+        raise Http404
     return FileResponse(
         open(path, "rb"),
-        as_attachment=True,
+        as_attachment=not att.is_image,
         filename=att.real_filename,
         content_type=att.mimetype or "application/octet-stream",
     )
