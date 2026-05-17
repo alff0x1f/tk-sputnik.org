@@ -102,16 +102,16 @@ return FileResponse(open(path, "rb"), as_attachment=True,
 **Files:**
 - Create: `apps/forum_import/management/commands/render_forum_attachments.py`
 
-- [ ] Create command that iterates all `PostAttachment` grouped by `post_id`
-- [ ] For each post, compute `old_url` from `settings.MEDIA_URL + "forum/attachments/" + basename(att.physical_filename)`, replace with `att.url`; handle multiple attachments per post in a single pass
-- [ ] Save only posts where `text_html` actually changed (`update_fields=["text_html"]`)
-- [ ] Print summary: `Updated N posts (M attachments)`
-- [ ] Write tests for the command in `apps/forum_import/tests.py`:
+- [x] Create command that iterates all `PostAttachment` grouped by `post_id`
+- [x] For each post, compute `old_url` from `settings.MEDIA_URL + "forum/attachments/" + basename(att.physical_filename)`, replace with `att.url`; handle multiple attachments per post in a single pass
+- [x] Save only posts where `text_html` actually changed (`update_fields=["text_html"]`)
+- [x] Print summary: `Updated N posts (M attachments)`
+- [x] Write tests for the command in `apps/forum_import/tests.py`:
   - Post with one attachment: old URL replaced with new URL in `text_html`
   - Post with multiple attachments: all URLs replaced
   - Post with no attachment references (inline attachment already replaced in BBCode): no change
   - Post not in any changed set: `text_html` unchanged
-- [ ] Run tests — must pass before Task 4
+- [x] Run tests — must pass before Task 4
 
 ### Task 4: Verify acceptance criteria
 

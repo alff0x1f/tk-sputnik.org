@@ -927,7 +927,7 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
 
         self.post.refresh_from_db()
         self.assertIn("<img src=", self.post.text_html)
-        self.assertIn("file.jpg", self.post.text_html)
+        self.assertIn("/forum/a/1/", self.post.text_html)
         self.assertNotIn("attachment-ref", self.post.text_html)
 
     @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
@@ -962,3 +962,92 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
         self.post.refresh_from_db()
         self.assertIn('class="post-attachments"', self.post.text_html)
         self.assertIn("<img src=", self.post.text_html)
+
+
+class RenderForumAttachmentsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+        self.post = Post.objects.create(
+            id=200, phpbb_id=200, topic=topic, text_bbcode="", text_html=""
+        )
+        self.post2 = Post.objects.create(
+            id=201,
+            phpbb_id=201,
+            topic=topic,
+            text_bbcode="",
+            text_html="<p>no attachments here</p>",
+        )
+
+    def _make_attachment(self, pk, post, physical_filename, real_filename="file.pdf"):
+        return PostAttachment.objects.create(
+            id=pk,
+            phpbb_id=pk,
+            post=post,
+            physical_filename=physical_filename,
+            real_filename=real_filename,
+            mimetype="application/pdf",
+        )
+
+    def test_single_attachment_url_replaced(self):
+        self._make_attachment(1, self.post, "16_abc123")
+        old_url = "/media/forum/attachments/16_abc123"
+        self.post.text_html = f'<a href="{old_url}">file.pdf</a>'
+        self.post.save()
+
+        call_command("render_forum_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn("/forum/a/1/", self.post.text_html)
+        self.assertNotIn(old_url, self.post.text_html)
+
+    def test_multiple_attachments_all_replaced(self):
+        self._make_attachment(1, self.post, "16_abc123")
+        self._make_attachment(2, self.post, "17_def456")
+        old_url1 = "/media/forum/attachments/16_abc123"
+        old_url2 = "/media/forum/attachments/17_def456"
+        self.post.text_html = f'<a href="{old_url1}">f1</a><a href="{old_url2}">f2</a>'
+        self.post.save()
+
+        call_command("render_forum_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn("/forum/a/1/", self.post.text_html)
+        self.assertIn("/forum/a/2/", self.post.text_html)
+        self.assertNotIn(old_url1, self.post.text_html)
+        self.assertNotIn(old_url2, self.post.text_html)
+
+    def test_no_old_url_in_html_no_change(self):
+        self._make_attachment(1, self.post, "16_abc123")
+        # text_html already has new-style URL; old media URL is absent
+        self.post.text_html = '<img src="/forum/a/1/">'
+        self.post.save()
+
+        call_command("render_forum_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.text_html, '<img src="/forum/a/1/">')
+
+    def test_post_with_no_attachments_unchanged(self):
+        original_html = self.post2.text_html
+
+        call_command("render_forum_attachments", stdout=StringIO())
+
+        self.post2.refresh_from_db()
+        self.assertEqual(self.post2.text_html, original_html)
+
+    def test_summary_output(self):
+        self._make_attachment(1, self.post, "16_abc123")
+        self.post.text_html = '<a href="/media/forum/attachments/16_abc123">file</a>'
+        self.post.save()
+
+        out = StringIO()
+        call_command("render_forum_attachments", stdout=out)
+
+        self.assertIn("Updated 1 posts", out.getvalue())
+        self.assertIn("1 attachments", out.getvalue())
