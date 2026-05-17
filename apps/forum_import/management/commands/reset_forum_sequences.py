@@ -7,6 +7,7 @@ _TABLES = [
     "forum_forumuser",
     "forum_topic",
     "forum_post",
+    "forum_postattachment",
 ]
 
 

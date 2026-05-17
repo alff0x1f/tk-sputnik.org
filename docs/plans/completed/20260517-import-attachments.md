@@ -27,6 +27,10 @@ Inline-вложения (`[attachment=N]`) рендерятся прямо в т
   - `DATABASES['phpbb']` уже настроен
   - `Post.text_bbcode` и `Post.text_html` уже хранятся
 
+## Decisions
+
+- Вложения из постов в приватных подфорумах попадают в `MEDIA_ROOT` и могут быть доступны публично по прямой ссылке — это приемлемо, специальной защиты не требуется.
+
 ## Development Approach
 
 - **testing approach**: Regular (code first, then tests)

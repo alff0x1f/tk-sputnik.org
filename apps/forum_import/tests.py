@@ -931,6 +931,16 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
         self.assertNotIn("attachment-ref", self.post.text_html)
 
     @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_excludes_private_message_attachments(self, mock_connections):
+        cursor = self._mock_cursor([], uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args_list[0][0][0]
+        self.assertIn("in_message = 0", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
     def test_import_appends_footer_for_unreferenced(self, mock_connections):
         self.post.text_bbcode = "plain text"
         self.post.text_html = "<p>plain text</p>"

@@ -64,7 +64,8 @@ class Command(BaseCommand):
         cursor.execute(
             f"SELECT attach_id, post_msg_id, physical_filename, real_filename,"  # noqa: S608
             f" mimetype, filesize, download_count, attach_comment"
-            f" FROM {ATTACHMENTS_TABLE} WHERE is_orphan = 0 ORDER BY attach_id"
+            f" FROM {ATTACHMENTS_TABLE}"
+            f" WHERE is_orphan = 0 AND in_message = 0 ORDER BY attach_id"
         )
         columns = [col[0] for col in cursor.description]
         rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
