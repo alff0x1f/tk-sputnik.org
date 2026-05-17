@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.db import models
 
@@ -165,7 +167,8 @@ class PostAttachment(models.Model):
 
     @property
     def url(self):
-        return f"{settings.MEDIA_URL}forum/attachments/{self.physical_filename}"
+        name = os.path.basename(self.physical_filename)
+        return f"{settings.MEDIA_URL}forum/attachments/{name}"
 
     @property
     def is_image(self):
