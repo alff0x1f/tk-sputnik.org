@@ -63,6 +63,8 @@ uv run python manage.py import_phpbb_forums
 # copy attachment files, then import attachment metadata:
 cp -r scratch/forum/files/ media/forum/attachments/
 uv run python manage.py import_phpbb_attachments
+# reset PostgreSQL sequences so ORM .create() works after explicit-ID imports:
+uv run python manage.py reset_forum_sequences
 ```
 
 **Django database connection:** `DATABASES['phpbb']` points to MySQL via PyMySQL (`pymysql.install_as_MySQLdb()` in `config/__init__.py`). MySQL env vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`. See `apps/forum_import/README.md` for details.

@@ -32,8 +32,7 @@ def _render_attachment_html(att):
     return f'<a href="{url}">{name}</a> ({size})'
 
 
-def _finalize_post_html(raw_bbcode, uid, attachments):
-    """Re-render BBCode and replace attachment placeholders with real HTML."""
+def _finalize_post_html(raw_bbcode, uid, attachments, warn_fn=None):
     html_text = _to_html(raw_bbcode, uid)
     referenced_indices = set()
 
@@ -42,6 +41,11 @@ def _finalize_post_html(raw_bbcode, uid, attachments):
         referenced_indices.add(idx)
         if idx < len(attachments):
             return _render_attachment_html(attachments[idx])
+        if warn_fn:
+            warn_fn(
+                f"attachment index {idx} out of range"
+                f" (post has {len(attachments)} attachments)"
+            )
         return ""
 
     result = _PLACEHOLDER_RE.sub(replace_placeholder, html_text)
@@ -125,7 +129,9 @@ class Command(BaseCommand):
             for i, post in enumerate(affected_posts, start=1):
                 uid = uid_map.get(post.phpbb_id, "")
                 attachments = list(post.attachments.order_by("phpbb_id"))
-                post.text_html = _finalize_post_html(post.text_bbcode, uid, attachments)
+                post.text_html = _finalize_post_html(
+                    post.text_bbcode, uid, attachments, warn_fn=self.stderr.write
+                )
                 post.save(update_fields=["text_html"])
 
                 if i % 100 == 0 or i == total_posts:
