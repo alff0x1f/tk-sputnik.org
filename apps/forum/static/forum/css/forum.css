@@ -58,10 +58,34 @@
 .sf-title{
   font-size:15px; font-weight:600; color:var(--ink);
   margin-bottom:2px; letter-spacing:-0.005em;
+  display:flex; align-items:center; gap:6px;
 }
 .sf-title a{ color:inherit; text-decoration:none; }
 .sf-title a:hover{ text-decoration:underline; }
 .sf-desc{ font-size:13px; color:var(--muted); line-height:1.4; margin-bottom:0; }
+
+/* Lock badge */
+.sf-lock{
+  display:inline-flex; align-items:center; justify-content:center;
+  flex-shrink:0; cursor:default;
+}
+.sf-title .sf-lock{
+  width:20px; height:20px; border-radius:5px;
+  background:var(--wine-soft);
+  border:1px solid rgba(138,51,70,.18);
+  color:var(--wine);
+}
+.sf-child .sf-lock{
+  width:16px; height:16px; border-radius:4px;
+  background:var(--wine-soft);
+  border:1px solid rgba(138,51,70,.18);
+  color:var(--wine);
+}
+.sf-lock svg{
+  width:11px; height:11px;
+  stroke:currentColor; fill:none;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+}
 
 /* Children as chips */
 .sf-children{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
