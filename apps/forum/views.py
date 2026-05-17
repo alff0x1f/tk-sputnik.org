@@ -111,5 +111,5 @@ def serve_attachment(request, pk):
         open(path, "rb"),
         as_attachment=not serve_inline,
         filename=att.real_filename,
-        content_type=att.mimetype if serve_inline else "application/octet-stream",
+        content_type=att.mimetype or "application/octet-stream",
     )
