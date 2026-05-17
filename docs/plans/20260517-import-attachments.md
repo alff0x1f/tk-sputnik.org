@@ -117,11 +117,11 @@ uv run python manage.py import_phpbb_attachments
 **Files:**
 - Create: `apps/forum_import/management/commands/import_phpbb_attachments.py`
 
-- [ ] создать команду `import_phpbb_attachments` с `help = "Import attachments from phpBB MySQL database"`
-- [ ] в `handle()`: выполнить запрос `SELECT attach_id, post_msg_id, physical_filename, real_filename, mimetype, filesize, download_count, attach_comment FROM vu2_attachments WHERE is_orphan = 0 ORDER BY attach_id`
-- [ ] для каждой строки: `PostAttachment.objects.update_or_create(id=row['attach_id'], defaults={"phpbb_id": row['attach_id'], ...})` — `id` совпадает с `phpbb_id`, как у Post/Topic; пропускать если `Post.objects.filter(phpbb_id=row['post_msg_id'])` не существует (логировать в stderr)
-- [ ] после создания всех записей — собрать множество `post_ids` затронутых постов
-- [ ] второй проход: для каждого `post_id` из `post_ids`:
+- [x] создать команду `import_phpbb_attachments` с `help = "Import attachments from phpBB MySQL database"`
+- [x] в `handle()`: выполнить запрос `SELECT attach_id, post_msg_id, physical_filename, real_filename, mimetype, filesize, download_count, attach_comment FROM vu2_attachments WHERE is_orphan = 0 ORDER BY attach_id`
+- [x] для каждой строки: `PostAttachment.objects.update_or_create(id=row['attach_id'], defaults={"phpbb_id": row['attach_id'], ...})` — `id` совпадает с `phpbb_id`, как у Post/Topic; пропускать если `Post.objects.filter(phpbb_id=row['post_msg_id'])` не существует (логировать в stderr)
+- [x] после создания всех записей — собрать множество `post_ids` затронутых постов
+- [x] второй проход: для каждого `post_id` из `post_ids`:
   - достать `post = Post.objects.get(phpbb_id=post_id)`
   - достать `bbcode_uid` из MySQL: `SELECT bbcode_uid FROM vu2_posts WHERE post_id = %s`
   - перерендерить: `html_with_placeholders = _to_html(post.text_bbcode, uid)`
@@ -129,13 +129,13 @@ uv run python manage.py import_phpbb_attachments
   - заменить каждый `<span class="attachment-ref" data-index="N">` на inline HTML (img или a+size)
   - собрать unreferenced attachments (те, чей индекс не встретился в тексте), добавить footer `<div class="post-attachments">...</div>`
   - сохранить `post.text_html = final_html; post.save(update_fields=["text_html"])`
-- [ ] прогресс-репортинг (`{i}/{total}`) и итоговое `Imported N attachments (M skipped)`
-- [ ] написать тесты (с mock MySQL cursor):
+- [x] прогресс-репортинг (`{i}/{total}`) и итоговое `Imported N attachments (M skipped)`
+- [x] написать тесты (с mock MySQL cursor):
   - `test_import_creates_postattachment` — запись создаётся
   - `test_import_skips_orphans` — orphan-вложения игнорируются
   - `test_import_updates_post_html_inline` — inline placeholder заменяется
   - `test_import_appends_footer_for_unreferenced` — unreferenced → footer блок
-- [ ] запустить `uv run pytest apps/forum_import/tests.py` — все тесты проходят
+- [x] запустить `uv run pytest apps/forum_import/tests.py` — все тесты проходят
 
 ### Task 4: Verify and update docs
 
