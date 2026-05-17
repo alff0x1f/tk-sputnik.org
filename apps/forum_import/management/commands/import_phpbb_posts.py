@@ -18,6 +18,11 @@ _LINK_INNER_RE = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 
+_ATTACHMENT_RE = re.compile(
+    r'\[attachment=(\d+)\](.*?)\[/attachment\]',
+    re.IGNORECASE | re.DOTALL,
+)
+
 _SMILEY_RE = re.compile(
     r"<!-- s[^>]* -->"
     r'<img\s+src="\{SMILIES_PATH\}/([^"]+)"[^>]*/>'
@@ -26,6 +31,14 @@ _SMILEY_RE = re.compile(
 _URL_MARKER_RE = re.compile(r"<!-- m -->(.*?)<!-- m -->", re.DOTALL)
 _EMAIL_MARKER_RE = re.compile(r"<!-- e -->(.*?)<!-- e -->", re.DOTALL)
 _ALT_RE = re.compile(r'\salt="([^"]*)"')
+
+
+def _replace_attachment(m, store):
+    index = m.group(1)
+    name = html.escape(m.group(2))
+    return store(
+        f'<span class="attachment-ref" data-index="{index}" data-name="{name}"></span>'
+    )
 
 
 def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
@@ -100,9 +113,21 @@ def _to_html(raw: str, uid: str) -> str:
     text = re.sub(r"\[list:o\]", "[list=1]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/list:[uo]\]", "[/list]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/\*:m\]", "", text, flags=re.IGNORECASE)
+    attachment_tokens = {}
+    token_counter = [0]
+
+    def store_attachment(html_str):
+        key = f"\x00AT{token_counter[0]}\x00"
+        token_counter[0] += 1
+        attachment_tokens[key] = html_str
+        return key
+
+    text = _ATTACHMENT_RE.sub(lambda m: _replace_attachment(m, store_attachment), text)
     text, replacements = _extract_phpbb_markers(text)
     result = _parser.format(text)
     for key, value in replacements.items():
+        result = result.replace(key, value)
+    for key, value in attachment_tokens.items():
         result = result.replace(key, value)
     return result
 

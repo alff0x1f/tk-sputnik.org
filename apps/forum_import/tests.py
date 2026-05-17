@@ -774,3 +774,28 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         result = _to_html(raw, "")
         self.assertNotIn("javascript", result)
         self.assertNotIn("<a", result)
+
+
+class ToHtmlAttachmentTest(TestCase):
+    def test_attachment_tag_becomes_placeholder(self):
+        raw = "[attachment=0]photo.jpg[/attachment]"
+        result = _to_html(raw, "")
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn("[attachment", result)
+
+    def test_attachment_tag_with_uid(self):
+        uid = "abc"
+        raw = f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn(f":{uid}", result)
+
+    def test_no_attachment_tag_unchanged(self):
+        raw = "[b]hello[/b]"
+        result = _to_html(raw, "")
+        self.assertIn("<strong>hello</strong>", result)
+        self.assertNotIn("attachment-ref", result)

@@ -97,20 +97,20 @@ uv run python manage.py import_phpbb_attachments
 - Modify: `apps/forum_import/management/commands/import_phpbb_posts.py`
 
 
-- [ ] добавить в начало файла регекс:
+- [x] добавить в начало файла регекс:
   ```python
   _ATTACHMENT_RE = re.compile(
       r'\[attachment=(\d+)\](.*?)\[/attachment\]',
       re.IGNORECASE | re.DOTALL,
   )
   ```
-- [ ] добавить функцию `_replace_attachment(m)` возвращающую `<span class="attachment-ref" data-index="{index}" data-name="{html.escape(name)}"></span>`
-- [ ] в `_to_html`, после UID-стрипа (строки с `re.sub(rf"\[...")`), до вызова `_extract_phpbb_markers`, добавить: `text = _ATTACHMENT_RE.sub(_replace_attachment, text)`
-- [ ] написать тесты в `apps/forum_import/tests.py`:
+- [x] добавить функцию `_replace_attachment(m)` возвращающую `<span class="attachment-ref" data-index="{index}" data-name="{html.escape(name)}"></span>`
+- [x] в `_to_html`, после UID-стрипа (строки с `re.sub(rf"\[...")`), до вызова `_extract_phpbb_markers`, добавить: `text = _ATTACHMENT_RE.sub(_replace_attachment, text)`
+- [x] написать тесты в `apps/forum_import/tests.py`:
   - `test_attachment_tag_becomes_placeholder` — `[attachment=0]photo.jpg[/attachment]` → правильный span
   - `test_attachment_tag_with_uid` — `[attachment=0:abc]photo.jpg[/attachment:abc]` → placeholder (uid стрипается раньше, проверить порядок)
   - `test_no_attachment_tag_unchanged` — текст без вложений не меняется
-- [ ] запустить `uv run pytest apps/forum_import/tests.py` — тесты должны проходить
+- [x] запустить `uv run pytest apps/forum_import/tests.py` — тесты должны проходить
 
 ### Task 3: Create import_phpbb_attachments command
 
