@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import ForumCategory, ForumUser, Post, SubForum, Topic
+from .models import ForumCategory, ForumUser, Post, PostAttachment, SubForum, Topic
 
 
 class ForumCategoryModelTests(TestCase):
@@ -174,6 +174,60 @@ class PostModelTests(TestCase):
         self.user.delete()
         post.refresh_from_db()
         self.assertIsNone(post.author)
+
+
+class PostAttachmentModelTests(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=self.subforum, title="T")
+        self.post = Post.objects.create(
+            phpbb_id=1000, topic=self.topic, text_bbcode="x", text_html="x"
+        )
+
+    def _make_attachment(self, phpbb_id=1, physical_filename="abc.jpg", mimetype="image/jpeg"):
+        return PostAttachment(
+            phpbb_id=phpbb_id,
+            post=self.post,
+            physical_filename=physical_filename,
+            real_filename="photo.jpg",
+            mimetype=mimetype,
+        )
+
+    def test_postattachment_url_property(self):
+        att = self._make_attachment(physical_filename="somefile_123.jpg")
+        self.assertIn("/forum/attachments/somefile_123.jpg", att.url)
+        self.assertTrue(att.url.startswith("/media/"))
+
+    def test_postattachment_is_image_true(self):
+        att = self._make_attachment(mimetype="image/jpeg")
+        self.assertTrue(att.is_image)
+
+    def test_postattachment_is_image_false_for_pdf(self):
+        att = self._make_attachment(mimetype="application/pdf")
+        self.assertFalse(att.is_image)
+
+    def test_postattachment_is_image_false_for_empty_mimetype(self):
+        att = self._make_attachment(mimetype="")
+        self.assertFalse(att.is_image)
+
+    def test_postattachment_ordering_by_phpbb_id(self):
+        PostAttachment.objects.create(
+            phpbb_id=30, post=self.post, physical_filename="c.jpg",
+            real_filename="c.jpg", mimetype="image/jpeg",
+        )
+        PostAttachment.objects.create(
+            phpbb_id=10, post=self.post, physical_filename="a.jpg",
+            real_filename="a.jpg", mimetype="image/jpeg",
+        )
+        PostAttachment.objects.create(
+            phpbb_id=20, post=self.post, physical_filename="b.jpg",
+            real_filename="b.jpg", mimetype="image/jpeg",
+        )
+        ids = list(PostAttachment.objects.values_list("phpbb_id", flat=True))
+        self.assertEqual(ids, [10, 20, 30])
 
 
 class ForumIndexViewTests(TestCase):

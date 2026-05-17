@@ -81,15 +81,15 @@ uv run python manage.py import_phpbb_attachments
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/0004_postattachment.py` (номер уточнить)
 
-- [ ] добавить класс `PostAttachment` в `apps/forum/models.py`:
+- [x] добавить класс `PostAttachment` в `apps/forum/models.py`:
   - поля: `phpbb_id` (IntegerField unique), `post` FK→Post cascade, `physical_filename` (CharField 255), `real_filename` (CharField 255), `mimetype` (CharField 100 blank), `filesize` (IntegerField default 0), `download_count` (IntegerField default 0), `attach_comment` (TextField blank)
   - property `url` → `f"{settings.MEDIA_URL}forum/attachments/{self.physical_filename}"`
   - property `is_image` → `self.mimetype.startswith("image/")`
   - `Meta: ordering = ["phpbb_id"]`, verbose_name рус.
-- [ ] запустить `uv run python manage.py makemigrations forum` и проверить сгенерированный файл
-- [ ] запустить `uv run python manage.py migrate` — убедиться, что миграция проходит
-- [ ] написать тест `test_postattachment_url_property` и `test_postattachment_is_image` в `apps/forum/tests.py`
-- [ ] запустить `uv run pytest apps/forum/tests.py` — тесты должны проходить
+- [x] запустить `uv run python manage.py makemigrations forum` и проверить сгенерированный файл
+- [x] запустить `uv run python manage.py migrate` — убедиться, что миграция проходит
+- [x] написать тест `test_postattachment_url_property` и `test_postattachment_is_image` в `apps/forum/tests.py`
+- [x] запустить `uv run pytest apps/forum/tests.py` — тесты должны проходить
 
 ### Task 2: Update _to_html to handle [attachment=N] tags
 
