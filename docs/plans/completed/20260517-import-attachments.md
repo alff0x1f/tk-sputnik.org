@@ -142,11 +142,11 @@ uv run python manage.py import_phpbb_attachments
 **Files:**
 - Modify: `CLAUDE.md`
 
-- [ ] добавить в CLAUDE.md раздел Import status пункт: `- [x] Attachments (PostAttachment) — done`
-- [ ] добавить в CLAUDE.md workflow: `uv run python manage.py import_phpbb_attachments`
-- [ ] запустить `uv run pytest` — полный suite проходит
-- [ ] запустить `uv run ruff check .` — нет ошибок
-- [ ] переместить этот план в `docs/plans/completed/`
+- [x] добавить в CLAUDE.md раздел Import status пункт: `- [x] Attachments (PostAttachment) — done`
+- [x] добавить в CLAUDE.md workflow: `uv run python manage.py import_phpbb_attachments`
+- [x] запустить `uv run pytest` — полный suite проходит
+- [x] запустить `uv run ruff check .` — нет ошибок
+- [x] переместить этот план в `docs/plans/completed/`
 
 ## Post-Completion
 

@@ -60,6 +60,9 @@ docker compose exec phpbb_db mysql -u phpbb -p phpbb < /path/to/forum_dump.sql
 # run the import command:
 uv run python manage.py import_phpbb_forums
 # expected output: Imported 5 categories, N subforums
+# copy attachment files, then import attachment metadata:
+cp -r scratch/forum/files/ media/forum/attachments/
+uv run python manage.py import_phpbb_attachments
 ```
 
 **Django database connection:** `DATABASES['phpbb']` points to MySQL via PyMySQL (`pymysql.install_as_MySQLdb()` in `config/__init__.py`). MySQL env vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`. See `apps/forum_import/README.md` for details.
@@ -71,6 +74,7 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Users (`ForumUser`) — done
 - [x] Topics (`Topic`), posts (`Post`) — done
 - [x] Private subforum access control (is_private + allowed_group)
+- [x] Attachments (`PostAttachment`) — done
 
 ## Branch naming
 

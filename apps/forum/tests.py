@@ -182,12 +182,16 @@ class PostAttachmentModelTests(TestCase):
         self.subforum = SubForum.objects.create(
             phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
         )
-        self.topic = Topic.objects.create(phpbb_id=100, subforum=self.subforum, title="T")
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="T"
+        )
         self.post = Post.objects.create(
             phpbb_id=1000, topic=self.topic, text_bbcode="x", text_html="x"
         )
 
-    def _make_attachment(self, phpbb_id=1, physical_filename="abc.jpg", mimetype="image/jpeg"):
+    def _make_attachment(
+        self, phpbb_id=1, physical_filename="abc.jpg", mimetype="image/jpeg"
+    ):
         return PostAttachment(
             phpbb_id=phpbb_id,
             post=self.post,
