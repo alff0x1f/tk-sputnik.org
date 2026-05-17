@@ -71,10 +71,10 @@ return FileResponse(open(path, "rb"), as_attachment=True,
 **Files:**
 - Modify: `apps/forum/models.py`
 
-- [ ] Change `PostAttachment.url` property to return `f"/forum/a/{self.pk}/"` instead of the `/media/...` path
-- [ ] Verify no other code depends on the old URL format (grep for `MEDIA_URL.*attachment` and `media/forum/attach`)
-- [ ] Write unit tests for the updated property: `PostAttachment.url` returns `/forum/a/{pk}/`
-- [ ] Run tests — must pass before Task 2
+- [x] Change `PostAttachment.url` property to return `f"/forum/a/{self.pk}/"` instead of the `/media/...` path
+- [x] Verify no other code depends on the old URL format (grep for `MEDIA_URL.*attachment` and `media/forum/attach`)
+- [x] Write unit tests for the updated property: `PostAttachment.url` returns `/forum/a/{pk}/`
+- [x] Run tests — must pass before Task 2
 
 ### Task 2: Add `serve_attachment` view and URL
 

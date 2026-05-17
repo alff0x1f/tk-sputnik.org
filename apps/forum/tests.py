@@ -201,9 +201,14 @@ class PostAttachmentModelTests(TestCase):
         )
 
     def test_postattachment_url_property(self):
-        att = self._make_attachment(physical_filename="somefile_123.jpg")
-        self.assertIn("/forum/attachments/somefile_123.jpg", att.url)
-        self.assertTrue(att.url.startswith("/media/"))
+        att = PostAttachment.objects.create(
+            phpbb_id=1,
+            post=self.post,
+            physical_filename="somefile_123.jpg",
+            real_filename="photo.jpg",
+            mimetype="image/jpeg",
+        )
+        self.assertEqual(att.url, f"/forum/a/{att.pk}/")
 
     def test_postattachment_is_image_true(self):
         att = self._make_attachment(mimetype="image/jpeg")
