@@ -82,20 +82,20 @@ return FileResponse(open(path, "rb"), as_attachment=True,
 - Modify: `apps/forum/views.py`
 - Modify: `apps/forum/urls.py`
 
-- [ ] Add `serve_attachment(request, pk)` view to `apps/forum/views.py`:
+- [x] Add `serve_attachment(request, pk)` view to `apps/forum/views.py`:
   - `get_object_or_404` with `select_related("post__topic__subforum")`
   - Call `_can_access(request, att.post.topic.subforum)` — anon → `redirect_to_login`, forbidden → `HttpResponseForbidden`
   - Build file path: `settings.MEDIA_ROOT / "forum" / "attachments" / os.path.basename(att.physical_filename)`
   - Return `FileResponse(open(path, "rb"), as_attachment=True, filename=att.real_filename, content_type=att.mimetype or "application/octet-stream")`
-- [ ] Add URL pattern `path("a/<int:pk>/", views.serve_attachment, name="forum-attachment")` to `apps/forum/urls.py`
-- [ ] Write tests for `serve_attachment` in `apps/forum/tests.py`:
+- [x] Add URL pattern `path("a/<int:pk>/", views.serve_attachment, name="forum-attachment")` to `apps/forum/urls.py`
+- [x] Write tests for `serve_attachment` in `apps/forum/tests.py`:
   - Public subforum: anonymous user gets file with correct `Content-Disposition` filename and `Content-Type`
   - Private subforum + anonymous: redirect to login
   - Private subforum + authenticated non-member: 403
   - Private subforum + member: 200 with file
   - Private subforum + staff: 200 with file
   - Non-existent pk: 404
-- [ ] Run tests — must pass before Task 3
+- [x] Run tests — must pass before Task 3
 
 ### Task 3: Add `render_forum_attachments` management command
 

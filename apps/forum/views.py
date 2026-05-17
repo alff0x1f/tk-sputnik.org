@@ -1,11 +1,14 @@
+import os
+
+from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
 from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
-from django.http import HttpResponseForbidden
+from django.http import FileResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 
-from .models import ForumCategory, Post, SubForum, Topic
+from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
 
 
 def _can_access(request, subforum):
@@ -83,4 +86,26 @@ def topic_posts(request, pk):
         request,
         "forum/topic.html",
         {"topic": topic, "page_obj": page_obj},
+    )
+
+
+def serve_attachment(request, pk):
+    att = get_object_or_404(
+        PostAttachment.objects.select_related("post__topic__subforum"), pk=pk
+    )
+    if not _can_access(request, att.post.topic.subforum):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        return HttpResponseForbidden()
+    path = (
+        settings.MEDIA_ROOT
+        / "forum"
+        / "attachments"
+        / os.path.basename(att.physical_filename)
+    )
+    return FileResponse(
+        open(path, "rb"),
+        as_attachment=True,
+        filename=att.real_filename,
+        content_type=att.mimetype or "application/octet-stream",
     )
