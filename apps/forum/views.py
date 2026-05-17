@@ -105,9 +105,11 @@ def serve_attachment(request, pk):
     )
     if not path.is_file():
         raise Http404
+    SAFE_INLINE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    serve_inline = att.mimetype in SAFE_INLINE_TYPES
     return FileResponse(
         open(path, "rb"),
-        as_attachment=not att.is_image,
+        as_attachment=not serve_inline,
         filename=att.real_filename,
-        content_type=att.mimetype or "application/octet-stream",
+        content_type=att.mimetype if serve_inline else "application/octet-stream",
     )
