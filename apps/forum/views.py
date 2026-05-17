@@ -54,7 +54,7 @@ def subforum_topics(request, pk):
     subforum = get_object_or_404(SubForum, pk=pk)
     if not _can_access(request, subforum):
         if not request.user.is_authenticated:
-            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+            return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
         return HttpResponseForbidden()
     first_post = Post.objects.filter(topic=OuterRef("pk")).order_by("created_at")
     last_post = Post.objects.filter(topic=OuterRef("pk")).order_by("-created_at")
@@ -75,7 +75,7 @@ def topic_posts(request, pk):
     topic = get_object_or_404(Topic.objects.select_related("subforum"), pk=pk)
     if not _can_access(request, topic.subforum):
         if not request.user.is_authenticated:
-            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+            return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
         return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at")
     page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
