@@ -226,16 +226,25 @@ class PostAttachmentModelTests(TestCase):
 
     def test_postattachment_ordering_by_phpbb_id(self):
         PostAttachment.objects.create(
-            phpbb_id=30, post=self.post, physical_filename="c.jpg",
-            real_filename="c.jpg", mimetype="image/jpeg",
+            phpbb_id=30,
+            post=self.post,
+            physical_filename="c.jpg",
+            real_filename="c.jpg",
+            mimetype="image/jpeg",
         )
         PostAttachment.objects.create(
-            phpbb_id=10, post=self.post, physical_filename="a.jpg",
-            real_filename="a.jpg", mimetype="image/jpeg",
+            phpbb_id=10,
+            post=self.post,
+            physical_filename="a.jpg",
+            real_filename="a.jpg",
+            mimetype="image/jpeg",
         )
         PostAttachment.objects.create(
-            phpbb_id=20, post=self.post, physical_filename="b.jpg",
-            real_filename="b.jpg", mimetype="image/jpeg",
+            phpbb_id=20,
+            post=self.post,
+            physical_filename="b.jpg",
+            real_filename="b.jpg",
+            mimetype="image/jpeg",
         )
         ids = list(PostAttachment.objects.values_list("phpbb_id", flat=True))
         self.assertEqual(ids, [10, 20, 30])
@@ -619,12 +628,18 @@ class ServeAttachmentViewTest(TestCase):
             id=200, phpbb_id=200, subforum=self.private_subforum, title="Private Topic"
         )
         self.public_post = Post.objects.create(
-            id=1000, phpbb_id=1000, topic=self.public_topic,
-            text_bbcode="x", text_html="x",
+            id=1000,
+            phpbb_id=1000,
+            topic=self.public_topic,
+            text_bbcode="x",
+            text_html="x",
         )
         self.private_post = Post.objects.create(
-            id=2000, phpbb_id=2000, topic=self.private_topic,
-            text_bbcode="x", text_html="x",
+            id=2000,
+            phpbb_id=2000,
+            topic=self.private_topic,
+            text_bbcode="x",
+            text_html="x",
         )
 
     def _make_attachment(

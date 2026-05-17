@@ -19,7 +19,7 @@ _LINK_INNER_RE = re.compile(
 )
 
 _ATTACHMENT_RE = re.compile(
-    r'\[attachment=(\d+)\](.*?)\[/attachment\]',
+    r"\[attachment=(\d+)\](.*?)\[/attachment\]",
     re.IGNORECASE | re.DOTALL,
 )
 

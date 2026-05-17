@@ -12,8 +12,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         attachments = list(
-            PostAttachment.objects.select_related("post")
-            .order_by("post_id", "phpbb_id")
+            PostAttachment.objects.select_related("post").order_by(
+                "post_id", "phpbb_id"
+            )
         )
 
         by_post = defaultdict(list)

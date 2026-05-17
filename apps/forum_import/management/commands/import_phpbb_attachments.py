@@ -140,7 +140,5 @@ class Command(BaseCommand):
             self.stdout.write("")
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Imported {imported} attachments ({skipped} skipped)"
-            )
+            self.style.SUCCESS(f"Imported {imported} attachments ({skipped} skipped)")
         )

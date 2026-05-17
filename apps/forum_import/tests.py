@@ -914,7 +914,8 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
 
         rows = [
             self._make_att_row(
-                1, 200,
+                1,
+                200,
                 physical_filename="file.jpg",
                 real_filename="photo.jpg",
                 mimetype="image/jpeg",
@@ -948,7 +949,8 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
 
         rows = [
             self._make_att_row(
-                1, 200,
+                1,
+                200,
                 physical_filename="file.jpg",
                 real_filename="photo.jpg",
                 mimetype="image/jpeg",

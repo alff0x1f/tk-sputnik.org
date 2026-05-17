@@ -5,29 +5,73 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('forum', '0002_subforum_allowed_group_subforum_is_private'),
+        ("forum", "0002_subforum_allowed_group_subforum_is_private"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PostAttachment',
+            name="PostAttachment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phpbb_id', models.IntegerField(unique=True, verbose_name='ID в phpBB')),
-                ('physical_filename', models.CharField(max_length=255, verbose_name='Физическое имя файла')),
-                ('real_filename', models.CharField(max_length=255, verbose_name='Оригинальное имя файла')),
-                ('mimetype', models.CharField(blank=True, max_length=100, verbose_name='MIME-тип')),
-                ('filesize', models.IntegerField(default=0, verbose_name='Размер файла')),
-                ('download_count', models.IntegerField(default=0, verbose_name='Количество скачиваний')),
-                ('attach_comment', models.TextField(blank=True, verbose_name='Комментарий')),
-                ('post', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='forum.post', verbose_name='Сообщение')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "phpbb_id",
+                    models.IntegerField(unique=True, verbose_name="ID в phpBB"),
+                ),
+                (
+                    "physical_filename",
+                    models.CharField(
+                        max_length=255, verbose_name="Физическое имя файла"
+                    ),
+                ),
+                (
+                    "real_filename",
+                    models.CharField(
+                        max_length=255, verbose_name="Оригинальное имя файла"
+                    ),
+                ),
+                (
+                    "mimetype",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="MIME-тип"
+                    ),
+                ),
+                (
+                    "filesize",
+                    models.IntegerField(default=0, verbose_name="Размер файла"),
+                ),
+                (
+                    "download_count",
+                    models.IntegerField(
+                        default=0, verbose_name="Количество скачиваний"
+                    ),
+                ),
+                (
+                    "attach_comment",
+                    models.TextField(blank=True, verbose_name="Комментарий"),
+                ),
+                (
+                    "post",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="attachments",
+                        to="forum.post",
+                        verbose_name="Сообщение",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Вложение',
-                'verbose_name_plural': 'Вложения',
-                'ordering': ['phpbb_id'],
+                "verbose_name": "Вложение",
+                "verbose_name_plural": "Вложения",
+                "ordering": ["phpbb_id"],
             },
         ),
     ]
