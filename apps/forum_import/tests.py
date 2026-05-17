@@ -31,7 +31,7 @@ class ImportPhpbbForumsCommandTest(TestCase):
             left_id,
         )
 
-    def _mock_cursor(self, rows):
+    def _mock_cursor(self, rows, *, acl_rows=None):
         cursor = MagicMock()
         cursor.description = [
             ("forum_id",),
@@ -46,7 +46,8 @@ class ImportPhpbbForumsCommandTest(TestCase):
             ("forum_last_post_time",),
             ("left_id",),
         ]
-        cursor.fetchall.return_value = rows
+        # Two fetchall calls per command run: forums then ACL data.
+        cursor.fetchall.side_effect = [rows, acl_rows if acl_rows is not None else []]
         return cursor
 
     @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
@@ -125,6 +126,8 @@ class ImportPhpbbForumsCommandTest(TestCase):
             self._make_row(1, 0, 0, "Приключения"),
         ]
         cursor = self._mock_cursor(rows)
+        # Command runs twice → 4 fetchall calls: (forums, acl) × 2
+        cursor.fetchall.side_effect = [rows, [], rows, []]
         mock_connections.__getitem__.return_value.cursor.return_value = cursor
 
         call_command("import_phpbb_forums", stdout=StringIO())
@@ -147,6 +150,100 @@ class ImportPhpbbForumsCommandTest(TestCase):
         self.assertEqual(cat.name, 'Турклуб "Спутник"')
         sub = SubForum.objects.get(phpbb_id=10)
         self.assertEqual(sub.name, "Походы & приключения")
+
+    @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
+    def test_private_subforum_gets_is_private_and_group(self, mock_connections):
+        rows = [
+            self._make_row(1, 0, 0, "Приключения"),
+            self._make_row(19, 1, 1, "Орг"),
+        ]
+        # ACL: group "ORG" can read forum 19, GUESTS cannot
+        acl_rows = [(19, "ORG", 1)]
+        cursor = self._mock_cursor(rows, acl_rows=acl_rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_forums", stdout=out)
+
+        sub = SubForum.objects.get(phpbb_id=19)
+        self.assertTrue(sub.is_private)
+        self.assertIsNotNone(sub.allowed_group)
+        self.assertEqual(sub.allowed_group.name, "орг")
+        self.assertIn("Marked 1 subforums as private", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
+    def test_public_subforum_gets_is_private_false(self, mock_connections):
+        rows = [
+            self._make_row(1, 0, 0, "Приключения"),
+            self._make_row(10, 1, 1, "Пешие походы"),
+        ]
+        # ACL: GUESTS can read forum 10
+        acl_rows = [(10, "GUESTS", 1), (10, "REGISTERED", 1)]
+        cursor = self._mock_cursor(rows, acl_rows=acl_rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_forums", stdout=StringIO())
+
+        sub = SubForum.objects.get(phpbb_id=10)
+        self.assertFalse(sub.is_private)
+        self.assertIsNone(sub.allowed_group)
+
+
+class FetchPrivateForumIdsTest(TestCase):
+    def _acl_cursor(self, acl_rows):
+        cursor = MagicMock()
+        cursor.fetchall.return_value = acl_rows
+        return cursor
+
+    def _call(self, acl_rows):
+        from apps.forum_import.management.commands.import_phpbb_forums import (
+            _fetch_private_forum_ids,
+        )
+
+        return _fetch_private_forum_ids(self._acl_cursor(acl_rows))
+
+    def test_group_allowed_guests_absent_is_private(self):
+        result = self._call([(19, "ORG", 1)])
+        self.assertIn(19, result)
+
+    def test_guests_allowed_is_not_private(self):
+        result = self._call([(1, "GUESTS", 1), (1, "REGISTERED", 1)])
+        self.assertNotIn(1, result)
+
+    def test_no_group_allowed_is_not_private(self):
+        result = self._call([(5, "ORG", 0)])
+        self.assertNotIn(5, result)
+
+    def test_guests_never_other_group_allowed_is_private(self):
+        result = self._call([(7, "GUESTS", 0), (7, "MODS", 1)])
+        self.assertIn(7, result)
+
+    def test_multiple_forums_mixed(self):
+        acl_rows = [
+            (1, "GUESTS", 1),
+            (1, "REGISTERED", 1),
+            (19, "ORG", 1),
+            (7, "GUESTS", 0),
+            (7, "MODS", 1),
+        ]
+        result = self._call(acl_rows)
+        self.assertNotIn(1, result)
+        self.assertIn(19, result)
+        self.assertIn(7, result)
+
+    def test_empty_acl_returns_empty_set(self):
+        result = self._call([])
+        self.assertEqual(result, set())
+
+    def test_query_includes_role_based_acl_table(self):
+        cursor = self._acl_cursor([])
+        from apps.forum_import.management.commands.import_phpbb_forums import (
+            _fetch_private_forum_ids,
+        )
+
+        _fetch_private_forum_ids(cursor)
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("acl_roles_data", executed_sql)
 
 
 class ImportPhpbbUsersCommandTest(TestCase):
