@@ -126,8 +126,8 @@ return FileResponse(open(path, "rb"), as_attachment=True,
 - Modify: `CLAUDE.md`
 - Move: `docs/plans/20260517-serve-attachments-via-django.md` → `docs/plans/completed/`
 
-- [ ] Add `render_forum_attachments` step to the import workflow in `CLAUDE.md`
-- [ ] Move this plan file to `docs/plans/completed/`
+- [x] Add `render_forum_attachments` step to the import workflow in `CLAUDE.md`
+- [x] Move this plan file to `docs/plans/completed/`
 
 ## Post-Completion
 
