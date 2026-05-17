@@ -604,7 +604,9 @@ class ForumIndexContextTest(TestCase):
 
 class ServeAttachmentViewTest(TestCase):
     def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_dir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_dir_obj.cleanup)
+        self.tmp_dir = self.tmp_dir_obj.name
         self.group = Group.objects.create(name="members")
         self.category = ForumCategory.objects.create(
             phpbb_id=1, name="Cat", sort_order=1
