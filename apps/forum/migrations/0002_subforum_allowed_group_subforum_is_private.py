@@ -5,21 +5,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
-        ('forum', '0001_initial'),
+        ("auth", "0012_alter_user_first_name_max_length"),
+        ("forum", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='subforum',
-            name='allowed_group',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='private_subforums', to='auth.group', verbose_name='Группа доступа'),
+            model_name="subforum",
+            name="allowed_group",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="private_subforums",
+                to="auth.group",
+                verbose_name="Группа доступа",
+            ),
         ),
         migrations.AddField(
-            model_name='subforum',
-            name='is_private',
-            field=models.BooleanField(default=False, verbose_name='Приватный'),
+            model_name="subforum",
+            name="is_private",
+            field=models.BooleanField(default=False, verbose_name="Приватный"),
         ),
     ]

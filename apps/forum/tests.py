@@ -417,9 +417,7 @@ class SubforumTopicsAccessControlTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_staff_gets_200_without_group(self):
-        User.objects.create_user(
-            username="admin", password="pass", is_staff=True
-        )
+        User.objects.create_user(username="admin", password="pass", is_staff=True)
         self.client.login(username="admin", password="pass")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
