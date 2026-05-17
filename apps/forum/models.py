@@ -145,3 +145,35 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post #{self.phpbb_id} in {self.topic}"
+
+
+class PostAttachment(models.Model):
+    phpbb_id = models.IntegerField("ID в phpBB", unique=True)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        verbose_name="Сообщение",
+    )
+    physical_filename = models.CharField("Физическое имя файла", max_length=255)
+    real_filename = models.CharField("Оригинальное имя файла", max_length=255)
+    mimetype = models.CharField("MIME-тип", max_length=100, blank=True)
+    filesize = models.IntegerField("Размер файла", default=0)
+    download_count = models.IntegerField("Количество скачиваний", default=0)
+    attach_comment = models.TextField("Комментарий", blank=True)
+
+    @property
+    def url(self):
+        return f"/forum/a/{self.pk}/"
+
+    @property
+    def is_image(self):
+        return self.mimetype.startswith("image/")
+
+    class Meta:
+        ordering = ["phpbb_id"]
+        verbose_name = "Вложение"
+        verbose_name_plural = "Вложения"
+
+    def __str__(self):
+        return self.real_filename

@@ -6,7 +6,14 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.forum.models import ForumCategory, ForumUser, Post, SubForum, Topic
+from apps.forum.models import (
+    ForumCategory,
+    ForumUser,
+    Post,
+    PostAttachment,
+    SubForum,
+    Topic,
+)
 from apps.forum_import.management.commands.import_phpbb_posts import _to_html
 
 
@@ -774,3 +781,186 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         result = _to_html(raw, "")
         self.assertNotIn("javascript", result)
         self.assertNotIn("<a", result)
+
+
+class ToHtmlAttachmentTest(TestCase):
+    def test_attachment_tag_becomes_placeholder(self):
+        raw = "[attachment=0]photo.jpg[/attachment]"
+        result = _to_html(raw, "")
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn("[attachment", result)
+
+    def test_attachment_tag_with_uid(self):
+        uid = "abc"
+        raw = f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn(f":{uid}", result)
+
+    def test_no_attachment_tag_unchanged(self):
+        raw = "[b]hello[/b]"
+        result = _to_html(raw, "")
+        self.assertIn("<strong>hello</strong>", result)
+        self.assertNotIn("attachment-ref", result)
+
+
+class ImportPhpbbAttachmentsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+        self.post = Post.objects.create(
+            id=200,
+            phpbb_id=200,
+            topic=topic,
+            text_bbcode="[b]hello[/b]",
+            text_html="<strong>hello</strong>",
+        )
+
+    def _make_att_row(
+        self,
+        attach_id=1,
+        post_msg_id=200,
+        physical_filename="file.jpg",
+        real_filename="photo.jpg",
+        mimetype="image/jpeg",
+        filesize=1024,
+        download_count=0,
+        attach_comment="",
+    ):
+        return (
+            attach_id,
+            post_msg_id,
+            physical_filename,
+            real_filename,
+            mimetype,
+            filesize,
+            download_count,
+            attach_comment,
+        )
+
+    def _mock_cursor(self, att_rows, uid_rows=None):
+        cursor = MagicMock()
+        cursor.description = [
+            ("attach_id",),
+            ("post_msg_id",),
+            ("physical_filename",),
+            ("real_filename",),
+            ("mimetype",),
+            ("filesize",),
+            ("download_count",),
+            ("attach_comment",),
+        ]
+        cursor.fetchall.side_effect = [
+            att_rows,
+            uid_rows if uid_rows is not None else [(200, "")],
+        ]
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_creates_postattachment(self, mock_connections):
+        rows = [self._make_att_row(1, 200)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_attachments", stdout=out)
+
+        self.assertEqual(PostAttachment.objects.count(), 1)
+        att = PostAttachment.objects.get(phpbb_id=1)
+        self.assertEqual(att.post, self.post)
+        self.assertEqual(att.real_filename, "photo.jpg")
+        self.assertIn("Imported 1 attachments (0 skipped)", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_skips_orphans(self, mock_connections):
+        cursor = self._mock_cursor([], uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args_list[0][0][0]
+        self.assertIn("is_orphan", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_skips_unknown_post(self, mock_connections):
+        rows = [self._make_att_row(1, 9999)]
+        cursor = self._mock_cursor(rows, uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        err = StringIO()
+        call_command("import_phpbb_attachments", stdout=out, stderr=err)
+
+        self.assertEqual(PostAttachment.objects.count(), 0)
+        self.assertIn("Imported 0 attachments (1 skipped)", out.getvalue())
+        self.assertIn("phpbb_id=9999", err.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_updates_post_html_inline(self, mock_connections):
+        self.post.text_bbcode = "[attachment=0]photo.jpg[/attachment]"
+        self.post.text_html = (
+            '<span class="attachment-ref" data-index="0" data-name="photo.jpg"></span>'
+        )
+        self.post.save()
+
+        rows = [
+            self._make_att_row(
+                1,
+                200,
+                physical_filename="file.jpg",
+                real_filename="photo.jpg",
+                mimetype="image/jpeg",
+            )
+        ]
+        cursor = self._mock_cursor(rows, uid_rows=[(200, "")])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn("<img src=", self.post.text_html)
+        self.assertIn("/forum/a/1/", self.post.text_html)
+        self.assertNotIn("attachment-ref", self.post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_excludes_private_message_attachments(self, mock_connections):
+        cursor = self._mock_cursor([], uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args_list[0][0][0]
+        self.assertIn("in_message = 0", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_appends_footer_for_unreferenced(self, mock_connections):
+        self.post.text_bbcode = "plain text"
+        self.post.text_html = "<p>plain text</p>"
+        self.post.save()
+
+        rows = [
+            self._make_att_row(
+                1,
+                200,
+                physical_filename="file.jpg",
+                real_filename="photo.jpg",
+                mimetype="image/jpeg",
+            )
+        ]
+        cursor = self._mock_cursor(rows, uid_rows=[(200, "")])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn('class="post-attachments"', self.post.text_html)
+        self.assertIn("<img src=", self.post.text_html)

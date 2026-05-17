@@ -1,10 +1,12 @@
 import datetime
+import pathlib
+import tempfile
 
 from django.contrib.auth.models import Group, User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import ForumCategory, ForumUser, Post, SubForum, Topic
+from .models import ForumCategory, ForumUser, Post, PostAttachment, SubForum, Topic
 
 
 class ForumCategoryModelTests(TestCase):
@@ -174,6 +176,78 @@ class PostModelTests(TestCase):
         self.user.delete()
         post.refresh_from_db()
         self.assertIsNone(post.author)
+
+
+class PostAttachmentModelTests(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="T"
+        )
+        self.post = Post.objects.create(
+            phpbb_id=1000, topic=self.topic, text_bbcode="x", text_html="x"
+        )
+
+    def _make_attachment(
+        self, phpbb_id=1, physical_filename="abc.jpg", mimetype="image/jpeg"
+    ):
+        return PostAttachment(
+            phpbb_id=phpbb_id,
+            post=self.post,
+            physical_filename=physical_filename,
+            real_filename="photo.jpg",
+            mimetype=mimetype,
+        )
+
+    def test_postattachment_url_property(self):
+        att = PostAttachment.objects.create(
+            phpbb_id=1,
+            post=self.post,
+            physical_filename="somefile_123.jpg",
+            real_filename="photo.jpg",
+            mimetype="image/jpeg",
+        )
+        self.assertEqual(att.url, f"/forum/a/{att.pk}/")
+
+    def test_postattachment_is_image_true(self):
+        att = self._make_attachment(mimetype="image/jpeg")
+        self.assertTrue(att.is_image)
+
+    def test_postattachment_is_image_false_for_pdf(self):
+        att = self._make_attachment(mimetype="application/pdf")
+        self.assertFalse(att.is_image)
+
+    def test_postattachment_is_image_false_for_empty_mimetype(self):
+        att = self._make_attachment(mimetype="")
+        self.assertFalse(att.is_image)
+
+    def test_postattachment_ordering_by_phpbb_id(self):
+        PostAttachment.objects.create(
+            phpbb_id=30,
+            post=self.post,
+            physical_filename="c.jpg",
+            real_filename="c.jpg",
+            mimetype="image/jpeg",
+        )
+        PostAttachment.objects.create(
+            phpbb_id=10,
+            post=self.post,
+            physical_filename="a.jpg",
+            real_filename="a.jpg",
+            mimetype="image/jpeg",
+        )
+        PostAttachment.objects.create(
+            phpbb_id=20,
+            post=self.post,
+            physical_filename="b.jpg",
+            real_filename="b.jpg",
+            mimetype="image/jpeg",
+        )
+        ids = list(PostAttachment.objects.values_list("phpbb_id", flat=True))
+        self.assertEqual(ids, [10, 20, 30])
 
 
 class ForumIndexViewTests(TestCase):
@@ -526,3 +600,142 @@ class ForumIndexContextTest(TestCase):
         )
         response = self.client.get(reverse("forum-index"))
         self.assertContains(response, "sf-lock")
+
+
+class ServeAttachmentViewTest(TestCase):
+    def setUp(self):
+        self.tmp_dir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_dir_obj.cleanup)
+        self.tmp_dir = self.tmp_dir_obj.name
+        self.group = Group.objects.create(name="members")
+        self.category = ForumCategory.objects.create(
+            phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.public_subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Public"
+        )
+        self.private_subforum = SubForum.objects.create(
+            id=20,
+            phpbb_id=20,
+            phpbb_parent_id=1,
+            category=self.category,
+            name="Private",
+            is_private=True,
+            allowed_group=self.group,
+        )
+        self.public_topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=self.public_subforum, title="Public Topic"
+        )
+        self.private_topic = Topic.objects.create(
+            id=200, phpbb_id=200, subforum=self.private_subforum, title="Private Topic"
+        )
+        self.public_post = Post.objects.create(
+            id=1000,
+            phpbb_id=1000,
+            topic=self.public_topic,
+            text_bbcode="x",
+            text_html="x",
+        )
+        self.private_post = Post.objects.create(
+            id=2000,
+            phpbb_id=2000,
+            topic=self.private_topic,
+            text_bbcode="x",
+            text_html="x",
+        )
+
+    def _make_attachment(
+        self, post, phpbb_id, physical_filename, real_filename, mimetype
+    ):
+        att = PostAttachment.objects.create(
+            phpbb_id=phpbb_id,
+            post=post,
+            physical_filename=physical_filename,
+            real_filename=real_filename,
+            mimetype=mimetype,
+        )
+        attachments_dir = pathlib.Path(self.tmp_dir) / "forum" / "attachments"
+        attachments_dir.mkdir(parents=True, exist_ok=True)
+        (attachments_dir / physical_filename).write_bytes(b"dummy content")
+        return att
+
+    def test_public_subforum_anonymous_gets_file(self):
+        att = self._make_attachment(
+            self.public_post, 1, "16_abc123", "report.pdf", "application/pdf"
+        )
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn('filename="report.pdf"', response["Content-Disposition"])
+
+    def test_public_subforum_anonymous_gets_correct_content_type(self):
+        att = self._make_attachment(
+            self.public_post, 2, "17_def456", "photo.jpg", "image/jpeg"
+        )
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "image/jpeg")
+
+    def test_private_subforum_anonymous_redirects_to_login(self):
+        att = self._make_attachment(
+            self.private_post, 3, "18_ghi789", "secret.doc", "application/msword"
+        )
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_private_subforum_non_member_gets_403(self):
+        att = self._make_attachment(
+            self.private_post, 4, "19_jkl012", "secret.doc", "application/msword"
+        )
+        User.objects.create_user(username="nogroup", password="pass")
+        self.client.login(username="nogroup", password="pass")
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_private_subforum_member_gets_file(self):
+        att = self._make_attachment(
+            self.private_post, 5, "20_mno345", "members_only.pdf", "application/pdf"
+        )
+        user = User.objects.create_user(username="member", password="pass")
+        user.groups.add(self.group)
+        self.client.login(username="member", password="pass")
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('filename="members_only.pdf"', response["Content-Disposition"])
+
+    def test_private_subforum_staff_gets_file(self):
+        att = self._make_attachment(
+            self.private_post, 6, "21_pqr678", "admin_file.pdf", "application/pdf"
+        )
+        User.objects.create_user(username="admin", password="pass", is_staff=True)
+        self.client.login(username="admin", password="pass")
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_nonexistent_pk_gets_404(self):
+        url = reverse("forum-attachment", kwargs={"pk": 99999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_no_mimetype_falls_back_to_octet_stream(self):
+        att = self._make_attachment(
+            self.public_post, 7, "22_stu901", "unknown_file", ""
+        )
+        with override_settings(MEDIA_ROOT=pathlib.Path(self.tmp_dir)):
+            url = reverse("forum-attachment", kwargs={"pk": att.pk})
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/octet-stream")
