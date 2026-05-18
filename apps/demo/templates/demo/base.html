@@ -5,6 +5,12 @@
   <meta charset="utf-8">
   <title>{% block title %}Турклуб Спутник{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block meta_description %}Турклуб «Спутник»{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}Турклуб Спутник{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Турклуб «Спутник»{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="{% static 'demo/favicon.ico' %}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'demo/favicon-32x32.png' %}">
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'demo/favicon-16x16.png' %}">

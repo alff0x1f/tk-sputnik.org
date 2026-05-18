@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}{{ subforum.name }} — Форум — Турклуб Спутник{% endblock %}
+{% block og_title %}{{ subforum.name }} — Форум — Турклуб Спутник{% endblock %}
+{% block meta_description %}{{ subforum.description|default:subforum.name }}{% endblock %}
+{% block og_description %}{{ subforum.description|default:subforum.name }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
