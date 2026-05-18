@@ -2,6 +2,9 @@
 {% load static forum_extras %}
 
 {% block title %}{{ topic.title }} — Форум — Турклуб Спутник{% endblock %}
+{% block og_title %}{{ topic.title }} — Форум — Турклуб Спутник{% endblock %}
+{% block meta_description %}{{ topic.title }}{% endblock %}
+{% block og_description %}{{ topic.title }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
