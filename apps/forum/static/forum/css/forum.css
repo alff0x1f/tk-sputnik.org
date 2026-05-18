@@ -307,6 +307,11 @@
   text-decoration-color:#1a5cb8;
 }
 
+.post-body img{
+  max-width:100%; height:auto;
+  border-radius:6px;
+}
+
 .post-body blockquote{
   border-left:3px solid var(--line-strong);
   background:var(--surface-2);
