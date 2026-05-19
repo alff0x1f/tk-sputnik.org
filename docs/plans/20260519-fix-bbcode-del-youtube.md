@@ -97,28 +97,28 @@ Length filter `{5,12}` excludes phpBB list markers (`:u`, `:o`, `:m` are 1 char)
 - Modify: `apps/forum_import/management/commands/import_phpbb_posts.py`
 - Modify: `apps/forum_import/tests.py`
 
-- [ ] add `_YT_URL_RE` regex constant for extracting YouTube video ID (supports
+- [x] add `_YT_URL_RE` regex constant for extracting YouTube video ID (supports
       `youtube.com/watch?v=` and `youtu.be/` in http and https)
-- [ ] add `_render_youtube(tag_name, value, options, parent, context)` function:
+- [x] add `_render_youtube(tag_name, value, options, parent, context)` function:
       extract URL (strip auto-link wrapper with `_HREF_RE`), parse video ID, return
       `<div class="yt-embed"><iframe ...></iframe></div>`; return bare value if no ID found
-- [ ] register `[del]` with `_parser.add_simple_formatter("del", "<del>%(value)s</del>")`
-- [ ] register `[youtube]` with
+- [x] register `[del]` with `_parser.add_simple_formatter("del", "<del>%(value)s</del>")`
+- [x] register `[youtube]` with
       `_parser.add_formatter("youtube", _render_youtube, render_embedded=False)`
-- [ ] in `Command.handle()`, add `"bbcode_uid": uid` to the `update_or_create` defaults
-- [ ] write test `test_del_tag_renders_to_del_element`: `_to_html("[del]text[/del]", "")` →
+- [x] in `Command.handle()`, add `"bbcode_uid": uid` to the `update_or_create` defaults
+- [x] write test `test_del_tag_renders_to_del_element`: `_to_html("[del]text[/del]", "")` →
       `<del>text</del>`
-- [ ] write test `test_del_tag_with_uid_stripped_and_rendered`: uid suffix stripped before
+- [x] write test `test_del_tag_with_uid_stripped_and_rendered`: uid suffix stripped before
       rendering
-- [ ] write test `test_youtube_tag_renders_iframe`: `_to_html` with
+- [x] write test `test_youtube_tag_renders_iframe`: `_to_html` with
       `[youtube:uid]https://www.youtube.com/watch?v=ABC123[/youtube:uid]` →
       `<iframe ... src=".../embed/ABC123" ...>`
-- [ ] write test `test_youtube_youtu_be_url`: short URL `https://youtu.be/ABC123` → same
+- [x] write test `test_youtube_youtu_be_url`: short URL `https://youtu.be/ABC123` → same
       iframe
-- [ ] write test `test_youtube_invalid_url_falls_back`: no video ID → no iframe, no crash
-- [ ] write test `test_bbcode_uid_saved_on_import`: after import command, `post.bbcode_uid`
+- [x] write test `test_youtube_invalid_url_falls_back`: no video ID → no iframe, no crash
+- [x] write test `test_bbcode_uid_saved_on_import`: after import command, `post.bbcode_uid`
       equals the UID from the row
-- [ ] run `uv run pytest apps/forum_import/tests.py` — must pass before Task 3
+- [x] run `uv run pytest apps/forum_import/tests.py` — must pass before Task 3
 
 ### Task 3: Create `rerender_posts` management command
 

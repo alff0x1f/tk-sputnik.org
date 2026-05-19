@@ -966,6 +966,84 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
         self.assertIn("<img src=", self.post.text_html)
 
 
+class DelTagRenderingTest(TestCase):
+    def test_del_tag_renders_to_del_element(self):
+        result = _to_html("[del]text[/del]", "")
+        self.assertIn("<del>text</del>", result)
+
+    def test_del_tag_with_uid_stripped_and_rendered(self):
+        uid = "abc12"
+        result = _to_html(f"[del:{uid}]removed[/del:{uid}]", uid)
+        self.assertIn("<del>removed</del>", result)
+        self.assertNotIn(f":{uid}", result)
+        self.assertNotIn("[del]", result)
+
+
+class YoutubeTagRenderingTest(TestCase):
+    def test_youtube_tag_renders_iframe(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("<iframe", result)
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+        self.assertNotIn("[youtube]", result)
+
+    def test_youtube_youtu_be_url(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://youtu.be/ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+
+    def test_youtube_invalid_url_falls_back(self):
+        result = _to_html("[youtube]not-a-url[/youtube]", "")
+        self.assertNotIn("<iframe", result)
+        self.assertNotIn("[youtube]", result)
+
+
+class ImportPhpbbPostsBbcodeUidSavedTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+
+    def _make_row(self, post_id=200, uid="xhj7k"):
+        return (post_id, 100, 0, "", "hello", uid, 1000000)
+
+    def _mock_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("post_id",),
+            ("topic_id",),
+            ("poster_id",),
+            ("post_username",),
+            ("post_text",),
+            ("bbcode_uid",),
+            ("post_time",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_saved_on_import(self, mock_connections):
+        uid = "xhj7k"
+        rows = [self._make_row(200, uid)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertEqual(post.bbcode_uid, uid)
+
+
 class PostBbcodeUidFieldTest(TestCase):
     def setUp(self):
         cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")

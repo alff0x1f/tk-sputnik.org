@@ -97,9 +97,34 @@ def _render_size(tag_name, value, options, parent, context):
     return value or ""
 
 
+_YT_URL_RE = re.compile(
+    r"(?:https?://(?:www\.)?youtube\.com/watch\?(?:[^#]*&)?v=|https?://youtu\.be/)([A-Za-z0-9_-]+)"
+)
+
+
+def _render_youtube(tag_name, value, options, parent, context):
+    url = (value or "").strip()
+    m = _HREF_RE.search(url)
+    if m:
+        url = html.unescape(m.group(1))
+    yt_m = _YT_URL_RE.search(url)
+    if not yt_m:
+        return value or ""
+    video_id = html.escape(yt_m.group(1), quote=True)
+    return (
+        f'<div class="yt-embed">'
+        f'<iframe width="560" height="315"'
+        f' src="https://www.youtube.com/embed/{video_id}"'
+        f' allowfullscreen loading="lazy"></iframe>'
+        f"</div>"
+    )
+
+
 _parser = bbcode.Parser()
 _parser.add_formatter("img", _render_img, render_embedded=False)
 _parser.add_formatter("size", _render_size)
+_parser.add_simple_formatter("del", "<del>%(value)s</del>")
+_parser.add_formatter("youtube", _render_youtube, render_embedded=False)
 
 
 def _to_html(raw: str, uid: str) -> str:
@@ -185,6 +210,7 @@ class Command(BaseCommand):
                     "author_username": row["post_username"] or "",
                     "text_bbcode": raw_text,
                     "text_html": _to_html(raw_text, uid),
+                    "bbcode_uid": uid,
                     "created_at": _unix_to_dt(row["post_time"]),
                 },
             )
