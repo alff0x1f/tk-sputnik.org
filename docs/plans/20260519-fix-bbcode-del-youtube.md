@@ -146,12 +146,12 @@ Length filter `{5,12}` excludes phpBB list markers (`:u`, `:o`, `:m` are 1 char)
 
 ### Task 4: Verify acceptance criteria
 
-- [ ] run full test suite: `uv run pytest`
-- [ ] run `uv run ruff check .` — no lint errors
-- [ ] verify `[del]` rendering: `Post.objects.filter(text_html__icontains="[del]").count()` == 0
+- [x] run full test suite: `uv run pytest`
+- [x] run `uv run ruff check .` — no lint errors
+- [x] verify `[del]` rendering: `Post.objects.filter(text_html__icontains="[del]").count()` == 0
       after rerender
-- [ ] verify `[youtube]` rendering: `Post.objects.filter(text_html__icontains="[youtube]").count()` == 0
-      after rerender
+- [x] verify `[youtube]` rendering: `Post.objects.filter(text_html__icontains="[youtube]").count()` == 0
+      after rerender (5 occurrences remain inside `<code>` blocks showing syntax examples — expected)
 
 ### Task 5: [Final] Cleanup
 
