@@ -326,6 +326,62 @@
   padding:24px 0; color:var(--muted); font-size:14px;
 }
 
+/* ── Spoiler (details/summary) ────────────────────────────── */
+details.spoiler {
+  margin: 10px 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+details.spoiler > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--surface-2);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-size: 13px;
+  color: var(--ink-2);
+  transition: background .12s;
+}
+
+details.spoiler > summary::-webkit-details-marker { display: none; }
+details.spoiler > summary::marker { display: none; }
+
+details.spoiler > summary::before {
+  content: "+";
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--muted);
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: color .12s;
+}
+
+details.spoiler[open] > summary::before {
+  content: "−";
+}
+
+details.spoiler > summary:hover {
+  background: var(--chip-bg, var(--surface-2));
+}
+
+details.spoiler > summary:hover::before {
+  color: var(--ink-2);
+}
+
+.spoiler-body {
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 @media (max-width:720px){
   .post-card{ grid-template-columns: 36px 1fr; column-gap:10px; }
   .post-avatar{ width:36px; height:36px; font-size:13px; }

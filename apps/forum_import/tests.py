@@ -702,6 +702,34 @@ class ImportPhpbbPostsCommandTest(TestCase):
         self.assertNotIn("[size", post.text_html)
 
 
+class ToHtmlSpoilerTest(TestCase):
+    def test_spoiler_with_title_renders_details(self):
+        uid = "abc123"
+        raw = f"[spoiler=Секрет:{uid}]скрытый текст[/spoiler:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn("<details", result)
+        self.assertIn("<summary>Секрет</summary>", result)
+        self.assertIn('class="spoiler-body"', result)
+        self.assertIn("скрытый текст", result)
+        self.assertNotIn("[spoiler", result)
+
+    def test_spoiler_title_is_escaped(self):
+        raw = "[spoiler=<script>alert(1)</script>]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+
+    def test_spoiler_empty_title_uses_default(self):
+        raw = "[spoiler=]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn("<summary>Spoiler</summary>", result)
+
+    def test_spoiler_has_css_class(self):
+        raw = "[spoiler=Заголовок]текст[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn('class="spoiler"', result)
+
+
 class ToHtmlSmiliesMarkersTest(TestCase):
     def test_smiley_renders_to_img_tag(self):
         raw = (

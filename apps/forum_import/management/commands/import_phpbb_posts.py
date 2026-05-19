@@ -120,11 +120,22 @@ def _render_youtube(tag_name, value, options, parent, context):
     )
 
 
+def _render_spoiler(tag_name, value, options, parent, context):
+    title = html.escape(options.get("spoiler", "") or "Spoiler")
+    return (
+        f'<details class="spoiler">'
+        f"<summary>{title}</summary>"
+        f'<div class="spoiler-body">{value}</div>'
+        f"</details>"
+    )
+
+
 _parser = bbcode.Parser()
 _parser.add_formatter("img", _render_img, render_embedded=False)
 _parser.add_formatter("size", _render_size)
 _parser.add_simple_formatter("del", "<del>%(value)s</del>")
 _parser.add_formatter("youtube", _render_youtube, render_embedded=False)
+_parser.add_formatter("spoiler", _render_spoiler)
 
 
 def _to_html(raw: str, uid: str) -> str:

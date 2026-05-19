@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('forum', '0003_postattachment'),
+        ("forum", "0003_postattachment"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='bbcode_uid',
-            field=models.CharField(blank=True, max_length=20, verbose_name='phpBB BBCode UID'),
+            model_name="post",
+            name="bbcode_uid",
+            field=models.CharField(
+                blank=True, max_length=20, verbose_name="phpBB BBCode UID"
+            ),
         ),
     ]
