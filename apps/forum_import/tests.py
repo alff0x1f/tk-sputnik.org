@@ -964,3 +964,33 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
         self.post.refresh_from_db()
         self.assertIn('class="post-attachments"', self.post.text_html)
         self.assertIn("<img src=", self.post.text_html)
+
+
+class PostBbcodeUidFieldTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def test_post_created_with_bbcode_uid(self):
+        post = Post.objects.create(
+            phpbb_id=300,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            bbcode_uid="abc12",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "abc12")
+
+    def test_post_created_without_bbcode_uid_defaults_to_empty(self):
+        post = Post.objects.create(
+            phpbb_id=301,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "")

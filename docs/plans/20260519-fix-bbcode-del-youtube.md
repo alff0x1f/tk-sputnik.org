@@ -83,13 +83,13 @@ Length filter `{5,12}` excludes phpBB list markers (`:u`, `:o`, `:m` are 1 char)
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/0004_post_bbcode_uid.py`
 
-- [ ] add `bbcode_uid = models.CharField("phpBB BBCode UID", max_length=20, blank=True)`
+- [x] add `bbcode_uid = models.CharField("phpBB BBCode UID", max_length=20, blank=True)`
       to `Post` in `apps/forum/models.py`
-- [ ] run `uv run python manage.py makemigrations forum` to generate migration
-- [ ] verify migration file is generated as `0004_post_bbcode_uid.py`
-- [ ] run `uv run python manage.py migrate` — must succeed with no errors
-- [ ] write test: `Post` can be created with and without `bbcode_uid` field
-- [ ] run tests — must pass before Task 2
+- [x] run `uv run python manage.py makemigrations forum` to generate migration
+- [x] verify migration file is generated as `0004_post_bbcode_uid.py`
+- [x] run `uv run python manage.py migrate` — must succeed with no errors
+- [x] write test: `Post` can be created with and without `bbcode_uid` field
+- [x] run tests — must pass before Task 2
 
 ### Task 2: Add `[del]` and `[youtube]` formatters; save UID in import
 
