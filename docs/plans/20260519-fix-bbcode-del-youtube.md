@@ -126,23 +126,23 @@ Length filter `{5,12}` excludes phpBB list markers (`:u`, `:o`, `:m` are 1 char)
 - Create: `apps/forum_import/management/commands/rerender_posts.py`
 - Modify: `apps/forum_import/tests.py`
 
-- [ ] create `rerender_posts.py` with `Command` class
-- [ ] add `_detect_uid(text: str) -> str` helper (with `_UID_DETECT_RE`) in the new file
-- [ ] command iterates `Post.objects.all()` in `phpbb_id` order
-- [ ] for each post: `uid = post.bbcode_uid or _detect_uid(post.text_bbcode)`
-- [ ] call `_finalize_post_html(post.text_bbcode, uid, list(post.attachments.order_by("phpbb_id")))`
+- [x] create `rerender_posts.py` with `Command` class
+- [x] add `_detect_uid(text: str) -> str` helper (with `_UID_DETECT_RE`) in the new file
+- [x] command iterates `Post.objects.all()` in `phpbb_id` order
+- [x] for each post: `uid = post.bbcode_uid or _detect_uid(post.text_bbcode)`
+- [x] call `_finalize_post_html(post.text_bbcode, uid, list(post.attachments.order_by("phpbb_id")))`
       imported from `import_phpbb_attachments`
-- [ ] save with `post.save(update_fields=["text_html"])`
-- [ ] print progress every 100 posts and final count
-- [ ] write test `test_rerender_updates_del_tag`: create `Post` with `text_bbcode`
+- [x] save with `post.save(update_fields=["text_html"])`
+- [x] print progress every 100 posts and final count
+- [x] write test `test_rerender_updates_del_tag`: create `Post` with `text_bbcode`
       containing `[del:uid]text[/del:uid]` and wrong `text_html`; run command; assert
       `text_html` contains `<del>text</del>`
-- [ ] write test `test_rerender_updates_youtube_tag`: similar for `[youtube:uid]`
-- [ ] write test `test_rerender_preserves_attachments`: post with attachment in DB;
+- [x] write test `test_rerender_updates_youtube_tag`: similar for `[youtube:uid]`
+- [x] write test `test_rerender_preserves_attachments`: post with attachment in DB;
       assert attachment HTML present after rerender
-- [ ] write test `test_rerender_uid_autodetect`: post with empty `bbcode_uid` but UID
+- [x] write test `test_rerender_uid_autodetect`: post with empty `bbcode_uid` but UID
       embedded in `text_bbcode`; assert UID stripped correctly after rerender
-- [ ] run `uv run pytest apps/forum_import/tests.py` — must pass before Task 4
+- [x] run `uv run pytest apps/forum_import/tests.py` — must pass before Task 4
 
 ### Task 4: Verify acceptance criteria
 

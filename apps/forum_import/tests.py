@@ -1044,6 +1044,80 @@ class ImportPhpbbPostsBbcodeUidSavedTest(TestCase):
         self.assertEqual(post.bbcode_uid, uid)
 
 
+class RerenderPostsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def _make_post(self, phpbb_id, text_bbcode, bbcode_uid="", text_html="old"):
+        return Post.objects.create(
+            phpbb_id=phpbb_id,
+            topic=self.topic,
+            text_bbcode=text_bbcode,
+            text_html=text_html,
+            bbcode_uid=bbcode_uid,
+        )
+
+    def test_rerender_updates_del_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            300,
+            f"[del:{uid}]removed[/del:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>removed</del>", post.text_html)
+        self.assertNotIn("[del]", post.text_html)
+
+    def test_rerender_updates_youtube_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            301,
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=XYZ999[/youtube:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<iframe", post.text_html)
+        self.assertIn("https://www.youtube.com/embed/XYZ999", post.text_html)
+
+    def test_rerender_preserves_attachments(self):
+        uid = "abc12"
+        post = self._make_post(
+            302,
+            f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]",
+            bbcode_uid=uid,
+        )
+        PostAttachment.objects.create(
+            phpbb_id=1,
+            post=post,
+            physical_filename="file.jpg",
+            real_filename="photo.jpg",
+            mimetype="image/jpeg",
+            filesize=1024,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<img src=", post.text_html)
+        self.assertNotIn("attachment-ref", post.text_html)
+
+    def test_rerender_uid_autodetect(self):
+        uid = "xhj7k"
+        post = self._make_post(
+            303,
+            f"[del:{uid}]old[/del:{uid}]",
+            bbcode_uid="",
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>old</del>", post.text_html)
+        self.assertNotIn(f":{uid}", post.text_html)
+
+
 class PostBbcodeUidFieldTest(TestCase):
     def setUp(self):
         cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
