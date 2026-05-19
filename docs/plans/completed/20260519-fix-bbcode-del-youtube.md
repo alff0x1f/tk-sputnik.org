@@ -155,7 +155,7 @@ Length filter `{5,12}` excludes phpBB list markers (`:u`, `:o`, `:m` are 1 char)
 
 ### Task 5: [Final] Cleanup
 
-- [ ] move this plan to `docs/plans/completed/`
+- [x] move this plan to `docs/plans/completed/`
 
 ## Post-Completion
 
