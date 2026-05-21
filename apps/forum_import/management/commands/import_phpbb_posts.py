@@ -112,9 +112,10 @@ def _render_youtube(tag_name, value, options, parent, context):
         return value or ""
     video_id = html.escape(yt_m.group(1), quote=True)
     return (
-        f'<div class="yt-embed">'
-        f'<iframe width="560" height="315"'
+        f'<div class="yt-embed" style="width:100%;max-width:560px;">'
+        f'<iframe'
         f' src="https://www.youtube.com/embed/{video_id}"'
+        f' style="display:block;width:100%;aspect-ratio:16 / 9;height:auto;border:0;"'
         f' allowfullscreen loading="lazy"></iframe>'
         f"</div>"
     )
