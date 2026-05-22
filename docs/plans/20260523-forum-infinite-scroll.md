@@ -104,14 +104,14 @@
 **Files:**
 - Create: `apps/forum/static/forum/js/topic.js`
 
-- [ ] создать `topic.js` с IIFE
-- [ ] если нет `#pagination` — выходим (защита для других страниц)
-- [ ] создать `IntersectionObserver` с `rootMargin: '-60px 0px 0px 0px'`
-- [ ] вести `Set visible` — добавлять/удалять `data-page` при пересечении
-- [ ] `setActivePage(Math.min(...visible))` — переключает класс `current` на `[data-page]`
-- [ ] `observeBlocks()` — подписывает все `.page-block[data-page]` на observer
-- [ ] `document.body.addEventListener('htmx:afterSwap', observeBlocks)` — переподписка после htmx-загрузки
-- [ ] убедиться что `observeBlocks()` не дублирует подписки при повторном вызове (использовать WeakSet или проверять `data-observed`)
+- [x] создать `topic.js` с IIFE
+- [x] если нет `#pagination` — выходим (защита для других страниц)
+- [x] создать `IntersectionObserver` с `rootMargin: '-60px 0px 0px 0px'`
+- [x] вести `Set visible` — добавлять/удалять `data-page` при пересечении
+- [x] `setActivePage(Math.min(...visible))` — переключает класс `current` на `[data-page]`
+- [x] `observeBlocks()` — подписывает все `.page-block[data-page]` на observer
+- [x] `document.body.addEventListener('htmx:afterSwap', observeBlocks)` — переподписка после htmx-загрузки
+- [x] убедиться что `observeBlocks()` не дублирует подписки при повторном вызове (использовать WeakSet или проверять `data-observed`)
 
 ### Task 7: Проверка требований
 
