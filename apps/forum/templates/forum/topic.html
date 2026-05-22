@@ -34,7 +34,7 @@
     {% if page_obj.paginator.num_pages > 1 %}
     <div id="pagination" class="pagination pagination-sticky">
       {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" data-page="{{ page_obj.previous_page_number }}">&lsaquo;</a>
+        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo;</a>
       {% else %}
         <span class="disabled">&lsaquo;</span>
       {% endif %}
@@ -44,7 +44,7 @@
       {% endfor %}
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" data-page="{{ page_obj.next_page_number }}">&rsaquo;</a>
+        <a href="?page={{ page_obj.next_page_number }}">&rsaquo;</a>
       {% else %}
         <span class="disabled">&rsaquo;</span>
       {% endif %}
