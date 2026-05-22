@@ -126,7 +126,7 @@
 
 ### Task 8: [Final] Завершение
 
-- [ ] переместить план в `docs/plans/completed/`
+- [x] переместить план в `docs/plans/completed/`
 
 ## Post-Completion
 
