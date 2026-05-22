@@ -239,6 +239,16 @@
 }
 .pagination .disabled{ color:var(--muted); pointer-events:none; }
 
+.pagination-sticky{
+  position:sticky; top:60px; z-index:10;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  margin:0 0 20px; padding:8px 0;
+}
+.pagination-sticky.pagination{ margin-top:0; }
+
+.sentinel{ height:1px; }
+
 /* ── Post feed (Twitter/Threads layout) ───────────────────── */
 .post-feed{ padding-top:4px; }
 

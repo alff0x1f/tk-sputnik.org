@@ -95,9 +95,9 @@
 **Files:**
 - Modify: `apps/forum/static/forum/css/forum.css`
 
-- [ ] добавить `.pagination-sticky`: `position: sticky; top: 60px; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 8px 0;`
-- [ ] добавить `.sentinel`: `height: 1px;`
-- [ ] убедиться, что `.pagination` базовые стили не конфликтуют с `.pagination-sticky` (margin-top переопределяется)
+- [x] добавить `.pagination-sticky`: `position: sticky; top: 60px; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 8px 0;`
+- [x] добавить `.sentinel`: `height: 1px;`
+- [x] убедиться, что `.pagination` базовые стили не конфликтуют с `.pagination-sticky` (margin-top переопределяется)
 
 ### Task 6: JavaScript — Intersection Observer для трекинга страницы
 
