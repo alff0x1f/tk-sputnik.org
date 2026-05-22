@@ -82,13 +82,13 @@
 **Files:**
 - Modify: `apps/forum/templates/forum/topic.html`
 
-- [ ] убрать пагинацию снизу
-- [ ] добавить пагинацию сверху (после `.feed-sub`, до `.post-feed`) с `id="pagination"` и классом `pagination-sticky`
-- [ ] все номера страниц — `<a href="?page={{ num }}" data-page="{{ num }}" {% if num == page_obj.number %}class="current"{% endif %}>{{ num }}</a>` (не `<span>`)
-- [ ] обернуть посты в `<div class="page-block" data-page="{{ page_obj.number }}">`
-- [ ] добавить сентинель после блока постов если `page_obj.has_next`
-- [ ] в `{% block extra_js %}` подключить htmx CDN и `{% static 'forum/js/topic.js' %}`
-- [ ] `uv run pytest apps/forum/tests.py` — все тесты проходят
+- [x] убрать пагинацию снизу
+- [x] добавить пагинацию сверху (после `.feed-sub`, до `.post-feed`) с `id="pagination"` и классом `pagination-sticky`
+- [x] все номера страниц — `<a href="?page={{ num }}" data-page="{{ num }}" {% if num == page_obj.number %}class="current"{% endif %}>{{ num }}</a>` (не `<span>`)
+- [x] обернуть посты в `<div class="page-block" data-page="{{ page_obj.number }}">`
+- [x] добавить сентинель после блока постов если `page_obj.has_next`
+- [x] в `{% block extra_js %}` подключить htmx CDN и `{% static 'forum/js/topic.js' %}`
+- [x] `uv run pytest apps/forum/tests.py` — все тесты проходят
 
 ### Task 5: CSS — sticky-пагинация и сентинель
 
