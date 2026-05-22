@@ -82,9 +82,11 @@ def topic_posts(request, pk):
         return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at")
     page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
     return render(
         request,
-        "forum/topic.html",
+        template,
         {"topic": topic, "page_obj": page_obj},
     )
 

@@ -58,13 +58,13 @@
 - Modify: `apps/forum/views.py`
 - Modify: `apps/forum/tests.py`
 
-- [ ] в `topic_posts()` добавить проверку `request.headers.get("HX-Request") == "true"`
-- [ ] при `is_htmx=True` рендерить `forum/topic_posts_partial.html`, иначе — `forum/topic.html`
-- [ ] написать тест: обычный GET `/forum/t/<pk>/` возвращает полный шаблон `topic.html`
-- [ ] написать тест: GET с заголовком `HTTP_HX_REQUEST=true` возвращает partial-шаблон
-- [ ] написать тест: partial-ответ содержит `.page-block`, не содержит `<html>`
-- [ ] написать тест: partial с последней страницей не содержит `.sentinel`
-- [ ] `uv run pytest apps/forum/tests.py` — все тесты проходят
+- [x] в `topic_posts()` добавить проверку `request.headers.get("HX-Request") == "true"`
+- [x] при `is_htmx=True` рендерить `forum/topic_posts_partial.html`, иначе — `forum/topic.html`
+- [x] написать тест: обычный GET `/forum/t/<pk>/` возвращает полный шаблон `topic.html`
+- [x] написать тест: GET с заголовком `HTTP_HX_REQUEST=true` возвращает partial-шаблон
+- [x] написать тест: partial-ответ содержит `.page-block`, не содержит `<html>`
+- [x] написать тест: partial с последней страницей не содержит `.sentinel`
+- [x] `uv run pytest apps/forum/tests.py` — все тесты проходят
 
 ### Task 3: Создать `topic_posts_partial.html`
 
