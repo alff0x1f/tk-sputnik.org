@@ -49,8 +49,8 @@
 **Files:**
 - Modify: `apps/demo/templates/demo/base.html`
 
-- [ ] добавить `{% block extra_js %}{% endblock %}` перед `</body>` в `base.html`
-- [ ] убедиться, что блок не ломает существующие страницы (рендер без изменений)
+- [x] добавить `{% block extra_js %}{% endblock %}` перед `</body>` в `base.html`
+- [x] убедиться, что блок не ломает существующие страницы (рендер без изменений)
 
 ### Task 2: Доработать view для поддержки partial-ответа
 
