@@ -5,6 +5,7 @@
   var visible = new Set();
   var observed = new WeakSet();
 
+  var stickyTop = -(60 + pagination.offsetHeight);
   var observer = new IntersectionObserver(
     function (entries) {
       entries.forEach(function (entry) {
@@ -19,7 +20,7 @@
         setActivePage(Math.min.apply(null, Array.from(visible)));
       }
     },
-    { rootMargin: '-60px 0px 0px 0px' }
+    { rootMargin: stickyTop + 'px 0px 0px 0px' }
   );
 
   function setActivePage(page) {
