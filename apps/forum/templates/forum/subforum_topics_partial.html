@@ -1,0 +1,12 @@
+<div class="page-block" data-page="{{ page_obj.number }}">
+  {% for topic in page_obj %}
+  <div class="topic">
+    <div class="topic-body">
+      <div class="topic-title"><a href="{% url 'topic-posts' topic.id %}">{{ topic.title }}</a></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if page_obj.has_next %}
+<div class="sentinel" hx-get="?page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>
+{% endif %}

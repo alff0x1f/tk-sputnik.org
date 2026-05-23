@@ -59,15 +59,15 @@
 **Files:**
 - Modify: `apps/forum/views.py`
 
-- [ ] добавить `is_htmx = request.headers.get("HX-Request") == "true"`
-- [ ] при `is_htmx=True` рендерить `forum/subforum_topics_partial.html`, иначе — `forum/subforum.html`
-- [ ] добавить `elided_pages` в контекст (только для не-htmx, как в `topic_posts`)
-- [ ] добавить `patch_vary_headers(response, ["HX-Request"])`
-- [ ] написать тест: обычный GET `/forum/f/<pk>/` возвращает полный шаблон `subforum.html`
-- [ ] написать тест: GET с заголовком `HTTP_HX_REQUEST=true` возвращает partial-шаблон
-- [ ] написать тест: partial-ответ содержит `.page-block`, не содержит `<html>`
-- [ ] написать тест: partial с последней страницей не содержит `.sentinel`
-- [ ] `uv run pytest apps/forum/tests.py` — все тесты проходят
+- [x] добавить `is_htmx = request.headers.get("HX-Request") == "true"`
+- [x] при `is_htmx=True` рендерить `forum/subforum_topics_partial.html`, иначе — `forum/subforum.html`
+- [x] добавить `elided_pages` в контекст (только для не-htmx, как в `topic_posts`)
+- [x] добавить `patch_vary_headers(response, ["HX-Request"])`
+- [x] написать тест: обычный GET `/forum/f/<pk>/` возвращает полный шаблон `subforum.html`
+- [x] написать тест: GET с заголовком `HTTP_HX_REQUEST=true` возвращает partial-шаблон
+- [x] написать тест: partial-ответ содержит `.page-block`, не содержит `<html>`
+- [x] написать тест: partial с последней страницей не содержит `.sentinel`
+- [x] `uv run pytest apps/forum/tests.py` — все тесты проходят
 
 ### Task 3: Создать subforum_topics_partial.html
 

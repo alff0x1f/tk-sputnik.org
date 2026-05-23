@@ -67,12 +67,21 @@ def subforum_topics(request, pk):
         last_post_author=Subquery(_display_name(last_post)[:1]),
         last_post_at=Subquery(last_post.values("created_at")[:1]),
     ).order_by(F("last_post_at").desc(nulls_last=True))
-    page_obj = Paginator(topics_qs, 25).get_page(request.GET.get("page"))
-    return render(
-        request,
-        "forum/subforum.html",
-        {"subforum": subforum, "page_obj": page_obj},
-    )
+    paginator = Paginator(topics_qs, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = "forum/subforum_topics_partial.html" if is_htmx else "forum/subforum.html"
+    context = {"subforum": subforum, "page_obj": page_obj}
+    if not is_htmx:
+        page_range = paginator.get_elided_page_range(
+            page_obj.number, on_each_side=2, on_ends=2
+        )
+        context["elided_pages"] = [
+            {"num": n, "is_ellipsis": n == Paginator.ELLIPSIS} for n in page_range
+        ]
+    response = render(request, template, context)
+    patch_vary_headers(response, ["HX-Request"])
+    return response
 
 
 def topic_posts(request, pk):
