@@ -7,6 +7,7 @@ from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
+from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
 
@@ -81,12 +82,21 @@ def topic_posts(request, pk):
             return redirect_to_login(request.get_full_path())
         return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at")
-    page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
-    return render(
-        request,
-        "forum/topic.html",
-        {"topic": topic, "page_obj": page_obj},
-    )
+    paginator = Paginator(posts_qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
+    context = {"topic": topic, "page_obj": page_obj}
+    if not is_htmx:
+        page_range = paginator.get_elided_page_range(
+            page_obj.number, on_each_side=2, on_ends=2
+        )
+        context["elided_pages"] = [
+            {"num": n, "is_ellipsis": n == Paginator.ELLIPSIS} for n in page_range
+        ]
+    response = render(request, template, context)
+    patch_vary_headers(response, ["HX-Request"])
+    return response
 
 
 def serve_attachment(request, pk):

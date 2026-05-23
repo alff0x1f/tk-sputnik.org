@@ -452,6 +452,60 @@ class TopicPostsViewTest(TestCase):
         self.assertEqual(len(response2.context["page_obj"].object_list), 2)
 
 
+class TopicPostsHtmxTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(
+            id=1, phpbb_id=1, name="Cat", sort_order=1
+        )
+        self.subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            id=700, phpbb_id=700, subforum=self.subforum, title="Htmx Topic"
+        )
+        for i in range(1, 22):
+            Post.objects.create(
+                id=20000 + i,
+                phpbb_id=20000 + i,
+                topic=self.topic,
+                text_bbcode="x",
+                text_html=f"<p>post {i}</p>",
+                created_at=datetime.datetime(2010, 9, 1, tzinfo=datetime.UTC),
+            )
+
+    def _url(self):
+        return reverse("topic-posts", kwargs={"pk": 700})
+
+    def test_normal_get_uses_full_template(self):
+        response = self.client.get(self._url())
+        self.assertTemplateUsed(response, "forum/topic.html")
+
+    def test_htmx_get_uses_partial_template(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertTemplateUsed(response, "forum/topic_posts_partial.html")
+
+    def test_partial_contains_page_block_not_html_tag(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertContains(response, "page-block")
+        self.assertNotContains(response, "<html")
+
+    def test_partial_last_page_has_no_sentinel(self):
+        response = self.client.get(self._url() + "?page=2", HTTP_HX_REQUEST="true")
+        self.assertNotContains(response, 'class="sentinel"')
+
+    def test_partial_non_last_page_has_sentinel(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertContains(response, 'class="sentinel"')
+
+    def test_vary_header_on_normal_response(self):
+        response = self.client.get(self._url())
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
+    def test_vary_header_on_partial_response(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
+
 class SubforumTopicsAccessControlTest(TestCase):
     def setUp(self):
         self.group = Group.objects.create(name="орг")

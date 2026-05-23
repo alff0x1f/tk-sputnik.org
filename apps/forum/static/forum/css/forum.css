@@ -237,7 +237,22 @@
   background:var(--accent); border-color:var(--accent);
   color:#fff; font-weight:600;
 }
+.pagination .entering{
+  border-color:var(--accent); color:var(--accent);
+}
 .pagination .disabled{ color:var(--muted); pointer-events:none; }
+.pagination .pag-ellipsis{ color:var(--muted); padding:0 6px; border:none; background:transparent; min-width:auto; }
+
+.pagination-sticky{
+  position:sticky; top:60px; z-index:10;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  margin:0 0 20px; padding:8px 0;
+  flex-wrap:nowrap; overflow-x:auto;
+}
+.pagination-sticky.pagination{ margin-top:0; }
+
+.sentinel{ height:1px; }
 
 /* ── Post feed (Twitter/Threads layout) ───────────────────── */
 .post-feed{ padding-top:4px; }
@@ -270,6 +285,8 @@
   margin-top:6px; margin-bottom:0;
   border-radius:1px;
 }
+.post-card:last-child .post-thread-line{ display:none; }
+.page-block:not(:last-child) .post-card:last-child .post-thread-line{ display:block; }
 
 .post-right{
   min-width:0;
