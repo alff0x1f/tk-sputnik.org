@@ -50,9 +50,9 @@
 - Rename: `apps/forum/static/forum/js/topic.js` → `apps/forum/static/forum/js/forum-scroll.js`
 - Modify: `apps/forum/templates/forum/topic.html`
 
-- [ ] переименовать `topic.js` в `forum-scroll.js`
-- [ ] обновить `topic.html`: заменить `{% static 'forum/js/topic.js' %}` на `{% static 'forum/js/forum-scroll.js' %}`
-- [ ] `uv run pytest apps/forum/tests.py` — все тесты проходят
+- [x] переименовать `topic.js` в `forum-scroll.js`
+- [x] обновить `topic.html`: заменить `{% static 'forum/js/topic.js' %}` на `{% static 'forum/js/forum-scroll.js' %}`
+- [x] `uv run pytest apps/forum/tests.py` — все тесты проходят
 
 ### Task 2: Доработать view subforum_topics()
 
