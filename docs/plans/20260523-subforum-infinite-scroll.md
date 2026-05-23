@@ -74,11 +74,11 @@
 **Files:**
 - Create: `apps/forum/templates/forum/subforum_topics_partial.html`
 
-- [ ] создать шаблон без `extends` — только фрагмент HTML
-- [ ] обернуть темы в `<div class="page-block" data-page="{{ page_obj.number }}">`
-- [ ] скопировать разметку `.topic` из `subforum.html` без изменений
-- [ ] добавить сентинель в конце если `page_obj.has_next`: `<div class="sentinel" hx-get="?page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>`
-- [ ] `uv run pytest apps/forum/tests.py` — тесты из Task 2 проходят с новым шаблоном
+- [x] создать шаблон без `extends` — только фрагмент HTML
+- [x] обернуть темы в `<div class="page-block" data-page="{{ page_obj.number }}">`
+- [x] скопировать разметку `.topic` из `subforum.html` без изменений
+- [x] добавить сентинель в конце если `page_obj.has_next`: `<div class="sentinel" hx-get="?page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>`
+- [x] `uv run pytest apps/forum/tests.py` — тесты из Task 2 проходят с новым шаблоном
 
 ### Task 4: Переписать subforum.html
 
