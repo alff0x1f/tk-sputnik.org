@@ -238,6 +238,7 @@
   color:#fff; font-weight:600;
 }
 .pagination .disabled{ color:var(--muted); pointer-events:none; }
+.pagination .pag-ellipsis{ color:var(--muted); padding:0 2px; }
 
 .pagination-sticky{
   position:sticky; top:60px; z-index:10;

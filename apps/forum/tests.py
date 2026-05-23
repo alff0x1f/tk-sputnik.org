@@ -497,6 +497,14 @@ class TopicPostsHtmxTest(TestCase):
         response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
         self.assertContains(response, 'class="sentinel"')
 
+    def test_vary_header_on_normal_response(self):
+        response = self.client.get(self._url())
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
+    def test_vary_header_on_partial_response(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
 
 class SubforumTopicsAccessControlTest(TestCase):
     def setUp(self):

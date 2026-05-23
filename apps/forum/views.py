@@ -82,10 +82,19 @@ def topic_posts(request, pk):
             return redirect_to_login(request.get_full_path())
         return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at")
-    page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
+    paginator = Paginator(posts_qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
     template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
-    response = render(request, template, {"topic": topic, "page_obj": page_obj})
+    context = {"topic": topic, "page_obj": page_obj}
+    if not is_htmx:
+        page_range = paginator.get_elided_page_range(
+            page_obj.number, on_each_side=2, on_ends=2
+        )
+        context["elided_pages"] = [
+            {"num": n, "is_ellipsis": n == Paginator.ELLIPSIS} for n in page_range
+        ]
+    response = render(request, template, context)
     patch_vary_headers(response, ["HX-Request"])
     return response
 
