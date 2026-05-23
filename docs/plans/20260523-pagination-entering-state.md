@@ -64,8 +64,8 @@
 **Files:**
 - Modify: `apps/forum/static/forum/js/topic.js`
 
-- [ ] добавить `var anyVisible = new Set();`
-- [ ] создать `viewObserver` (без rootMargin) для отслеживания видимости блоков:
+- [x] добавить `var anyVisible = new Set();`
+- [x] создать `viewObserver` (без rootMargin) для отслеживания видимости блоков:
   ```js
   var viewObserver = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
@@ -76,14 +76,14 @@
     updatePagination();
   });
   ```
-- [ ] заменить callback первого observer: вместо вызова `setActivePage` вызывать `updatePagination()`
-- [ ] написать `updatePagination()`, которая:
+- [x] заменить callback первого observer: вместо вызова `setActivePage` вызывать `updatePagination()`
+- [x] написать `updatePagination()`, которая:
   - вычисляет `currentPage` через `Math.min(...visible)` или `lastPage` если `visible` пуст
   - для каждого `[data-page]` в пагинации: выставляет `.current` и `.entering` через `classList.toggle`
   - обновляет `pag-prev` / `pag-next` (та же логика, что в `setActivePage`)
-- [ ] удалить `setActivePage()`
-- [ ] в `observeBlocks()` добавить `viewObserver.observe(block)` рядом с `observer.observe(block)`
-- [ ] убедиться, что оба observer'а вызывают `updatePagination()`, а не отдельные функции
+- [x] удалить `setActivePage()`
+- [x] в `observeBlocks()` добавить `viewObserver.observe(block)` рядом с `observer.observe(block)`
+- [x] убедиться, что оба observer'а вызывают `updatePagination()`, а не отдельные функции
 
 ### Task 3: Регрессионная проверка тестов
 
