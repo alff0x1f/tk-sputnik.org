@@ -493,6 +493,10 @@ class TopicPostsHtmxTest(TestCase):
         response = self.client.get(self._url() + "?page=2", HTTP_HX_REQUEST="true")
         self.assertNotContains(response, 'class="sentinel"')
 
+    def test_partial_non_last_page_has_sentinel(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertContains(response, 'class="sentinel"')
+
 
 class SubforumTopicsAccessControlTest(TestCase):
     def setUp(self):

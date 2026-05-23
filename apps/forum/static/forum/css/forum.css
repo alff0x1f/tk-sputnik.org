@@ -280,6 +280,7 @@
   margin-top:6px; margin-bottom:0;
   border-radius:1px;
 }
+.page-block:last-child .post-card:last-child .post-thread-line{ display:none; }
 
 .post-right{
   min-width:0;

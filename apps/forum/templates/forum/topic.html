@@ -57,7 +57,7 @@
             {% else %}
               <div class="post-avatar">—</div>
             {% endif %}
-            {% if not forloop.last %}<div class="post-thread-line"></div>{% endif %}
+            <div class="post-thread-line"></div>
           </div>
           <div class="post-right">
             <div class="post-header">
@@ -82,6 +82,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+<script src="{% static 'forum/js/htmx.min.js' %}"></script>
 <script src="{% static 'forum/js/topic.js' %}"></script>
 {% endblock %}
