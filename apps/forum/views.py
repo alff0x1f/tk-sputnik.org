@@ -7,6 +7,7 @@ from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
+from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
 
@@ -84,11 +85,9 @@ def topic_posts(request, pk):
     page_obj = Paginator(posts_qs, 20).get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
     template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
-    return render(
-        request,
-        template,
-        {"topic": topic, "page_obj": page_obj},
-    )
+    response = render(request, template, {"topic": topic, "page_obj": page_obj})
+    patch_vary_headers(response, ["HX-Request"])
+    return response
 
 
 def serve_attachment(request, pk):

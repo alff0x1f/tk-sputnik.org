@@ -24,9 +24,20 @@
   );
 
   function setActivePage(page) {
+    var total = parseInt(pagination.dataset.pages, 10);
     pagination.querySelectorAll('[data-page]').forEach(function (el) {
       el.classList.toggle('current', parseInt(el.dataset.page, 10) === page);
     });
+    var prevEl = document.getElementById('pag-prev');
+    var nextEl = document.getElementById('pag-next');
+    if (prevEl) {
+      prevEl.classList.toggle('disabled', page <= 1);
+      prevEl.href = '?page=' + Math.max(1, page - 1);
+    }
+    if (nextEl) {
+      nextEl.classList.toggle('disabled', page >= total);
+      nextEl.href = '?page=' + Math.min(total, page + 1);
+    }
   }
 
   function observeBlocks() {

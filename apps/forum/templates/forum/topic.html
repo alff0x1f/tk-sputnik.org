@@ -32,22 +32,14 @@
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div id="pagination" class="pagination pagination-sticky">
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo;</a>
-      {% else %}
-        <span class="disabled">&lsaquo;</span>
-      {% endif %}
+    <div id="pagination" class="pagination pagination-sticky" data-pages="{{ page_obj.paginator.num_pages }}">
+      <a id="pag-prev" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}?page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
 
       {% for num in page_obj.paginator.page_range %}
         <a href="?page={{ num }}" data-page="{{ num }}"{% if num == page_obj.number %} class="current"{% endif %}>{{ num }}</a>
       {% endfor %}
 
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">&rsaquo;</a>
-      {% else %}
-        <span class="disabled">&rsaquo;</span>
-      {% endif %}
+      <a id="pag-next" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
     </div>
     {% endif %}
 
