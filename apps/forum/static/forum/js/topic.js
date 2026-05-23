@@ -9,6 +9,49 @@
 
   var stickyTop = -(60 + pagination.offsetHeight);
 
+  function elidedPages(pivots, total) {
+    if (!Array.isArray(pivots)) pivots = [pivots];
+    var ON_ENDS = 2, ON_EACH_SIDE = 2;
+    var pageSet = new Set();
+    for (var i = 1; i <= Math.min(ON_ENDS, total); i++) pageSet.add(i);
+    for (var i = Math.max(1, total - ON_ENDS + 1); i <= total; i++) pageSet.add(i);
+    pivots.forEach(function (current) {
+      for (var i = Math.max(1, current - ON_EACH_SIDE); i <= Math.min(total, current + ON_EACH_SIDE); i++) pageSet.add(i);
+    });
+    var sorted = Array.from(pageSet).sort(function (a, b) { return a - b; });
+    var result = [];
+    var prev = 0;
+    sorted.forEach(function (p) {
+      if (prev && p > prev + 1) {
+        if (p === prev + 2) result.push(prev + 1);
+        else result.push(null);
+      }
+      result.push(p);
+      prev = p;
+    });
+    return result;
+  }
+
+  function rebuildPaginationLinks(currentPage, total, enteringPage) {
+    var nextEl = document.getElementById('pag-next');
+    pagination.querySelectorAll('[data-page], .pag-ellipsis').forEach(function (el) { el.remove(); });
+    var pivots = enteringPage ? [currentPage, enteringPage] : [currentPage];
+    elidedPages(pivots, total).forEach(function (p) {
+      var el;
+      if (p === null) {
+        el = document.createElement('span');
+        el.className = 'pag-ellipsis';
+        el.textContent = '…';
+      } else {
+        el = document.createElement('a');
+        el.href = '?page=' + p;
+        el.dataset.page = p;
+        el.textContent = p;
+      }
+      nextEl.insertAdjacentElement('beforebegin', el);
+    });
+  }
+
   function updatePagination() {
     var currentPage;
     if (visible.size > 0) {
@@ -19,6 +62,15 @@
     }
 
     var total = parseInt(pagination.dataset.pages, 10);
+    var enteringCandidate = null;
+    anyVisible.forEach(function (page) {
+      if (page > currentPage && !pagination.querySelector('[data-page="' + page + '"]')) {
+        if (enteringCandidate === null || page < enteringCandidate) enteringCandidate = page;
+      }
+    });
+    if (currentPage && (!pagination.querySelector('[data-page="' + currentPage + '"]') || enteringCandidate !== null)) {
+      rebuildPaginationLinks(currentPage, total, enteringCandidate);
+    }
     pagination.querySelectorAll('[data-page]').forEach(function (el) {
       var page = parseInt(el.dataset.page, 10);
       var isCurrent = page === currentPage;
