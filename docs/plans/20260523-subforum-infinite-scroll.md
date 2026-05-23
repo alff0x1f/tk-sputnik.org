@@ -85,15 +85,15 @@
 **Files:**
 - Modify: `apps/forum/templates/forum/subforum.html`
 
-- [ ] убрать пагинацию снизу
-- [ ] добавить пагинацию сверху (перед `.forum-cat`) с `id="pagination"`, классом `pagination-sticky`, `data-pages="{{ page_obj.paginator.num_pages }}"`
-- [ ] все номера страниц — `<a href="?page={{ item.num }}" data-page="{{ item.num }}" ...>` (не `<span>`), эллипсис через `item.is_ellipsis`
-- [ ] добавить стрелки `id="pag-prev"` / `id="pag-next"` как в `topic.html`
-- [ ] показывать пагинацию только если `page_obj.paginator.num_pages > 1`
-- [ ] обернуть темы в `<div class="page-block" data-page="{{ page_obj.number }}">`
-- [ ] добавить сентинель после блока тем если `page_obj.has_next`
-- [ ] в `{% block extra_js %}` подключить `{% static 'forum/js/htmx.min.js' %}` и `{% static 'forum/js/forum-scroll.js' %}`
-- [ ] `uv run pytest apps/forum/tests.py` — все тесты проходят
+- [x] убрать пагинацию снизу
+- [x] добавить пагинацию сверху (перед `.forum-cat`) с `id="pagination"`, классом `pagination-sticky`, `data-pages="{{ page_obj.paginator.num_pages }}"`
+- [x] все номера страниц — `<a href="?page={{ item.num }}" data-page="{{ item.num }}" ...>` (не `<span>`), эллипсис через `item.is_ellipsis`
+- [x] добавить стрелки `id="pag-prev"` / `id="pag-next"` как в `topic.html`
+- [x] показывать пагинацию только если `page_obj.paginator.num_pages > 1`
+- [x] обернуть темы в `<div class="page-block" data-page="{{ page_obj.number }}">`
+- [x] добавить сентинель после блока тем если `page_obj.has_next`
+- [x] в `{% block extra_js %}` подключить `{% static 'forum/js/htmx.min.js' %}` и `{% static 'forum/js/forum-scroll.js' %}`
+- [x] `uv run pytest apps/forum/tests.py` — все тесты проходят
 
 ### Task 5: Проверка требований
 
