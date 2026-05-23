@@ -506,6 +506,48 @@ class TopicPostsHtmxTest(TestCase):
         self.assertIn("HX-Request", response.get("Vary", ""))
 
 
+class SubforumTopicsHtmxTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(
+            id=3, phpbb_id=3, name="HtmxCat", sort_order=3
+        )
+        self.subforum = SubForum.objects.create(
+            id=50,
+            phpbb_id=50,
+            phpbb_parent_id=3,
+            category=self.category,
+            name="HtmxSub",
+        )
+        for i in range(1, 27):
+            Topic.objects.create(
+                id=5000 + i,
+                phpbb_id=5000 + i,
+                subforum=self.subforum,
+                title=f"Topic {i}",
+                created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC),
+            )
+
+    def _url(self):
+        return reverse("subforum-topics", kwargs={"pk": 50})
+
+    def test_normal_get_uses_full_template(self):
+        response = self.client.get(self._url())
+        self.assertTemplateUsed(response, "forum/subforum.html")
+
+    def test_htmx_get_uses_partial_template(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertTemplateUsed(response, "forum/subforum_topics_partial.html")
+
+    def test_partial_contains_page_block_not_html_tag(self):
+        response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
+        self.assertContains(response, "page-block")
+        self.assertNotContains(response, "<html")
+
+    def test_partial_last_page_has_no_sentinel(self):
+        response = self.client.get(self._url() + "?page=2", HTTP_HX_REQUEST="true")
+        self.assertNotContains(response, 'class="sentinel"')
+
+
 class SubforumTopicsAccessControlTest(TestCase):
     def setUp(self):
         self.group = Group.objects.create(name="орг")

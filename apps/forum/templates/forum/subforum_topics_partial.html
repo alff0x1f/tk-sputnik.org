@@ -1,0 +1,26 @@
+<div class="page-block" data-page="{{ page_obj.number }}">
+  {% for topic in page_obj %}
+  <div class="topic">
+    <div class="topic-ico">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="topic-body">
+      <div class="topic-title"><a href="{% url 'topic-posts' topic.id %}">{{ topic.title }}</a></div>
+      <div class="topic-meta">{{ topic.first_author|default:"—" }}</div>
+    </div>
+    <div class="topic-stats">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <b>{{ topic.post_count|add:"-1" }}</b>
+    </div>
+    <div class="topic-last">
+      {% if topic.last_post_at %}
+      <span class="when">{{ topic.last_post_at|date:"d.m.Y" }}</span>
+      {% endif %}
+      <span class="who">{{ topic.last_post_author|default:"—" }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if page_obj.has_next %}
+<div class="sentinel" hx-get="?page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>
+{% endif %}
