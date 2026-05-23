@@ -237,6 +237,9 @@
   background:var(--accent); border-color:var(--accent);
   color:#fff; font-weight:600;
 }
+.pagination .entering{
+  border-color:var(--accent); color:var(--accent);
+}
 .pagination .disabled{ color:var(--muted); pointer-events:none; }
 .pagination .pag-ellipsis{ color:var(--muted); padding:0 2px; }
 

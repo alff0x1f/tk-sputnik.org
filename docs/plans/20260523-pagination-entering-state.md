@@ -51,13 +51,13 @@
 **Files:**
 - Modify: `apps/forum/static/forum/css/forum.css`
 
-- [ ] добавить после `.pagination .current { ... }`:
+- [x] добавить после `.pagination .current { ... }`:
   ```css
   .pagination .entering{
     border-color:var(--accent); color:var(--accent);
   }
   ```
-- [ ] убедиться, что `.entering` и `.current` взаимно исключают видимый эффект (`.current` имеет фон — порядок правил не важен, оба класса не назначаются одновременно)
+- [x] убедиться, что `.entering` и `.current` взаимно исключают видимый эффект (`.current` имеет фон — порядок правил не важен, оба класса не назначаются одновременно)
 
 ### Task 2: JS — рефактор `topic.js` с добавлением `viewObserver`
 
