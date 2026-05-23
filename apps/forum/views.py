@@ -70,7 +70,9 @@ def subforum_topics(request, pk):
     paginator = Paginator(topics_qs, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
-    template = "forum/subforum_topics_partial.html" if is_htmx else "forum/subforum.html"
+    template = (
+        "forum/subforum_topics_partial.html" if is_htmx else "forum/subforum.html"
+    )
     context = {"subforum": subforum, "page_obj": page_obj}
     if not is_htmx:
         page_range = paginator.get_elided_page_range(

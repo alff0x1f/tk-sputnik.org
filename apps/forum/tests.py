@@ -512,7 +512,11 @@ class SubforumTopicsHtmxTest(TestCase):
             id=3, phpbb_id=3, name="HtmxCat", sort_order=3
         )
         self.subforum = SubForum.objects.create(
-            id=50, phpbb_id=50, phpbb_parent_id=3, category=self.category, name="HtmxSub"
+            id=50,
+            phpbb_id=50,
+            phpbb_parent_id=3,
+            category=self.category,
+            name="HtmxSub",
         )
         for i in range(1, 27):
             Topic.objects.create(
