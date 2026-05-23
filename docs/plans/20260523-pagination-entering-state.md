@@ -90,8 +90,8 @@
 **Files:**
 - Read: `apps/forum/tests.py`
 
-- [ ] запустить `uv run pytest apps/forum/tests.py` — все тесты проходят (view-логика не менялась)
-- [ ] запустить `uv run pytest` — полный прогон без регрессий
+- [x] запустить `uv run pytest apps/forum/tests.py` — все тесты проходят (view-логика не менялась)
+- [x] запустить `uv run pytest` — полный прогон без регрессий
 
 ### Task 4: [Final] Завершение
 
