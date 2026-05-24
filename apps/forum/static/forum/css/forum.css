@@ -294,7 +294,6 @@
 }
 .post-body p{ margin:0 0 8px; }
 .post-body p:last-child{ margin-bottom:0; }
-.post-body br + br{ display:none; }
 .post-body a{
   color:#2470d4;
   text-decoration:underline;
