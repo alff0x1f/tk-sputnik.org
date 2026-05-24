@@ -136,6 +136,7 @@ _parser = bbcode.Parser()
 _parser.add_formatter("img", _render_img, render_embedded=False)
 _parser.add_formatter("size", _render_size)
 _parser.add_simple_formatter("del", "<del>%(value)s</del>")
+_parser.add_simple_formatter("center", '<p style="text-align:center">%(value)s</p>')
 _parser.add_formatter("youtube", _render_youtube, render_embedded=False)
 _parser.add_formatter("spoiler", _render_spoiler)
 

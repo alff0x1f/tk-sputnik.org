@@ -999,6 +999,10 @@ class DelTagRenderingTest(TestCase):
         result = _to_html("[del]text[/del]", "")
         self.assertIn("<del>text</del>", result)
 
+    def test_center_tag_renders_centered_paragraph(self):
+        result = _to_html("[center]hello[/center]", "")
+        self.assertIn('<p style="text-align:center">hello</p>', result)
+
     def test_del_tag_with_uid_stripped_and_rendered(self):
         uid = "abc12"
         result = _to_html(f"[del:{uid}]removed[/del:{uid}]", uid)
