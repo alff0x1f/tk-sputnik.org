@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
@@ -108,6 +108,42 @@ def topic_posts(request, pk):
     response = render(request, template, context)
     patch_vary_headers(response, ["HX-Request"])
     return response
+
+
+def viewtopic_redirect(request):
+    p = request.GET.get("p")
+    t = request.GET.get("t")
+    f_id = request.GET.get("f")
+
+    if p:
+        try:
+            post = Post.objects.select_related("topic").get(phpbb_id=int(p))
+        except (Post.DoesNotExist, ValueError, TypeError):
+            raise Http404
+        posts_before = Post.objects.filter(
+            topic=post.topic, created_at__lt=post.created_at
+        ).count()
+        page = posts_before // 20 + 1
+        url = f"/forum/t/{post.topic.pk}/"
+        if page > 1:
+            url += f"?page={page}"
+        return redirect(f"{url}#post-{post.pk}", permanent=True)
+
+    if t:
+        try:
+            topic = Topic.objects.get(phpbb_id=int(t))
+        except (Topic.DoesNotExist, ValueError, TypeError):
+            raise Http404
+        return redirect(f"/forum/t/{topic.pk}/", permanent=True)
+
+    if f_id:
+        try:
+            subforum = SubForum.objects.get(phpbb_id=int(f_id))
+        except (SubForum.DoesNotExist, ValueError, TypeError):
+            raise Http404
+        return redirect(f"/forum/f/{subforum.pk}/", permanent=True)
+
+    return redirect("/forum/", permanent=True)
 
 
 def serve_attachment(request, pk):

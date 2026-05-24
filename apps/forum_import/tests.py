@@ -742,16 +742,28 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn("{SMILIES_PATH}", result)
         self.assertNotIn("<!-- s", result)
 
-    def test_url_marker_renders_with_rel_nofollow(self):
+    def test_url_marker_renders_with_target_blank(self):
         raw = (
             '<!-- m --><a class="postlink" href="https://example.com">'
             "text</a><!-- m -->"
         )
         result = _to_html(raw, "")
         self.assertIn('href="https://example.com"', result)
-        self.assertIn('rel="nofollow"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
         self.assertIn(">text<", result)
         self.assertNotIn("<!-- m -->", result)
+
+    def test_www_marker_renders_with_target_blank(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.example.com">'
+            "www.example.com</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://www.example.com"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertNotIn("<!-- w -->", result)
 
     def test_email_marker_renders_with_rel_nofollow(self):
         raw = (
@@ -759,8 +771,31 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         )
         result = _to_html(raw, "")
         self.assertIn('href="mailto:user@example.com"', result)
-        self.assertIn('rel="nofollow"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
         self.assertNotIn("<!-- e -->", result)
+
+    def test_local_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/viewtopic.php?f=10&amp;t=6057">'
+            "viewtopic.php?f=10&amp;t=6057</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?f=10&amp;t=6057"', result)
+        self.assertNotIn("forum.veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_local_marker_non_viewtopic_kept_as_external(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/memberlist.php">'
+            "memberlist</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://forum.veloufa.ru/memberlist.php"', result)
+        self.assertNotIn("<!-- l -->", result)
 
     def test_multiple_smileys_all_rendered(self):
         raw = (
