@@ -272,14 +272,14 @@
 
 .sentinel{ height:1px; }
 
-/* ── Post feed (Twitter/Threads layout) ───────────────────── */
+/* ── Post feed ────────────────────────────────────────────── */
 .post-feed{ padding-top:0; }
 
 .post-card{
   display:grid;
   grid-template-columns: 44px 1fr;
   column-gap:12px;
-  padding:16px 0 0;
+  padding:18px 0 0;
   scroll-margin-top: var(--post-scroll-margin, 68px);
 }
 
@@ -300,20 +300,13 @@
   box-shadow:0 1px 2px rgba(19,36,74,.05);
 }
 
-.post-thread-line{
-  flex:1; width:2px; min-height:16px;
-  background:var(--line);
-  margin-top:6px; margin-bottom:0;
-  border-radius:1px;
-}
-.post-card:last-child .post-thread-line{ display:none; }
-.page-block:not(:last-child) .post-card:last-child .post-thread-line{ display:block; }
-
 .post-right{
   min-width:0;
-  padding-bottom:20px;
-  border-bottom:none;
+  padding-bottom:18px;
+  border-bottom:1px solid var(--line);
 }
+.post-card:last-child .post-right{ border-bottom:none; }
+.page-block:not(:last-child) .post-card:last-child .post-right{ border-bottom:1px solid var(--line); }
 
 .post-header{
   display:flex; align-items:baseline; gap:8px;
@@ -366,6 +359,11 @@
 }
 
 @media (max-width:720px){
-  .post-card{ grid-template-columns: 36px 1fr; column-gap:10px; }
+  .post-card{
+    grid-template-columns: 36px 1fr;
+    column-gap:10px;
+    padding-top:14px;
+  }
+  .post-right{ padding-bottom:14px; }
   .post-avatar{ width:36px; height:36px; border-radius:10px; font-size:13px; }
 }
