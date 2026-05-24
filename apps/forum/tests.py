@@ -966,3 +966,54 @@ class ViewtopicRedirectTests(TestCase):
             status_code=301,
             fetch_redirect_response=False,
         )
+
+    def test_redirect_unknown_forum_gives_404(self):
+        response = self.client.get(self._url(f=9999))
+        self.assertEqual(response.status_code, 404)
+
+    def _make_private_subforum(self):
+        cat = ForumCategory.objects.create(phpbb_id=2, name="Private Cat")
+        group = Group.objects.create(name="members")
+        subforum = SubForum.objects.create(
+            phpbb_id=20, phpbb_parent_id=2, category=cat, name="Private",
+            is_private=True, allowed_group=group,
+        )
+        topic = Topic.objects.create(phpbb_id=200, subforum=subforum, title="Private T")
+        post = Post.objects.create(
+            phpbb_id=800, topic=topic, text_bbcode="x", text_html="x",
+            created_at=datetime.datetime(2012, 1, 1, tzinfo=datetime.UTC),
+        )
+        return subforum, topic, post, group
+
+    def test_private_post_unauthenticated_redirects_to_login(self):
+        _, _, post, _ = self._make_private_subforum()
+        response = self.client.get(self._url(p=800))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_private_topic_unauthenticated_redirects_to_login(self):
+        _, topic, _, _ = self._make_private_subforum()
+        response = self.client.get(self._url(t=200))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_private_forum_unauthenticated_redirects_to_login(self):
+        subforum, _, _, _ = self._make_private_subforum()
+        response = self.client.get(self._url(f=20))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_private_post_authenticated_non_member_returns_403(self):
+        _, _, post, _ = self._make_private_subforum()
+        user = User.objects.create_user("outsider", password="x")
+        self.client.force_login(user)
+        response = self.client.get(self._url(p=800))
+        self.assertEqual(response.status_code, 403)
+
+    def test_private_post_authenticated_member_redirects(self):
+        _, _, post, group = self._make_private_subforum()
+        user = User.objects.create_user("member", password="x")
+        user.groups.add(group)
+        self.client.force_login(user)
+        response = self.client.get(self._url(p=800))
+        self.assertEqual(response.status_code, 301)

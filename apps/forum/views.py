@@ -117,9 +117,13 @@ def viewtopic_redirect(request):
 
     if p:
         try:
-            post = Post.objects.select_related("topic").get(phpbb_id=int(p))
+            post = Post.objects.select_related("topic__subforum").get(phpbb_id=int(p))
         except (Post.DoesNotExist, ValueError, TypeError):
             raise Http404
+        if not _can_access(request, post.topic.subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
         posts_before = Post.objects.filter(
             topic=post.topic,
         ).filter(
@@ -134,14 +138,18 @@ def viewtopic_redirect(request):
 
     if t:
         try:
-            topic = Topic.objects.get(phpbb_id=int(t))
+            topic = Topic.objects.select_related("subforum").get(phpbb_id=int(t))
         except (Topic.DoesNotExist, ValueError, TypeError):
             raise Http404
+        if not _can_access(request, topic.subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
         start = request.GET.get("start")
         page = 1
         if start:
             try:
-                page = int(start) // 20 + 1
+                page = max(1, int(start) // 20 + 1)
             except (ValueError, TypeError):
                 pass
         url = f"/forum/t/{topic.pk}/"
@@ -154,6 +162,10 @@ def viewtopic_redirect(request):
             subforum = SubForum.objects.get(phpbb_id=int(f_id))
         except (SubForum.DoesNotExist, ValueError, TypeError):
             raise Http404
+        if not _can_access(request, subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
         return redirect(f"/forum/f/{subforum.pk}/", permanent=True)
 
     return redirect("/forum/", permanent=True)
