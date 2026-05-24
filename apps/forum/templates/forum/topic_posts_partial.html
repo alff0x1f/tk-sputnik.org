@@ -1,6 +1,6 @@
 <div class="page-block" data-page="{{ page_obj.number }}">
   {% for post in page_obj %}
-  <div class="post-card">
+  <div class="post-card" id="post-{{ post.id }}">
     <div class="post-left">
       {% if post.author_username %}{% with dn=post.author_username %}
         {% if post.author and post.author.avatar_url %}<img class="post-avatar" src="{{ post.author.avatar_url }}" alt="{{ dn }}">
@@ -18,7 +18,7 @@
         {% if post.author_username %}<span class="post-author-name">{{ post.author_username }}</span>
         {% elif post.author %}<span class="post-author-name">{{ post.author.username }}</span>
         {% else %}<span class="post-author-name">—</span>{% endif %}
-        {% if post.created_at %}<span class="post-date">{{ post.created_at|date:"d M Y" }}</span>{% endif %}
+        {% if post.created_at %}<a class="post-date" href="?page={{ page_obj.number }}#post-{{ post.id }}">{{ post.created_at|date:"d M Y, H:i" }}</a>{% endif %}
       </div>
       <div class="post-body">{{ post.text_html|safe }}</div>
     </div>

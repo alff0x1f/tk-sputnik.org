@@ -13,11 +13,9 @@
 {% block topbar_action %}{% endblock %}
 
 {% block content %}
-  <main class="feed">
+  <main class="feed" style="--post-scroll-margin:{% if page_obj.paginator.num_pages > 1 %}116px{% else %}68px{% endif %}">
     <div class="crumbs">
       <a href="{% url 'forum-index' %}">Форум</a>
-      <span class="sep">›</span>
-      <span>{{ topic.subforum.category.name }}</span>
       <span class="sep">›</span>
       <a href="{% url 'subforum-topics' topic.subforum.id %}">{{ topic.subforum.name }}</a>
       <span class="sep">›</span>
@@ -32,23 +30,28 @@
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div id="pagination" class="pagination pagination-sticky" data-pages="{{ page_obj.paginator.num_pages }}">
-      <a id="pag-prev" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}?page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
+    <div class="pagination-sticky">
+      <div class="pagination-bar">
+        <div id="pagination-info" class="pagination-info">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</div>
+        <nav id="pagination" class="pagination" data-pages="{{ page_obj.paginator.num_pages }}">
+          <a id="pag-prev" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}?page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
 
-      {% for item in elided_pages %}
-        {% if item.is_ellipsis %}<span class="pag-ellipsis">…</span>
-        {% else %}<a href="?page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
-        {% endif %}
-      {% endfor %}
+          {% for item in elided_pages %}
+            {% if item.is_ellipsis %}<span class="pag-ellipsis">…</span>
+            {% else %}<a href="?page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
+            {% endif %}
+          {% endfor %}
 
-      <a id="pag-next" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
+          <a id="pag-next" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
+        </nav>
+      </div>
     </div>
     {% endif %}
 
     <div class="post-feed">
       <div class="page-block" data-page="{{ page_obj.number }}">
         {% for post in page_obj %}
-        <div class="post-card">
+        <div class="post-card" id="post-{{ post.id }}">
           <div class="post-left">
             {% if post.author_username %}{% with dn=post.author_username %}
               {% if post.author and post.author.avatar_url %}<img class="post-avatar" src="{{ post.author.avatar_url }}" alt="{{ dn }}">
@@ -66,7 +69,7 @@
               {% if post.author_username %}<span class="post-author-name">{{ post.author_username }}</span>
               {% elif post.author %}<span class="post-author-name">{{ post.author.username }}</span>
               {% else %}<span class="post-author-name">—</span>{% endif %}
-              {% if post.created_at %}<span class="post-date">{{ post.created_at|date:"d M Y" }}</span>{% endif %}
+              {% if post.created_at %}<a class="post-date" href="?page={{ page_obj.number }}#post-{{ post.id }}">{{ post.created_at|date:"d M Y, H:i" }}</a>{% endif %}
             </div>
             <div class="post-body">{{ post.text_html|safe }}</div>
           </div>
