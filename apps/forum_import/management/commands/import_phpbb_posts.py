@@ -98,7 +98,8 @@ def _render_size(tag_name, value, options, parent, context):
 
 
 _YT_URL_RE = re.compile(
-    r"(?:https?://(?:www\.)?youtube\.com/watch\?(?:[^#]*&)?v=|https?://youtu\.be/)([A-Za-z0-9_-]+)"
+    r"(?:https?://(?:www\.)?youtube\.com/watch\?"
+    r"(?:[^#]*&)?v=|https?://youtu\.be/)([A-Za-z0-9_-]+)"
 )
 
 
@@ -113,7 +114,7 @@ def _render_youtube(tag_name, value, options, parent, context):
     video_id = html.escape(yt_m.group(1), quote=True)
     return (
         f'<div class="yt-embed" style="width:100%;max-width:560px;">'
-        f'<iframe'
+        f"<iframe"
         f' src="https://www.youtube.com/embed/{video_id}"'
         f' style="display:block;width:100%;aspect-ratio:16 / 9;height:auto;border:0;"'
         f' allowfullscreen loading="lazy"></iframe>'
