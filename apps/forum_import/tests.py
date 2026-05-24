@@ -787,6 +787,17 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn('target="_blank"', result)
         self.assertNotIn("nofollow", result)
 
+    def test_local_marker_veloufa_path_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+
     def test_local_marker_non_viewtopic_kept_as_external(self):
         raw = (
             '<!-- l --><a class="postlink-local"'

@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
-from django.db.models import F, OuterRef, Subquery, Value
+from django.db.models import F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -92,7 +92,7 @@ def topic_posts(request, pk):
         if not request.user.is_authenticated:
             return redirect_to_login(request.get_full_path())
         return HttpResponseForbidden()
-    posts_qs = topic.posts.select_related("author").order_by("created_at")
+    posts_qs = topic.posts.select_related("author").order_by("created_at", "id")
     paginator = Paginator(posts_qs, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
@@ -121,7 +121,10 @@ def viewtopic_redirect(request):
         except (Post.DoesNotExist, ValueError, TypeError):
             raise Http404
         posts_before = Post.objects.filter(
-            topic=post.topic, created_at__lt=post.created_at
+            topic=post.topic,
+        ).filter(
+            Q(created_at__lt=post.created_at)
+            | Q(created_at=post.created_at, id__lt=post.id)
         ).count()
         page = posts_before // 20 + 1
         url = f"/forum/t/{post.topic.pk}/"
@@ -134,7 +137,17 @@ def viewtopic_redirect(request):
             topic = Topic.objects.get(phpbb_id=int(t))
         except (Topic.DoesNotExist, ValueError, TypeError):
             raise Http404
-        return redirect(f"/forum/t/{topic.pk}/", permanent=True)
+        start = request.GET.get("start")
+        page = 1
+        if start:
+            try:
+                page = int(start) // 20 + 1
+            except (ValueError, TypeError):
+                pass
+        url = f"/forum/t/{topic.pk}/"
+        if page > 1:
+            url += f"?page={page}"
+        return redirect(url, permanent=True)
 
     if f_id:
         try:

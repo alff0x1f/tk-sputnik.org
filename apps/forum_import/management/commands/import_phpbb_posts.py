@@ -34,7 +34,7 @@ _EMAIL_MARKER_RE = re.compile(r"<!-- e -->(.*?)<!-- e -->", re.DOTALL)
 _LOCAL_MARKER_RE = re.compile(r"<!-- l -->(.*?)<!-- l -->", re.DOTALL)
 _ALT_RE = re.compile(r'\salt="([^"]*)"')
 _VELOUFA_VIEWTOPIC_RE = re.compile(
-    r"https?://(?:www\.)?(?:forum\.)?veloufa\.ru/viewtopic\.php",
+    r"https?://(?:www\.)?(?:forum\.)?veloufa\.ru(?:/forum)?/viewtopic\.php",
     re.IGNORECASE,
 )
 

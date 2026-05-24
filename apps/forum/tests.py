@@ -851,10 +851,12 @@ class ViewtopicRedirectTests(TestCase):
         self.subforum = SubForum.objects.create(
             phpbb_id=10, phpbb_parent_id=1, category=cat, name="Sub"
         )
-        self.topic = Topic.objects.create(phpbb_id=100, subforum=self.subforum, title="T")
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="T"
+        )
         self.post = Post.objects.create(
             phpbb_id=500, topic=self.topic, text_bbcode="x", text_html="x",
-            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.timezone.utc),
+            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC),
         )
 
     def _url(self, **params):
@@ -864,13 +866,19 @@ class ViewtopicRedirectTests(TestCase):
     def test_redirect_by_topic_phpbb_id(self):
         response = self.client.get(self._url(t=100))
         self.assertRedirects(
-            response, f"/forum/t/{self.topic.pk}/", status_code=301, fetch_redirect_response=False
+            response,
+            f"/forum/t/{self.topic.pk}/",
+            status_code=301,
+            fetch_redirect_response=False,
         )
 
     def test_redirect_by_forum_phpbb_id(self):
         response = self.client.get(self._url(f=10))
         self.assertRedirects(
-            response, f"/forum/f/{self.subforum.pk}/", status_code=301, fetch_redirect_response=False
+            response,
+            f"/forum/f/{self.subforum.pk}/",
+            status_code=301,
+            fetch_redirect_response=False,
         )
 
     def test_redirect_by_post_phpbb_id_page_one(self):
@@ -886,11 +894,11 @@ class ViewtopicRedirectTests(TestCase):
         for i in range(20):
             Post.objects.create(
                 phpbb_id=600 + i, topic=self.topic, text_bbcode="x", text_html="x",
-                created_at=datetime.datetime(2010, 1, 2 + i, tzinfo=datetime.timezone.utc),
+                created_at=datetime.datetime(2010, 1, 2 + i, tzinfo=datetime.UTC),
             )
         late_post = Post.objects.create(
             phpbb_id=620, topic=self.topic, text_bbcode="x", text_html="x",
-            created_at=datetime.datetime(2010, 2, 1, tzinfo=datetime.timezone.utc),
+            created_at=datetime.datetime(2010, 2, 1, tzinfo=datetime.UTC),
         )
         response = self.client.get(self._url(p=620))
         self.assertRedirects(
@@ -902,7 +910,9 @@ class ViewtopicRedirectTests(TestCase):
 
     def test_redirect_no_params_goes_to_index(self):
         response = self.client.get(reverse("viewtopic-redirect"))
-        self.assertRedirects(response, "/forum/", status_code=301, fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "/forum/", status_code=301, fetch_redirect_response=False
+        )
 
     def test_redirect_unknown_topic_gives_404(self):
         response = self.client.get(self._url(t=9999))
@@ -911,3 +921,48 @@ class ViewtopicRedirectTests(TestCase):
     def test_redirect_unknown_post_gives_404(self):
         response = self.client.get(self._url(p=9999))
         self.assertEqual(response.status_code, 404)
+
+    def test_redirect_by_topic_with_start_calculates_page(self):
+        response = self.client.get(self._url(t=100, start=20))
+        self.assertRedirects(
+            response,
+            f"/forum/t/{self.topic.pk}/?page=2",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    def test_redirect_by_topic_with_start_zero_goes_to_page_one(self):
+        response = self.client.get(self._url(t=100, start=0))
+        self.assertRedirects(
+            response,
+            f"/forum/t/{self.topic.pk}/",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    def test_redirect_by_post_phpbb_id_tie_uses_stable_sort(self):
+        tied_time = datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC)
+        posts = []
+        for i in range(20):
+            p = Post.objects.create(
+                phpbb_id=700 + i,
+                topic=self.topic,
+                text_bbcode="x",
+                text_html="x",
+                created_at=tied_time,
+            )
+            posts.append(p)
+        late_post = Post.objects.create(
+            phpbb_id=720,
+            topic=self.topic,
+            text_bbcode="x",
+            text_html="x",
+            created_at=tied_time,
+        )
+        response = self.client.get(self._url(p=720))
+        self.assertRedirects(
+            response,
+            f"/forum/t/{self.topic.pk}/?page=2#post-{late_post.pk}",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
