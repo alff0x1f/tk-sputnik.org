@@ -702,6 +702,34 @@ class ImportPhpbbPostsCommandTest(TestCase):
         self.assertNotIn("[size", post.text_html)
 
 
+class ToHtmlSpoilerTest(TestCase):
+    def test_spoiler_with_title_renders_details(self):
+        uid = "abc123"
+        raw = f"[spoiler=Секрет:{uid}]скрытый текст[/spoiler:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn("<details", result)
+        self.assertIn("<summary>Секрет</summary>", result)
+        self.assertIn('class="spoiler-body"', result)
+        self.assertIn("скрытый текст", result)
+        self.assertNotIn("[spoiler", result)
+
+    def test_spoiler_title_is_escaped(self):
+        raw = "[spoiler=<script>alert(1)</script>]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+
+    def test_spoiler_empty_title_uses_default(self):
+        raw = "[spoiler=]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn("<summary>Spoiler</summary>", result)
+
+    def test_spoiler_has_css_class(self):
+        raw = "[spoiler=Заголовок]текст[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn('class="spoiler"', result)
+
+
 class ToHtmlSmiliesMarkersTest(TestCase):
     def test_smiley_renders_to_img_tag(self):
         raw = (
@@ -964,3 +992,189 @@ class ImportPhpbbAttachmentsCommandTest(TestCase):
         self.post.refresh_from_db()
         self.assertIn('class="post-attachments"', self.post.text_html)
         self.assertIn("<img src=", self.post.text_html)
+
+
+class DelTagRenderingTest(TestCase):
+    def test_del_tag_renders_to_del_element(self):
+        result = _to_html("[del]text[/del]", "")
+        self.assertIn("<del>text</del>", result)
+
+    def test_center_tag_renders_centered_paragraph(self):
+        result = _to_html("[center]hello[/center]", "")
+        self.assertIn('<p style="text-align:center">hello</p>', result)
+
+    def test_del_tag_with_uid_stripped_and_rendered(self):
+        uid = "abc12"
+        result = _to_html(f"[del:{uid}]removed[/del:{uid}]", uid)
+        self.assertIn("<del>removed</del>", result)
+        self.assertNotIn(f":{uid}", result)
+        self.assertNotIn("[del]", result)
+
+
+class YoutubeTagRenderingTest(TestCase):
+    def test_youtube_tag_renders_iframe(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("<iframe", result)
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+        self.assertNotIn("[youtube]", result)
+
+    def test_youtube_youtu_be_url(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://youtu.be/ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+
+    def test_youtube_invalid_url_falls_back(self):
+        result = _to_html("[youtube]not-a-url[/youtube]", "")
+        self.assertNotIn("<iframe", result)
+        self.assertNotIn("[youtube]", result)
+
+
+class ImportPhpbbPostsBbcodeUidSavedTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+
+    def _make_row(self, post_id=200, uid="xhj7k"):
+        return (post_id, 100, 0, "", "hello", uid, 1000000)
+
+    def _mock_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("post_id",),
+            ("topic_id",),
+            ("poster_id",),
+            ("post_username",),
+            ("post_text",),
+            ("bbcode_uid",),
+            ("post_time",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_saved_on_import(self, mock_connections):
+        uid = "xhj7k"
+        rows = [self._make_row(200, uid)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertEqual(post.bbcode_uid, uid)
+
+
+class RerenderPostsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def _make_post(self, phpbb_id, text_bbcode, bbcode_uid="", text_html="old"):
+        return Post.objects.create(
+            phpbb_id=phpbb_id,
+            topic=self.topic,
+            text_bbcode=text_bbcode,
+            text_html=text_html,
+            bbcode_uid=bbcode_uid,
+        )
+
+    def test_rerender_updates_del_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            300,
+            f"[del:{uid}]removed[/del:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>removed</del>", post.text_html)
+        self.assertNotIn("[del]", post.text_html)
+
+    def test_rerender_updates_youtube_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            301,
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=XYZ999[/youtube:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<iframe", post.text_html)
+        self.assertIn("https://www.youtube.com/embed/XYZ999", post.text_html)
+
+    def test_rerender_preserves_attachments(self):
+        uid = "abc12"
+        post = self._make_post(
+            302,
+            f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]",
+            bbcode_uid=uid,
+        )
+        PostAttachment.objects.create(
+            phpbb_id=1,
+            post=post,
+            physical_filename="file.jpg",
+            real_filename="photo.jpg",
+            mimetype="image/jpeg",
+            filesize=1024,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<img src=", post.text_html)
+        self.assertNotIn("attachment-ref", post.text_html)
+
+    def test_rerender_uid_autodetect(self):
+        uid = "xhj7k"
+        post = self._make_post(
+            303,
+            f"[del:{uid}]old[/del:{uid}]",
+            bbcode_uid="",
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>old</del>", post.text_html)
+        self.assertNotIn(f":{uid}", post.text_html)
+
+
+class PostBbcodeUidFieldTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def test_post_created_with_bbcode_uid(self):
+        post = Post.objects.create(
+            phpbb_id=300,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            bbcode_uid="abc12",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "abc12")
+
+    def test_post_created_without_bbcode_uid_defaults_to_empty(self):
+        post = Post.objects.create(
+            phpbb_id=301,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "")

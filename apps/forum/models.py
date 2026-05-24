@@ -136,6 +136,7 @@ class Post(models.Model):
     author_username = models.CharField("Имя автора", max_length=255, blank=True)
     text_bbcode = models.TextField("Текст (BBCode)")
     text_html = models.TextField("Текст (HTML)")
+    bbcode_uid = models.CharField("phpBB BBCode UID", max_length=20, blank=True)
     created_at = models.DateTimeField("Дата создания", null=True, blank=True)
 
     class Meta:
