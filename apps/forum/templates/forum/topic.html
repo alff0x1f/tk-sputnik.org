@@ -30,16 +30,21 @@
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div id="pagination" class="pagination pagination-sticky" data-pages="{{ page_obj.paginator.num_pages }}">
-      <a id="pag-prev" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}?page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
+    <div class="pagination-sticky">
+      <div class="pagination-bar">
+        <div id="pagination-info" class="pagination-info">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</div>
+        <nav id="pagination" class="pagination" data-pages="{{ page_obj.paginator.num_pages }}">
+          <a id="pag-prev" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}?page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
 
-      {% for item in elided_pages %}
-        {% if item.is_ellipsis %}<span class="pag-ellipsis">…</span>
-        {% else %}<a href="?page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
-        {% endif %}
-      {% endfor %}
+          {% for item in elided_pages %}
+            {% if item.is_ellipsis %}<span class="pag-ellipsis">…</span>
+            {% else %}<a href="?page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
+            {% endif %}
+          {% endfor %}
 
-      <a id="pag-next" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
+          <a id="pag-next" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
+        </nav>
+      </div>
     </div>
     {% endif %}
 

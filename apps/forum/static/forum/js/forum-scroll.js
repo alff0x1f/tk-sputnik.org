@@ -7,7 +7,9 @@
   var observed = new WeakSet();
   var lastPage = 0;
 
-  var stickyTop = -(60 + pagination.offsetHeight);
+  var stickyPanel = pagination.closest('.pagination-sticky') || pagination;
+  var pageInfo = document.getElementById('pagination-info');
+  var stickyTop = -(60 + stickyPanel.offsetHeight);
 
   function elidedPages(pivots, total) {
     if (!Array.isArray(pivots)) pivots = [pivots];
@@ -88,6 +90,9 @@
     if (nextEl) {
       nextEl.classList.toggle('disabled', currentPage >= total);
       nextEl.href = '?page=' + Math.min(total, currentPage + 1);
+    }
+    if (pageInfo && currentPage) {
+      pageInfo.textContent = 'Стр. ' + currentPage + ' из ' + total;
     }
   }
 
