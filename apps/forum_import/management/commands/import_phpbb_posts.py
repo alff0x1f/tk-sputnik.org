@@ -95,6 +95,11 @@ def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
         link_text = html.unescape(link_text)
         safe_href = html.escape(href, quote=True)
         safe_text = html.escape(link_text)
+        if _SAFE_URL_RE.match(href):
+            return store(
+                f'<a href="{safe_href}" target="_blank" rel="nofollow noreferrer">'
+                f"{safe_text}</a>"
+            )
         return store(f'<a href="{safe_href}">{safe_text}</a>')
 
     text = _SMILEY_RE.sub(replace_smiley, text)

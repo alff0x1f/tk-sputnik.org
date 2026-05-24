@@ -806,6 +806,8 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         )
         result = _to_html(raw, "")
         self.assertIn('href="http://forum.veloufa.ru/memberlist.php"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
         self.assertNotIn("<!-- l -->", result)
 
     def test_multiple_smileys_all_rendered(self):
