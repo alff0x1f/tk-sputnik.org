@@ -436,6 +436,10 @@ class TopicPostsViewTest(TestCase):
         self.assertIn(9001, ids)
         self.assertNotIn(9002, ids)
 
+    def test_post_timestamp_links_include_page_fragment(self):
+        response = self.client.get(self._url())
+        self.assertContains(response, 'href="?page=1#post-9001"')
+
     def test_pagination_20_per_page(self):
         for i in range(1, 22):
             Post.objects.create(
@@ -496,6 +500,10 @@ class TopicPostsHtmxTest(TestCase):
     def test_partial_non_last_page_has_sentinel(self):
         response = self.client.get(self._url(), HTTP_HX_REQUEST="true")
         self.assertContains(response, 'class="sentinel"')
+
+    def test_partial_post_timestamp_links_include_loaded_page_fragment(self):
+        response = self.client.get(self._url() + "?page=2", HTTP_HX_REQUEST="true")
+        self.assertContains(response, 'href="?page=2#post-20021"')
 
     def test_vary_header_on_normal_response(self):
         response = self.client.get(self._url())
