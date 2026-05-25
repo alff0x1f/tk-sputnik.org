@@ -784,8 +784,21 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         )
         result = _to_html(raw, "")
         self.assertIn('href="mailto:user@example.com"', result)
-        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertNotIn('rel="', result)
+        self.assertNotIn('target="_blank"', result)
         self.assertNotIn("<!-- e -->", result)
+
+    def test_www_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- w -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
 
     def test_local_marker_veloufa_viewtopic_rewritten(self):
         raw = (
