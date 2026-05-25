@@ -7,6 +7,7 @@ from django.db.models import F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
@@ -133,7 +134,7 @@ def viewtopic_redirect(request):
             | Q(created_at=post.created_at, id__lt=post.id)
         ).count()
         page = posts_before // POSTS_PER_PAGE + 1
-        url = f"/forum/t/{post.topic.pk}/"
+        url = reverse("topic-posts", args=[post.topic.pk])
         if page > 1:
             url += f"?page={page}"
         return redirect(f"{url}#post-{post.pk}", permanent=True)
@@ -154,7 +155,7 @@ def viewtopic_redirect(request):
                 page = max(1, int(start) // POSTS_PER_PAGE + 1)
             except (ValueError, TypeError):
                 pass
-        url = f"/forum/t/{topic.pk}/"
+        url = reverse("topic-posts", args=[topic.pk])
         if page > 1:
             url += f"?page={page}"
         return redirect(url, permanent=True)
@@ -168,9 +169,9 @@ def viewtopic_redirect(request):
             if not request.user.is_authenticated:
                 return redirect_to_login(request.get_full_path())
             return HttpResponseForbidden()
-        return redirect(f"/forum/f/{subforum.pk}/", permanent=True)
+        return redirect(reverse("subforum-topics", args=[subforum.pk]), permanent=True)
 
-    return redirect("/forum/", permanent=True)
+    return redirect(reverse("forum-index"), permanent=True)
 
 
 def serve_attachment(request, pk):
