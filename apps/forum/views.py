@@ -11,6 +11,8 @@ from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
 
+POSTS_PER_PAGE = 20
+
 
 def _can_access(request, subforum):
     if not subforum.is_private:
@@ -93,7 +95,7 @@ def topic_posts(request, pk):
             return redirect_to_login(request.get_full_path())
         return HttpResponseForbidden()
     posts_qs = topic.posts.select_related("author").order_by("created_at", "id")
-    paginator = Paginator(posts_qs, 20)
+    paginator = Paginator(posts_qs, POSTS_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
     template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
@@ -130,7 +132,7 @@ def viewtopic_redirect(request):
             Q(created_at__lt=post.created_at)
             | Q(created_at=post.created_at, id__lt=post.id)
         ).count()
-        page = posts_before // 20 + 1
+        page = posts_before // POSTS_PER_PAGE + 1
         url = f"/forum/t/{post.topic.pk}/"
         if page > 1:
             url += f"?page={page}"
@@ -149,7 +151,7 @@ def viewtopic_redirect(request):
         page = 1
         if start:
             try:
-                page = max(1, int(start) // 20 + 1)
+                page = max(1, int(start) // POSTS_PER_PAGE + 1)
             except (ValueError, TypeError):
                 pass
         url = f"/forum/t/{topic.pk}/"

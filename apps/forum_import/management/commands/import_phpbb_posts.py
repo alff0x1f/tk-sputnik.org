@@ -85,31 +85,11 @@ def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
             )
         return store(f'<a href="{safe_href}">{safe_text}</a>')
 
-    def replace_local_link_marker(m):
-        inner = m.group(1).strip()
-        link_m = _LINK_INNER_RE.fullmatch(inner)
-        if not link_m:
-            return ""
-        href = html.unescape(link_m.group(1))
-        if not _SAFE_SCHEME_RE.match(href):
-            return ""
-        href = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", href)
-        link_text = re.sub(r"<[^>]+>", "", link_m.group(2))
-        link_text = html.unescape(link_text)
-        safe_href = html.escape(href, quote=True)
-        safe_text = html.escape(link_text)
-        if _SAFE_URL_RE.match(href):
-            return store(
-                f'<a href="{safe_href}" target="_blank" rel="nofollow noreferrer">'
-                f"{safe_text}</a>"
-            )
-        return store(f'<a href="{safe_href}">{safe_text}</a>')
-
     text = _SMILEY_RE.sub(replace_smiley, text)
     text = _URL_MARKER_RE.sub(replace_link_marker, text)
     text = _WWW_MARKER_RE.sub(replace_link_marker, text)
     text = _EMAIL_MARKER_RE.sub(replace_link_marker, text)
-    text = _LOCAL_MARKER_RE.sub(replace_local_link_marker, text)
+    text = _LOCAL_MARKER_RE.sub(replace_link_marker, text)
     return text, replacements
 
 
