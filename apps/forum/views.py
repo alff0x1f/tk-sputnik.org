@@ -121,7 +121,7 @@ def viewtopic_redirect(request):
     if p:
         try:
             post = Post.objects.select_related("topic__subforum").get(phpbb_id=int(p))
-        except Post.DoesNotExist, ValueError, TypeError:
+        except (Post.DoesNotExist, ValueError, TypeError):
             raise Http404
         if not _can_access(request, post.topic.subforum):
             if not request.user.is_authenticated:
@@ -158,7 +158,7 @@ def viewtopic_redirect(request):
     if t:
         try:
             topic = Topic.objects.select_related("subforum").get(phpbb_id=int(t))
-        except Topic.DoesNotExist, ValueError, TypeError:
+        except (Topic.DoesNotExist, ValueError, TypeError):
             raise Http404
         if not _can_access(request, topic.subforum):
             if not request.user.is_authenticated:
@@ -179,7 +179,7 @@ def viewtopic_redirect(request):
     if f_id:
         try:
             subforum = SubForum.objects.get(phpbb_id=int(f_id))
-        except SubForum.DoesNotExist, ValueError, TypeError:
+        except (SubForum.DoesNotExist, ValueError, TypeError):
             raise Http404
         if not _can_access(request, subforum):
             if not request.user.is_authenticated:
