@@ -754,6 +754,19 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertIn(">text<", result)
         self.assertNotIn("<!-- m -->", result)
 
+    def test_url_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- m --><a class="postlink"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "Расписание</a><!-- m -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn('href="http://www.veloufa.ru', result)
+        self.assertNotIn("<!-- m -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
     def test_www_marker_renders_with_target_blank(self):
         raw = (
             '<!-- w --><a class="postlink" href="http://www.example.com">'
