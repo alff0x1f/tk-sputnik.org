@@ -3,13 +3,16 @@ import os
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
-from django.db.models import F, OuterRef, Subquery, Value
+from django.db.models import F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.http import FileResponse, Http404, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
+
+POSTS_PER_PAGE = 20
 
 
 def _can_access(request, subforum):
@@ -92,8 +95,8 @@ def topic_posts(request, pk):
         if not request.user.is_authenticated:
             return redirect_to_login(request.get_full_path())
         return HttpResponseForbidden()
-    posts_qs = topic.posts.select_related("author").order_by("created_at")
-    paginator = Paginator(posts_qs, 20)
+    posts_qs = topic.posts.select_related("author").order_by("created_at", "id")
+    paginator = Paginator(posts_qs, POSTS_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get("page"))
     is_htmx = request.headers.get("HX-Request") == "true"
     template = "forum/topic_posts_partial.html" if is_htmx else "forum/topic.html"
@@ -108,6 +111,83 @@ def topic_posts(request, pk):
     response = render(request, template, context)
     patch_vary_headers(response, ["HX-Request"])
     return response
+
+
+def viewtopic_redirect(request):
+    p = request.GET.get("p")
+    t = request.GET.get("t")
+    f_id = request.GET.get("f")
+
+    if p:
+        try:
+            post = Post.objects.select_related("topic__subforum").get(phpbb_id=int(p))
+        except Post.DoesNotExist, ValueError, TypeError:
+            raise Http404
+        if not _can_access(request, post.topic.subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
+        if post.created_at is None:
+            posts_before = (
+                Post.objects.filter(
+                    topic=post.topic,
+                )
+                .filter(
+                    Q(created_at__isnull=False)
+                    | Q(created_at__isnull=True, id__lt=post.id)
+                )
+                .count()
+            )
+        else:
+            posts_before = (
+                Post.objects.filter(
+                    topic=post.topic,
+                )
+                .filter(
+                    Q(created_at__lt=post.created_at)
+                    | Q(created_at=post.created_at, id__lt=post.id)
+                )
+                .count()
+            )
+        page = posts_before // POSTS_PER_PAGE + 1
+        url = reverse("topic-posts", args=[post.topic.pk])
+        if page > 1:
+            url += f"?page={page}"
+        return redirect(f"{url}#post-{post.pk}", permanent=True)
+
+    if t:
+        try:
+            topic = Topic.objects.select_related("subforum").get(phpbb_id=int(t))
+        except Topic.DoesNotExist, ValueError, TypeError:
+            raise Http404
+        if not _can_access(request, topic.subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
+        start = request.GET.get("start")
+        page = 1
+        if start:
+            try:
+                page = max(1, int(start) // POSTS_PER_PAGE + 1)
+            except ValueError, TypeError:
+                pass
+        url = reverse("topic-posts", args=[topic.pk])
+        if page > 1:
+            url += f"?page={page}"
+        return redirect(url, permanent=True)
+
+    if f_id:
+        try:
+            subforum = SubForum.objects.get(phpbb_id=int(f_id))
+        except SubForum.DoesNotExist, ValueError, TypeError:
+            raise Http404
+        if not _can_access(request, subforum):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            return HttpResponseForbidden()
+        return redirect(reverse("subforum-topics", args=[subforum.pk]), permanent=True)
+
+    return redirect(reverse("forum-index"), permanent=True)
 
 
 def serve_attachment(request, pk):

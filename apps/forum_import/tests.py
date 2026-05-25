@@ -742,25 +742,99 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn("{SMILIES_PATH}", result)
         self.assertNotIn("<!-- s", result)
 
-    def test_url_marker_renders_with_rel_nofollow(self):
+    def test_url_marker_renders_with_target_blank(self):
         raw = (
             '<!-- m --><a class="postlink" href="https://example.com">'
             "text</a><!-- m -->"
         )
         result = _to_html(raw, "")
         self.assertIn('href="https://example.com"', result)
-        self.assertIn('rel="nofollow"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
         self.assertIn(">text<", result)
         self.assertNotIn("<!-- m -->", result)
 
-    def test_email_marker_renders_with_rel_nofollow(self):
+    def test_url_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- m --><a class="postlink"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "Расписание</a><!-- m -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn('href="http://www.veloufa.ru', result)
+        self.assertNotIn("<!-- m -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_www_marker_renders_with_target_blank(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.example.com">'
+            "www.example.com</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://www.example.com"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertNotIn("<!-- w -->", result)
+
+    def test_email_marker_renders_plain_anchor(self):
         raw = (
             '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
         )
         result = _to_html(raw, "")
         self.assertIn('href="mailto:user@example.com"', result)
-        self.assertIn('rel="nofollow"', result)
+        self.assertNotIn('rel="', result)
+        self.assertNotIn('target="_blank"', result)
         self.assertNotIn("<!-- e -->", result)
+
+    def test_www_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- w -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_local_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/viewtopic.php?f=10&amp;t=6057">'
+            "viewtopic.php?f=10&amp;t=6057</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?f=10&amp;t=6057"', result)
+        self.assertNotIn("forum.veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_local_marker_veloufa_path_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+
+    def test_local_marker_non_viewtopic_kept_as_external(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/memberlist.php">'
+            "memberlist</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://forum.veloufa.ru/memberlist.php"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertNotIn("<!-- l -->", result)
 
     def test_multiple_smileys_all_rendered(self):
         raw = (
@@ -809,6 +883,74 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         result = _to_html(raw, "")
         self.assertNotIn("javascript", result)
         self.assertNotIn("<a", result)
+
+    def test_url_bbcode_tag_veloufa_viewtopic_rewritten(self):
+        uid = "25kichn1"
+        raw = (
+            f"[url:{uid}]http://www.veloufa.ru/forum/viewtopic.php"
+            f"?f=12&amp;t=1050[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=12&amp;t=1050"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_option_veloufa_viewtopic_rewritten(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?f=11&amp;t=6437:{uid}]"
+            f"link text[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=11&amp;t=6437"', result)
+        self.assertIn("link text", result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_external_has_nofollow_noreferrer(self):
+        raw = "[url]https://example.com[/url]"
+        result = _to_html(raw, "")
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+
+    def test_url_option_with_nested_img_preserves_img(self):
+        uid = "abc123"
+        raw = (
+            f"[url=https://example.com:{uid}]"
+            f"[img:{uid}]https://example.com/thumb.jpg[/img:{uid}]"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('<img src="https://example.com/thumb.jpg"', result)
+        self.assertNotIn("https://example.com</a>", result)
+
+    def test_url_option_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
+
+    def test_url_option_mixed_text_and_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"see http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
 
 
 class ToHtmlAttachmentTest(TestCase):
