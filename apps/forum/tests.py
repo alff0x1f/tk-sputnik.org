@@ -855,12 +855,16 @@ class ViewtopicRedirectTests(TestCase):
             phpbb_id=100, subforum=self.subforum, title="T"
         )
         self.post = Post.objects.create(
-            phpbb_id=500, topic=self.topic, text_bbcode="x", text_html="x",
+            phpbb_id=500,
+            topic=self.topic,
+            text_bbcode="x",
+            text_html="x",
             created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC),
         )
 
     def _url(self, **params):
         from urllib.parse import urlencode
+
         return reverse("viewtopic-redirect") + "?" + urlencode(params)
 
     def test_redirect_by_topic_phpbb_id(self):
@@ -893,11 +897,17 @@ class ViewtopicRedirectTests(TestCase):
     def test_redirect_by_post_phpbb_id_later_page(self):
         for i in range(20):
             Post.objects.create(
-                phpbb_id=600 + i, topic=self.topic, text_bbcode="x", text_html="x",
+                phpbb_id=600 + i,
+                topic=self.topic,
+                text_bbcode="x",
+                text_html="x",
                 created_at=datetime.datetime(2010, 1, 2 + i, tzinfo=datetime.UTC),
             )
         late_post = Post.objects.create(
-            phpbb_id=620, topic=self.topic, text_bbcode="x", text_html="x",
+            phpbb_id=620,
+            topic=self.topic,
+            text_bbcode="x",
+            text_html="x",
             created_at=datetime.datetime(2010, 2, 1, tzinfo=datetime.UTC),
         )
         response = self.client.get(self._url(p=620))
@@ -1001,12 +1011,19 @@ class ViewtopicRedirectTests(TestCase):
         cat = ForumCategory.objects.create(phpbb_id=2, name="Private Cat")
         group = Group.objects.create(name="members")
         subforum = SubForum.objects.create(
-            phpbb_id=20, phpbb_parent_id=2, category=cat, name="Private",
-            is_private=True, allowed_group=group,
+            phpbb_id=20,
+            phpbb_parent_id=2,
+            category=cat,
+            name="Private",
+            is_private=True,
+            allowed_group=group,
         )
         topic = Topic.objects.create(phpbb_id=200, subforum=subforum, title="Private T")
         post = Post.objects.create(
-            phpbb_id=800, topic=topic, text_bbcode="x", text_html="x",
+            phpbb_id=800,
+            topic=topic,
+            text_bbcode="x",
+            text_html="x",
             created_at=datetime.datetime(2012, 1, 1, tzinfo=datetime.UTC),
         )
         return subforum, topic, post, group

@@ -121,26 +121,34 @@ def viewtopic_redirect(request):
     if p:
         try:
             post = Post.objects.select_related("topic__subforum").get(phpbb_id=int(p))
-        except (Post.DoesNotExist, ValueError, TypeError):
+        except Post.DoesNotExist, ValueError, TypeError:
             raise Http404
         if not _can_access(request, post.topic.subforum):
             if not request.user.is_authenticated:
                 return redirect_to_login(request.get_full_path())
             return HttpResponseForbidden()
         if post.created_at is None:
-            posts_before = Post.objects.filter(
-                topic=post.topic,
-            ).filter(
-                Q(created_at__isnull=False)
-                | Q(created_at__isnull=True, id__lt=post.id)
-            ).count()
+            posts_before = (
+                Post.objects.filter(
+                    topic=post.topic,
+                )
+                .filter(
+                    Q(created_at__isnull=False)
+                    | Q(created_at__isnull=True, id__lt=post.id)
+                )
+                .count()
+            )
         else:
-            posts_before = Post.objects.filter(
-                topic=post.topic,
-            ).filter(
-                Q(created_at__lt=post.created_at)
-                | Q(created_at=post.created_at, id__lt=post.id)
-            ).count()
+            posts_before = (
+                Post.objects.filter(
+                    topic=post.topic,
+                )
+                .filter(
+                    Q(created_at__lt=post.created_at)
+                    | Q(created_at=post.created_at, id__lt=post.id)
+                )
+                .count()
+            )
         page = posts_before // POSTS_PER_PAGE + 1
         url = reverse("topic-posts", args=[post.topic.pk])
         if page > 1:
@@ -150,7 +158,7 @@ def viewtopic_redirect(request):
     if t:
         try:
             topic = Topic.objects.select_related("subforum").get(phpbb_id=int(t))
-        except (Topic.DoesNotExist, ValueError, TypeError):
+        except Topic.DoesNotExist, ValueError, TypeError:
             raise Http404
         if not _can_access(request, topic.subforum):
             if not request.user.is_authenticated:
@@ -161,7 +169,7 @@ def viewtopic_redirect(request):
         if start:
             try:
                 page = max(1, int(start) // POSTS_PER_PAGE + 1)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 pass
         url = reverse("topic-posts", args=[topic.pk])
         if page > 1:
@@ -171,7 +179,7 @@ def viewtopic_redirect(request):
     if f_id:
         try:
             subforum = SubForum.objects.get(phpbb_id=int(f_id))
-        except (SubForum.DoesNotExist, ValueError, TypeError):
+        except SubForum.DoesNotExist, ValueError, TypeError:
             raise Http404
         if not _can_access(request, subforum):
             if not request.user.is_authenticated:
