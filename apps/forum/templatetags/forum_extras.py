@@ -11,7 +11,7 @@ def ru_pluralize(value, arg):
     """
     try:
         n = int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return ""
     forms = arg.split(",")
     if len(forms) != 3:
