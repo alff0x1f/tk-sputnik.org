@@ -169,7 +169,7 @@ def viewtopic_redirect(request):
         if start:
             try:
                 page = max(1, int(start) // POSTS_PER_PAGE + 1)
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 pass
         url = reverse("topic-posts", args=[topic.pk])
         if page > 1:
