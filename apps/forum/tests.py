@@ -971,6 +971,32 @@ class ViewtopicRedirectTests(TestCase):
         response = self.client.get(self._url(f=9999))
         self.assertEqual(response.status_code, 404)
 
+    def test_redirect_by_post_null_created_at_lands_on_correct_page(self):
+        # Posts with null created_at sort after non-null ones in PostgreSQL ASC.
+        # Create 20 posts with real timestamps so the null-ts post lands on page 2.
+        for i in range(20):
+            Post.objects.create(
+                phpbb_id=900 + i,
+                topic=self.topic,
+                text_bbcode="x",
+                text_html="x",
+                created_at=datetime.datetime(2010, 1, 2 + i, tzinfo=datetime.UTC),
+            )
+        null_post = Post.objects.create(
+            phpbb_id=920,
+            topic=self.topic,
+            text_bbcode="x",
+            text_html="x",
+            created_at=None,
+        )
+        response = self.client.get(self._url(p=920))
+        self.assertRedirects(
+            response,
+            f"/forum/t/{self.topic.pk}/?page=2#post-{null_post.pk}",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
     def _make_private_subforum(self):
         cat = ForumCategory.objects.create(phpbb_id=2, name="Private Cat")
         group = Group.objects.create(name="members")

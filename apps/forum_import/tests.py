@@ -884,6 +884,74 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertNotIn("javascript", result)
         self.assertNotIn("<a", result)
 
+    def test_url_bbcode_tag_veloufa_viewtopic_rewritten(self):
+        uid = "25kichn1"
+        raw = (
+            f"[url:{uid}]http://www.veloufa.ru/forum/viewtopic.php"
+            f"?f=12&amp;t=1050[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=12&amp;t=1050"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_option_veloufa_viewtopic_rewritten(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?f=11&amp;t=6437:{uid}]"
+            f"link text[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=11&amp;t=6437"', result)
+        self.assertIn("link text", result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_external_has_nofollow_noreferrer(self):
+        raw = "[url]https://example.com[/url]"
+        result = _to_html(raw, "")
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+
+    def test_url_option_with_nested_img_preserves_img(self):
+        uid = "abc123"
+        raw = (
+            f"[url=https://example.com:{uid}]"
+            f"[img:{uid}]https://example.com/thumb.jpg[/img:{uid}]"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('<img src="https://example.com/thumb.jpg"', result)
+        self.assertNotIn("https://example.com</a>", result)
+
+    def test_url_option_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
+
+    def test_url_option_mixed_text_and_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"see http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
+
 
 class ToHtmlAttachmentTest(TestCase):
     def test_attachment_tag_becomes_placeholder(self):

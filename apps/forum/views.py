@@ -127,12 +127,20 @@ def viewtopic_redirect(request):
             if not request.user.is_authenticated:
                 return redirect_to_login(request.get_full_path())
             return HttpResponseForbidden()
-        posts_before = Post.objects.filter(
-            topic=post.topic,
-        ).filter(
-            Q(created_at__lt=post.created_at)
-            | Q(created_at=post.created_at, id__lt=post.id)
-        ).count()
+        if post.created_at is None:
+            posts_before = Post.objects.filter(
+                topic=post.topic,
+            ).filter(
+                Q(created_at__isnull=False)
+                | Q(created_at__isnull=True, id__lt=post.id)
+            ).count()
+        else:
+            posts_before = Post.objects.filter(
+                topic=post.topic,
+            ).filter(
+                Q(created_at__lt=post.created_at)
+                | Q(created_at=post.created_at, id__lt=post.id)
+            ).count()
         page = posts_before // POSTS_PER_PAGE + 1
         url = reverse("topic-posts", args=[post.topic.pk])
         if page > 1:

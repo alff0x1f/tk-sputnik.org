@@ -146,8 +146,60 @@ def _render_spoiler(tag_name, value, options, parent, context):
     )
 
 
+def _render_url(tag_name, value, options, parent, context):
+    href = html.unescape((options.get("url") or "").strip())
+    href_from_option = bool(href)
+    if not href:
+        m = _HREF_RE.search(value or "")
+        if m:
+            href = html.unescape(m.group(1))
+        else:
+            href = re.sub(r"<[^>]+>", "", value or "").strip()
+    if not _SAFE_SCHEME_RE.match(href):
+        return re.sub(r"<[^>]+>", "", value or "").strip()
+    href = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", href)
+    safe_href = html.escape(href, quote=True)
+    if href_from_option:
+        stripped = (value or "").strip()
+        single_a = _LINK_INNER_RE.fullmatch(stripped)
+        if single_a:
+            # value is a single auto-linked <a>; flatten to avoid nested anchors
+            inner_text = re.sub(r"<[^>]+>", "", single_a.group(2))
+            inner_text = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", inner_text)
+            if inner_text:
+                link_body = html.escape(html.unescape(inner_text))
+            else:
+                link_body = html.escape(href)
+        else:
+            # Preserve rendered child HTML (e.g. nested <img>); unwrap any
+            # auto-linked <a> tags to prevent nested anchors.
+            if value:
+                link_body = re.sub(
+                    r"<a\b[^>]*>(.*?)</a\s*>",
+                    lambda m: _VELOUFA_VIEWTOPIC_RE.sub(
+                        "/forum/viewtopic.php", m.group(1)
+                    ),
+                    value,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+            else:
+                link_body = html.escape(href)
+    else:
+        # [url]URL[/url] form — link text is the URL itself; rewrite it too
+        link_text = re.sub(r"<[^>]+>", "", value or "").strip() or href
+        link_text = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", link_text)
+        link_body = html.escape(html.unescape(link_text))
+    if _SAFE_URL_RE.match(href):
+        return (
+            f'<a href="{safe_href}" target="_blank" rel="nofollow noreferrer">'
+            f"{link_body}</a>"
+        )
+    return f'<a href="{safe_href}">{link_body}</a>'
+
+
 _parser = bbcode.Parser()
 _parser.add_formatter("img", _render_img, render_embedded=False)
+_parser.add_formatter("url", _render_url)
 _parser.add_formatter("size", _render_size)
 _parser.add_simple_formatter("del", "<del>%(value)s</del>")
 _parser.add_simple_formatter("center", '<p style="text-align:center">%(value)s</p>')
