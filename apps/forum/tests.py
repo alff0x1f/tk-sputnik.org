@@ -1025,9 +1025,40 @@ class ViewtopicRedirectTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_private_post_authenticated_member_redirects(self):
-        _, _, post, group = self._make_private_subforum()
+        _, topic, post, group = self._make_private_subforum()
         user = User.objects.create_user("member", password="x")
         user.groups.add(group)
         self.client.force_login(user)
         response = self.client.get(self._url(p=800))
-        self.assertEqual(response.status_code, 301)
+        self.assertRedirects(
+            response,
+            f"/forum/t/{topic.pk}/#post-{post.pk}",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    def test_private_topic_authenticated_member_redirects(self):
+        _, topic, _, group = self._make_private_subforum()
+        user = User.objects.create_user("member_t", password="x")
+        user.groups.add(group)
+        self.client.force_login(user)
+        response = self.client.get(self._url(t=200))
+        self.assertRedirects(
+            response,
+            f"/forum/t/{topic.pk}/",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    def test_private_forum_authenticated_member_redirects(self):
+        subforum, _, _, group = self._make_private_subforum()
+        user = User.objects.create_user("member_f", password="x")
+        user.groups.add(group)
+        self.client.force_login(user)
+        response = self.client.get(self._url(f=20))
+        self.assertRedirects(
+            response,
+            f"/forum/f/{subforum.pk}/",
+            status_code=301,
+            fetch_redirect_response=False,
+        )

@@ -778,7 +778,7 @@ class ToHtmlSmiliesMarkersTest(TestCase):
         self.assertIn('rel="nofollow noreferrer"', result)
         self.assertNotIn("<!-- w -->", result)
 
-    def test_email_marker_renders_with_rel_nofollow(self):
+    def test_email_marker_renders_plain_anchor(self):
         raw = (
             '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
         )
