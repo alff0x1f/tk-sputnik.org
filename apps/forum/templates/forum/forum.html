@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}Форум — Турклуб Спутник{% endblock %}
+{% block og_title %}Форум — Турклуб Спутник{% endblock %}
+{% block meta_description %}Архив форума, 2007–2016{% endblock %}
+{% block og_description %}Архив форума, 2007–2016{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
@@ -32,7 +35,14 @@
           <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <div class="sf-body">
-          <div class="sf-title"><a href="{% url 'subforum-topics' subforum.id %}">{{ subforum.name }}</a></div>
+          <div class="sf-title">
+            <a href="{% url 'subforum-topics' subforum.id %}">{{ subforum.name }}</a>
+            {% if subforum.is_private and not user_is_staff and subforum.allowed_group_id not in user_group_ids %}
+            <span class="sf-lock" title="Приватный раздел">
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            {% endif %}
+          </div>
           {% if subforum.description %}<div class="sf-desc">{{ subforum.description }}</div>{% endif %}
           {% if subforum.children %}
           <div class="sf-children">
@@ -40,6 +50,11 @@
             <a class="sf-child" href="{% url 'subforum-topics' child.id %}">
               <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               <span class="sf-child-title">{{ child.name }}</span>
+              {% if child.is_private and not user_is_staff and child.allowed_group_id not in user_group_ids %}
+              <span class="sf-lock" title="Приватный раздел">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              {% endif %}
               <span class="sf-child-stats">{{ child.topic_count }} тем</span>
             </a>
             {% endfor %}

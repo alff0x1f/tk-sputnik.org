@@ -6,7 +6,15 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.forum.models import ForumCategory, ForumUser, Post, SubForum, Topic
+from apps.forum.models import (
+    ForumCategory,
+    ForumUser,
+    Post,
+    PostAttachment,
+    SubForum,
+    Topic,
+)
+from apps.forum_import.management.commands.import_phpbb_posts import _to_html
 
 
 class ForumImportAppConfigTest(TestCase):
@@ -30,7 +38,7 @@ class ImportPhpbbForumsCommandTest(TestCase):
             left_id,
         )
 
-    def _mock_cursor(self, rows):
+    def _mock_cursor(self, rows, *, acl_rows=None):
         cursor = MagicMock()
         cursor.description = [
             ("forum_id",),
@@ -45,7 +53,8 @@ class ImportPhpbbForumsCommandTest(TestCase):
             ("forum_last_post_time",),
             ("left_id",),
         ]
-        cursor.fetchall.return_value = rows
+        # Two fetchall calls per command run: forums then ACL data.
+        cursor.fetchall.side_effect = [rows, acl_rows if acl_rows is not None else []]
         return cursor
 
     @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
@@ -124,6 +133,8 @@ class ImportPhpbbForumsCommandTest(TestCase):
             self._make_row(1, 0, 0, "Приключения"),
         ]
         cursor = self._mock_cursor(rows)
+        # Command runs twice → 4 fetchall calls: (forums, acl) × 2
+        cursor.fetchall.side_effect = [rows, [], rows, []]
         mock_connections.__getitem__.return_value.cursor.return_value = cursor
 
         call_command("import_phpbb_forums", stdout=StringIO())
@@ -146,6 +157,100 @@ class ImportPhpbbForumsCommandTest(TestCase):
         self.assertEqual(cat.name, 'Турклуб "Спутник"')
         sub = SubForum.objects.get(phpbb_id=10)
         self.assertEqual(sub.name, "Походы & приключения")
+
+    @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
+    def test_private_subforum_gets_is_private_and_group(self, mock_connections):
+        rows = [
+            self._make_row(1, 0, 0, "Приключения"),
+            self._make_row(19, 1, 1, "Орг"),
+        ]
+        # ACL: group "ORG" can read forum 19, GUESTS cannot
+        acl_rows = [(19, "ORG", 1)]
+        cursor = self._mock_cursor(rows, acl_rows=acl_rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_forums", stdout=out)
+
+        sub = SubForum.objects.get(phpbb_id=19)
+        self.assertTrue(sub.is_private)
+        self.assertIsNotNone(sub.allowed_group)
+        self.assertEqual(sub.allowed_group.name, "орг")
+        self.assertIn("Marked 1 subforums as private", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_forums.connections")
+    def test_public_subforum_gets_is_private_false(self, mock_connections):
+        rows = [
+            self._make_row(1, 0, 0, "Приключения"),
+            self._make_row(10, 1, 1, "Пешие походы"),
+        ]
+        # ACL: GUESTS can read forum 10
+        acl_rows = [(10, "GUESTS", 1), (10, "REGISTERED", 1)]
+        cursor = self._mock_cursor(rows, acl_rows=acl_rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_forums", stdout=StringIO())
+
+        sub = SubForum.objects.get(phpbb_id=10)
+        self.assertFalse(sub.is_private)
+        self.assertIsNone(sub.allowed_group)
+
+
+class FetchPrivateForumIdsTest(TestCase):
+    def _acl_cursor(self, acl_rows):
+        cursor = MagicMock()
+        cursor.fetchall.return_value = acl_rows
+        return cursor
+
+    def _call(self, acl_rows):
+        from apps.forum_import.management.commands.import_phpbb_forums import (
+            _fetch_private_forum_ids,
+        )
+
+        return _fetch_private_forum_ids(self._acl_cursor(acl_rows))
+
+    def test_group_allowed_guests_absent_is_private(self):
+        result = self._call([(19, "ORG", 1)])
+        self.assertIn(19, result)
+
+    def test_guests_allowed_is_not_private(self):
+        result = self._call([(1, "GUESTS", 1), (1, "REGISTERED", 1)])
+        self.assertNotIn(1, result)
+
+    def test_no_group_allowed_is_not_private(self):
+        result = self._call([(5, "ORG", 0)])
+        self.assertNotIn(5, result)
+
+    def test_guests_never_other_group_allowed_is_private(self):
+        result = self._call([(7, "GUESTS", 0), (7, "MODS", 1)])
+        self.assertIn(7, result)
+
+    def test_multiple_forums_mixed(self):
+        acl_rows = [
+            (1, "GUESTS", 1),
+            (1, "REGISTERED", 1),
+            (19, "ORG", 1),
+            (7, "GUESTS", 0),
+            (7, "MODS", 1),
+        ]
+        result = self._call(acl_rows)
+        self.assertNotIn(1, result)
+        self.assertIn(19, result)
+        self.assertIn(7, result)
+
+    def test_empty_acl_returns_empty_set(self):
+        result = self._call([])
+        self.assertEqual(result, set())
+
+    def test_query_includes_role_based_acl_table(self):
+        cursor = self._acl_cursor([])
+        from apps.forum_import.management.commands.import_phpbb_forums import (
+            _fetch_private_forum_ids,
+        )
+
+        _fetch_private_forum_ids(cursor)
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("acl_roles_data", executed_sql)
 
 
 class ImportPhpbbUsersCommandTest(TestCase):
@@ -595,3 +700,623 @@ class ImportPhpbbPostsCommandTest(TestCase):
         self.assertIn("big text", post.text_html)
         self.assertIn("font-size:150%", post.text_html)
         self.assertNotIn("[size", post.text_html)
+
+
+class ToHtmlSpoilerTest(TestCase):
+    def test_spoiler_with_title_renders_details(self):
+        uid = "abc123"
+        raw = f"[spoiler=Секрет:{uid}]скрытый текст[/spoiler:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn("<details", result)
+        self.assertIn("<summary>Секрет</summary>", result)
+        self.assertIn('class="spoiler-body"', result)
+        self.assertIn("скрытый текст", result)
+        self.assertNotIn("[spoiler", result)
+
+    def test_spoiler_title_is_escaped(self):
+        raw = "[spoiler=<script>alert(1)</script>]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+
+    def test_spoiler_empty_title_uses_default(self):
+        raw = "[spoiler=]content[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn("<summary>Spoiler</summary>", result)
+
+    def test_spoiler_has_css_class(self):
+        raw = "[spoiler=Заголовок]текст[/spoiler]"
+        result = _to_html(raw, "")
+        self.assertIn('class="spoiler"', result)
+
+
+class ToHtmlSmiliesMarkersTest(TestCase):
+    def test_smiley_renders_to_img_tag(self):
+        raw = (
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn('<img src="/media/forum/smilies/smile.gif"', result)
+        self.assertIn('alt=":)"', result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertNotIn("<!-- s", result)
+
+    def test_url_marker_renders_with_target_blank(self):
+        raw = (
+            '<!-- m --><a class="postlink" href="https://example.com">'
+            "text</a><!-- m -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertIn(">text<", result)
+        self.assertNotIn("<!-- m -->", result)
+
+    def test_url_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- m --><a class="postlink"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "Расписание</a><!-- m -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn('href="http://www.veloufa.ru', result)
+        self.assertNotIn("<!-- m -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_www_marker_renders_with_target_blank(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.example.com">'
+            "www.example.com</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://www.example.com"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertNotIn("<!-- w -->", result)
+
+    def test_email_marker_renders_plain_anchor(self):
+        raw = (
+            '<!-- e --><a href="mailto:user@example.com">user@example.com</a><!-- e -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="mailto:user@example.com"', result)
+        self.assertNotIn('rel="', result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("<!-- e -->", result)
+
+    def test_www_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- w --><a class="postlink" href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- w -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- w -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_local_marker_veloufa_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/viewtopic.php?f=10&amp;t=6057">'
+            "viewtopic.php?f=10&amp;t=6057</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?f=10&amp;t=6057"', result)
+        self.assertNotIn("forum.veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_local_marker_veloufa_path_viewtopic_rewritten(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://www.veloufa.ru/forum/viewtopic.php?t=468">'
+            "viewtopic.php?t=468</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="/forum/viewtopic.php?t=468"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn("<!-- l -->", result)
+
+    def test_local_marker_non_viewtopic_kept_as_external(self):
+        raw = (
+            '<!-- l --><a class="postlink-local"'
+            ' href="http://forum.veloufa.ru/memberlist.php">'
+            "memberlist</a><!-- l -->"
+        )
+        result = _to_html(raw, "")
+        self.assertIn('href="http://forum.veloufa.ru/memberlist.php"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertNotIn("<!-- l -->", result)
+
+    def test_multiple_smileys_all_rendered(self):
+        raw = (
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+            " and "
+            '<!-- s:D --><img src="{SMILIES_PATH}/grin.gif"'
+            ' alt=":D" title="Grin" /><!-- s:D -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("/media/forum/smilies/smile.gif", result)
+        self.assertIn("/media/forum/smilies/grin.gif", result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertEqual(result.count("<img"), 2)
+
+    def test_bbcode_and_smiley_mixed(self):
+        raw = (
+            "[b]hello[/b] "
+            '<!-- s:) --><img src="{SMILIES_PATH}/smile.gif"'
+            ' alt=":)" title="Smile" /><!-- s:) -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("<strong>hello</strong>", result)
+        self.assertIn("/media/forum/smilies/smile.gif", result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+        self.assertNotIn("<!-- s", result)
+
+    def test_smiley_with_slash_in_alt_renders(self):
+        raw = (
+            '<!-- s:/ --><img src="{SMILIES_PATH}/neutral.gif"'
+            ' alt=":/" title="Neutral" /><!-- s:/ -->'
+        )
+        result = _to_html(raw, "")
+        self.assertIn("/media/forum/smilies/neutral.gif", result)
+        self.assertIn('alt=":/"', result)
+        self.assertNotIn("{SMILIES_PATH}", result)
+
+    def test_malformed_url_marker_produces_no_html(self):
+        raw = "<!-- m --><img src=x onerror=alert(1)><!-- m -->"
+        result = _to_html(raw, "")
+        self.assertNotIn("<img", result)
+        self.assertNotIn("onerror", result)
+
+    def test_unsafe_scheme_in_url_marker_suppressed(self):
+        raw = '<!-- m --><a href="javascript:alert(1)">click</a><!-- m -->'
+        result = _to_html(raw, "")
+        self.assertNotIn("javascript", result)
+        self.assertNotIn("<a", result)
+
+    def test_url_bbcode_tag_veloufa_viewtopic_rewritten(self):
+        uid = "25kichn1"
+        raw = (
+            f"[url:{uid}]http://www.veloufa.ru/forum/viewtopic.php"
+            f"?f=12&amp;t=1050[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=12&amp;t=1050"', result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_option_veloufa_viewtopic_rewritten(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?f=11&amp;t=6437:{uid}]"
+            f"link text[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?f=11&amp;t=6437"', result)
+        self.assertIn("link text", result)
+        self.assertNotIn("veloufa.ru", result)
+        self.assertNotIn('target="_blank"', result)
+        self.assertNotIn("nofollow", result)
+
+    def test_url_bbcode_external_has_nofollow_noreferrer(self):
+        raw = "[url]https://example.com[/url]"
+        result = _to_html(raw, "")
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('rel="nofollow noreferrer"', result)
+        self.assertIn('target="_blank"', result)
+
+    def test_url_option_with_nested_img_preserves_img(self):
+        uid = "abc123"
+        raw = (
+            f"[url=https://example.com:{uid}]"
+            f"[img:{uid}]https://example.com/thumb.jpg[/img:{uid}]"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="https://example.com"', result)
+        self.assertIn('<img src="https://example.com/thumb.jpg"', result)
+        self.assertNotIn("https://example.com</a>", result)
+
+    def test_url_option_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
+
+    def test_url_option_mixed_text_and_autolinked_body_no_nested_anchor(self):
+        uid = "37ycp0zs"
+        raw = (
+            f"[url=http://forum.veloufa.ru/viewtopic.php?t=1:{uid}]"
+            f"see http://forum.veloufa.ru/viewtopic.php?t=1"
+            f"[/url:{uid}]"
+        )
+        result = _to_html(raw, uid)
+        self.assertIn('href="/forum/viewtopic.php?t=1"', result)
+        self.assertEqual(result.count("<a "), 1)
+        self.assertNotIn("veloufa.ru", result)
+
+
+class ToHtmlAttachmentTest(TestCase):
+    def test_attachment_tag_becomes_placeholder(self):
+        raw = "[attachment=0]photo.jpg[/attachment]"
+        result = _to_html(raw, "")
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn("[attachment", result)
+
+    def test_attachment_tag_with_uid(self):
+        uid = "abc"
+        raw = f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]"
+        result = _to_html(raw, uid)
+        self.assertIn('class="attachment-ref"', result)
+        self.assertIn('data-index="0"', result)
+        self.assertIn('data-name="photo.jpg"', result)
+        self.assertNotIn(f":{uid}", result)
+
+    def test_no_attachment_tag_unchanged(self):
+        raw = "[b]hello[/b]"
+        result = _to_html(raw, "")
+        self.assertIn("<strong>hello</strong>", result)
+        self.assertNotIn("attachment-ref", result)
+
+
+class ImportPhpbbAttachmentsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+        self.post = Post.objects.create(
+            id=200,
+            phpbb_id=200,
+            topic=topic,
+            text_bbcode="[b]hello[/b]",
+            text_html="<strong>hello</strong>",
+        )
+
+    def _make_att_row(
+        self,
+        attach_id=1,
+        post_msg_id=200,
+        physical_filename="file.jpg",
+        real_filename="photo.jpg",
+        mimetype="image/jpeg",
+        filesize=1024,
+        download_count=0,
+        attach_comment="",
+    ):
+        return (
+            attach_id,
+            post_msg_id,
+            physical_filename,
+            real_filename,
+            mimetype,
+            filesize,
+            download_count,
+            attach_comment,
+        )
+
+    def _mock_cursor(self, att_rows, uid_rows=None):
+        cursor = MagicMock()
+        cursor.description = [
+            ("attach_id",),
+            ("post_msg_id",),
+            ("physical_filename",),
+            ("real_filename",),
+            ("mimetype",),
+            ("filesize",),
+            ("download_count",),
+            ("attach_comment",),
+        ]
+        cursor.fetchall.side_effect = [
+            att_rows,
+            uid_rows if uid_rows is not None else [(200, "")],
+        ]
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_creates_postattachment(self, mock_connections):
+        rows = [self._make_att_row(1, 200)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        call_command("import_phpbb_attachments", stdout=out)
+
+        self.assertEqual(PostAttachment.objects.count(), 1)
+        att = PostAttachment.objects.get(phpbb_id=1)
+        self.assertEqual(att.post, self.post)
+        self.assertEqual(att.real_filename, "photo.jpg")
+        self.assertIn("Imported 1 attachments (0 skipped)", out.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_skips_orphans(self, mock_connections):
+        cursor = self._mock_cursor([], uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args_list[0][0][0]
+        self.assertIn("is_orphan", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_skips_unknown_post(self, mock_connections):
+        rows = [self._make_att_row(1, 9999)]
+        cursor = self._mock_cursor(rows, uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        out = StringIO()
+        err = StringIO()
+        call_command("import_phpbb_attachments", stdout=out, stderr=err)
+
+        self.assertEqual(PostAttachment.objects.count(), 0)
+        self.assertIn("Imported 0 attachments (1 skipped)", out.getvalue())
+        self.assertIn("phpbb_id=9999", err.getvalue())
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_updates_post_html_inline(self, mock_connections):
+        self.post.text_bbcode = "[attachment=0]photo.jpg[/attachment]"
+        self.post.text_html = (
+            '<span class="attachment-ref" data-index="0" data-name="photo.jpg"></span>'
+        )
+        self.post.save()
+
+        rows = [
+            self._make_att_row(
+                1,
+                200,
+                physical_filename="file.jpg",
+                real_filename="photo.jpg",
+                mimetype="image/jpeg",
+            )
+        ]
+        cursor = self._mock_cursor(rows, uid_rows=[(200, "")])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn("<img src=", self.post.text_html)
+        self.assertIn("/forum/a/1/", self.post.text_html)
+        self.assertNotIn("attachment-ref", self.post.text_html)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_excludes_private_message_attachments(self, mock_connections):
+        cursor = self._mock_cursor([], uid_rows=[])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        executed_sql = cursor.execute.call_args_list[0][0][0]
+        self.assertIn("in_message = 0", executed_sql)
+
+    @patch("apps.forum_import.management.commands.import_phpbb_attachments.connections")
+    def test_import_appends_footer_for_unreferenced(self, mock_connections):
+        self.post.text_bbcode = "plain text"
+        self.post.text_html = "<p>plain text</p>"
+        self.post.save()
+
+        rows = [
+            self._make_att_row(
+                1,
+                200,
+                physical_filename="file.jpg",
+                real_filename="photo.jpg",
+                mimetype="image/jpeg",
+            )
+        ]
+        cursor = self._mock_cursor(rows, uid_rows=[(200, "")])
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_attachments", stdout=StringIO())
+
+        self.post.refresh_from_db()
+        self.assertIn('class="post-attachments"', self.post.text_html)
+        self.assertIn("<img src=", self.post.text_html)
+
+
+class DelTagRenderingTest(TestCase):
+    def test_del_tag_renders_to_del_element(self):
+        result = _to_html("[del]text[/del]", "")
+        self.assertIn("<del>text</del>", result)
+
+    def test_center_tag_renders_centered_paragraph(self):
+        result = _to_html("[center]hello[/center]", "")
+        self.assertIn('<p style="text-align:center">hello</p>', result)
+
+    def test_del_tag_with_uid_stripped_and_rendered(self):
+        uid = "abc12"
+        result = _to_html(f"[del:{uid}]removed[/del:{uid}]", uid)
+        self.assertIn("<del>removed</del>", result)
+        self.assertNotIn(f":{uid}", result)
+        self.assertNotIn("[del]", result)
+
+
+class YoutubeTagRenderingTest(TestCase):
+    def test_youtube_tag_renders_iframe(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("<iframe", result)
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+        self.assertNotIn("[youtube]", result)
+
+    def test_youtube_youtu_be_url(self):
+        uid = "abc12"
+        result = _to_html(
+            f"[youtube:{uid}]https://youtu.be/ABC123[/youtube:{uid}]",
+            uid,
+        )
+        self.assertIn("https://www.youtube.com/embed/ABC123", result)
+
+    def test_youtube_invalid_url_falls_back(self):
+        result = _to_html("[youtube]not-a-url[/youtube]", "")
+        self.assertNotIn("<iframe", result)
+        self.assertNotIn("[youtube]", result)
+
+
+class ImportPhpbbPostsBbcodeUidSavedTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(id=1, phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            id=10, phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(
+            id=100, phpbb_id=100, subforum=subforum, title="Тема"
+        )
+
+    def _make_row(self, post_id=200, uid="xhj7k"):
+        return (post_id, 100, 0, "", "hello", uid, 1000000)
+
+    def _mock_cursor(self, rows):
+        cursor = MagicMock()
+        cursor.description = [
+            ("post_id",),
+            ("topic_id",),
+            ("poster_id",),
+            ("post_username",),
+            ("post_text",),
+            ("bbcode_uid",),
+            ("post_time",),
+        ]
+        cursor.fetchall.return_value = rows
+        return cursor
+
+    @patch("apps.forum_import.management.commands.import_phpbb_posts.connections")
+    def test_bbcode_uid_saved_on_import(self, mock_connections):
+        uid = "xhj7k"
+        rows = [self._make_row(200, uid)]
+        cursor = self._mock_cursor(rows)
+        mock_connections.__getitem__.return_value.cursor.return_value = cursor
+
+        call_command("import_phpbb_posts", stdout=StringIO())
+
+        post = Post.objects.get(phpbb_id=200)
+        self.assertEqual(post.bbcode_uid, uid)
+
+
+class RerenderPostsCommandTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def _make_post(self, phpbb_id, text_bbcode, bbcode_uid="", text_html="old"):
+        return Post.objects.create(
+            phpbb_id=phpbb_id,
+            topic=self.topic,
+            text_bbcode=text_bbcode,
+            text_html=text_html,
+            bbcode_uid=bbcode_uid,
+        )
+
+    def test_rerender_updates_del_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            300,
+            f"[del:{uid}]removed[/del:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>removed</del>", post.text_html)
+        self.assertNotIn("[del]", post.text_html)
+
+    def test_rerender_updates_youtube_tag(self):
+        uid = "abc12"
+        post = self._make_post(
+            301,
+            f"[youtube:{uid}]https://www.youtube.com/watch?v=XYZ999[/youtube:{uid}]",
+            bbcode_uid=uid,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<iframe", post.text_html)
+        self.assertIn("https://www.youtube.com/embed/XYZ999", post.text_html)
+
+    def test_rerender_preserves_attachments(self):
+        uid = "abc12"
+        post = self._make_post(
+            302,
+            f"[attachment=0:{uid}]photo.jpg[/attachment:{uid}]",
+            bbcode_uid=uid,
+        )
+        PostAttachment.objects.create(
+            phpbb_id=1,
+            post=post,
+            physical_filename="file.jpg",
+            real_filename="photo.jpg",
+            mimetype="image/jpeg",
+            filesize=1024,
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<img src=", post.text_html)
+        self.assertNotIn("attachment-ref", post.text_html)
+
+    def test_rerender_uid_autodetect(self):
+        uid = "xhj7k"
+        post = self._make_post(
+            303,
+            f"[del:{uid}]old[/del:{uid}]",
+            bbcode_uid="",
+        )
+        call_command("rerender_posts", stdout=StringIO())
+        post.refresh_from_db()
+        self.assertIn("<del>old</del>", post.text_html)
+        self.assertNotIn(f":{uid}", post.text_html)
+
+
+class PostBbcodeUidFieldTest(TestCase):
+    def setUp(self):
+        cat = ForumCategory.objects.create(phpbb_id=1, name="Категория")
+        subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=cat, name="Подфорум"
+        )
+        self.topic = Topic.objects.create(phpbb_id=100, subforum=subforum, title="Тема")
+
+    def test_post_created_with_bbcode_uid(self):
+        post = Post.objects.create(
+            phpbb_id=300,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            bbcode_uid="abc12",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "abc12")
+
+    def test_post_created_without_bbcode_uid_defaults_to_empty(self):
+        post = Post.objects.create(
+            phpbb_id=301,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.bbcode_uid, "")

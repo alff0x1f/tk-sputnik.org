@@ -11,7 +11,86 @@ from apps.forum.models import ForumUser, Post, Topic
 POSTS_TABLE = "vu2_posts"
 
 _SAFE_URL_RE = re.compile(r"^https?://", re.IGNORECASE)
+_SAFE_SCHEME_RE = re.compile(r"^(https?://|mailto:)", re.IGNORECASE)
 _HREF_RE = re.compile(r'<a[^>]+href="([^"]+)"')
+_LINK_INNER_RE = re.compile(
+    r'<a\b[^>]+href="([^"]*)"[^>]*>(.*?)</a\s*>',
+    re.DOTALL | re.IGNORECASE,
+)
+
+_ATTACHMENT_RE = re.compile(
+    r"\[attachment=(\d+)\](.*?)\[/attachment\]",
+    re.IGNORECASE | re.DOTALL,
+)
+
+_SMILEY_RE = re.compile(
+    r"<!-- s[^>]* -->"
+    r'<img\s+src="\{SMILIES_PATH\}/([^"]+)"[^>]*/>'
+    r"<!-- s[^>]* -->"
+)
+_URL_MARKER_RE = re.compile(r"<!-- m -->(.*?)<!-- m -->", re.DOTALL)
+_WWW_MARKER_RE = re.compile(r"<!-- w -->(.*?)<!-- w -->", re.DOTALL)
+_EMAIL_MARKER_RE = re.compile(r"<!-- e -->(.*?)<!-- e -->", re.DOTALL)
+_LOCAL_MARKER_RE = re.compile(r"<!-- l -->(.*?)<!-- l -->", re.DOTALL)
+_ALT_RE = re.compile(r'\salt="([^"]*)"')
+_VELOUFA_VIEWTOPIC_RE = re.compile(
+    r"https?://(?:www\.)?(?:forum\.)?veloufa\.ru(?:/forum)?/viewtopic\.php",
+    re.IGNORECASE,
+)
+
+
+def _replace_attachment(m, store):
+    index = m.group(1)
+    name = html.escape(m.group(2))
+    return store(
+        f'<span class="attachment-ref" data-index="{index}" data-name="{name}"></span>'
+    )
+
+
+def _extract_phpbb_markers(text: str) -> tuple[str, dict]:
+    replacements = {}
+    counter = 0
+
+    def store(html_replacement):
+        nonlocal counter
+        key = f"\x00P{counter}\x00"
+        replacements[key] = html_replacement
+        counter += 1
+        return key
+
+    def replace_smiley(m):
+        filename = m.group(1)
+        alt_m = _ALT_RE.search(m.group(0))
+        alt = alt_m.group(1) if alt_m else ""
+        src = f"/media/forum/smilies/{html.escape(filename)}"
+        return store(f'<img src="{src}" alt="{html.escape(alt)}">')
+
+    def replace_link_marker(m):
+        inner = m.group(1).strip()
+        link_m = _LINK_INNER_RE.fullmatch(inner)
+        if not link_m:
+            return ""
+        href = html.unescape(link_m.group(1))
+        if not _SAFE_SCHEME_RE.match(href):
+            return ""
+        href = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", href)
+        link_text = re.sub(r"<[^>]+>", "", link_m.group(2))
+        link_text = html.unescape(link_text)
+        safe_href = html.escape(href, quote=True)
+        safe_text = html.escape(link_text)
+        if _SAFE_URL_RE.match(href):
+            return store(
+                f'<a href="{safe_href}" target="_blank" rel="nofollow noreferrer">'
+                f"{safe_text}</a>"
+            )
+        return store(f'<a href="{safe_href}">{safe_text}</a>')
+
+    text = _SMILEY_RE.sub(replace_smiley, text)
+    text = _URL_MARKER_RE.sub(replace_link_marker, text)
+    text = _WWW_MARKER_RE.sub(replace_link_marker, text)
+    text = _EMAIL_MARKER_RE.sub(replace_link_marker, text)
+    text = _LOCAL_MARKER_RE.sub(replace_link_marker, text)
+    return text, replacements
 
 
 def _render_img(tag_name, value, options, parent, context):
@@ -32,9 +111,100 @@ def _render_size(tag_name, value, options, parent, context):
     return value or ""
 
 
+_YT_URL_RE = re.compile(
+    r"(?:https?://(?:www\.)?youtube\.com/watch\?"
+    r"(?:[^#]*&)?v=|https?://youtu\.be/)([A-Za-z0-9_-]+)"
+)
+
+
+def _render_youtube(tag_name, value, options, parent, context):
+    url = (value or "").strip()
+    m = _HREF_RE.search(url)
+    if m:
+        url = html.unescape(m.group(1))
+    yt_m = _YT_URL_RE.search(url)
+    if not yt_m:
+        return value or ""
+    video_id = html.escape(yt_m.group(1), quote=True)
+    return (
+        f'<div class="yt-embed" style="width:100%;max-width:560px;">'
+        f"<iframe"
+        f' src="https://www.youtube.com/embed/{video_id}"'
+        f' style="display:block;width:100%;aspect-ratio:16 / 9;height:auto;border:0;"'
+        f' allowfullscreen loading="lazy"></iframe>'
+        f"</div>"
+    )
+
+
+def _render_spoiler(tag_name, value, options, parent, context):
+    title = html.escape(options.get("spoiler", "") or "Spoiler")
+    return (
+        f'<details class="spoiler">'
+        f"<summary>{title}</summary>"
+        f'<div class="spoiler-body">{value}</div>'
+        f"</details>"
+    )
+
+
+def _render_url(tag_name, value, options, parent, context):
+    href = html.unescape((options.get("url") or "").strip())
+    href_from_option = bool(href)
+    if not href:
+        m = _HREF_RE.search(value or "")
+        if m:
+            href = html.unescape(m.group(1))
+        else:
+            href = re.sub(r"<[^>]+>", "", value or "").strip()
+    if not _SAFE_SCHEME_RE.match(href):
+        return re.sub(r"<[^>]+>", "", value or "").strip()
+    href = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", href)
+    safe_href = html.escape(href, quote=True)
+    if href_from_option:
+        stripped = (value or "").strip()
+        single_a = _LINK_INNER_RE.fullmatch(stripped)
+        if single_a:
+            # value is a single auto-linked <a>; flatten to avoid nested anchors
+            inner_text = re.sub(r"<[^>]+>", "", single_a.group(2))
+            inner_text = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", inner_text)
+            if inner_text:
+                link_body = html.escape(html.unescape(inner_text))
+            else:
+                link_body = html.escape(href)
+        else:
+            # Preserve rendered child HTML (e.g. nested <img>); unwrap any
+            # auto-linked <a> tags to prevent nested anchors.
+            if value:
+                link_body = re.sub(
+                    r"<a\b[^>]*>(.*?)</a\s*>",
+                    lambda m: _VELOUFA_VIEWTOPIC_RE.sub(
+                        "/forum/viewtopic.php", m.group(1)
+                    ),
+                    value,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+            else:
+                link_body = html.escape(href)
+    else:
+        # [url]URL[/url] form — link text is the URL itself; rewrite it too
+        link_text = re.sub(r"<[^>]+>", "", value or "").strip() or href
+        link_text = _VELOUFA_VIEWTOPIC_RE.sub("/forum/viewtopic.php", link_text)
+        link_body = html.escape(html.unescape(link_text))
+    if _SAFE_URL_RE.match(href):
+        return (
+            f'<a href="{safe_href}" target="_blank" rel="nofollow noreferrer">'
+            f"{link_body}</a>"
+        )
+    return f'<a href="{safe_href}">{link_body}</a>'
+
+
 _parser = bbcode.Parser()
 _parser.add_formatter("img", _render_img, render_embedded=False)
+_parser.add_formatter("url", _render_url)
 _parser.add_formatter("size", _render_size)
+_parser.add_simple_formatter("del", "<del>%(value)s</del>")
+_parser.add_simple_formatter("center", '<p style="text-align:center">%(value)s</p>')
+_parser.add_formatter("youtube", _render_youtube, render_embedded=False)
+_parser.add_formatter("spoiler", _render_spoiler)
 
 
 def _to_html(raw: str, uid: str) -> str:
@@ -48,7 +218,23 @@ def _to_html(raw: str, uid: str) -> str:
     text = re.sub(r"\[list:o\]", "[list=1]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/list:[uo]\]", "[/list]", text, flags=re.IGNORECASE)
     text = re.sub(r"\[/\*:m\]", "", text, flags=re.IGNORECASE)
-    return _parser.format(text)
+    attachment_tokens = {}
+    token_counter = [0]
+
+    def store_attachment(html_str):
+        key = f"\x00AT{token_counter[0]}\x00"
+        token_counter[0] += 1
+        attachment_tokens[key] = html_str
+        return key
+
+    text = _ATTACHMENT_RE.sub(lambda m: _replace_attachment(m, store_attachment), text)
+    text, replacements = _extract_phpbb_markers(text)
+    result = _parser.format(text)
+    for key, value in replacements.items():
+        result = result.replace(key, value)
+    for key, value in attachment_tokens.items():
+        result = result.replace(key, value)
+    return result
 
 
 def _unix_to_dt(ts):
@@ -104,6 +290,7 @@ class Command(BaseCommand):
                     "author_username": row["post_username"] or "",
                     "text_bbcode": raw_text,
                     "text_html": _to_html(raw_text, uid),
+                    "bbcode_uid": uid,
                     "created_at": _unix_to_dt(row["post_time"]),
                 },
             )
