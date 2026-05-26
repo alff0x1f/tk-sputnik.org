@@ -48,6 +48,7 @@ class Workout(models.Model):
 
 class SourceMessage(models.Model):
     msg_id = models.IntegerField("ID сообщения", primary_key=True)
+    from_id = models.CharField("Telegram ID отправителя", max_length=64, blank=True, db_index=True)
     from_name = models.CharField("Отправитель", max_length=255)
     date = models.DateField("Дата")
     datetime = models.DateTimeField("Дата и время", null=True, blank=True)

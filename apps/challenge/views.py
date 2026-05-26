@@ -206,7 +206,7 @@ def _group_messages(messages, workouts_by_msg):
 @staff_member_required
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
-    messages = SourceMessage.objects.filter(from_name=athlete.name).order_by(
+    messages = SourceMessage.objects.filter(from_id=athlete.telegram_id).order_by(
         "date", "msg_id"
     )
     workouts_by_msg = {

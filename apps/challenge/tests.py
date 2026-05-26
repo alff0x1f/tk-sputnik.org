@@ -881,6 +881,7 @@ class MemberDetailViewTests(TestCase):
 
         self.msg_with_workout = SourceMessage.objects.create(
             msg_id=1001,
+            from_id="u1",
             from_name="Анна",
             date=datetime.date(2026, 1, 10),
             text="Пробежала 10 км",
@@ -888,6 +889,7 @@ class MemberDetailViewTests(TestCase):
         )
         self.msg_plain = SourceMessage.objects.create(
             msg_id=1002,
+            from_id="u1",
             from_name="Анна",
             date=datetime.date(2026, 1, 11),
             text="Просто сообщение",
@@ -895,6 +897,7 @@ class MemberDetailViewTests(TestCase):
         )
         self.msg_other = SourceMessage.objects.create(
             msg_id=1003,
+            from_id="u2",
             from_name="Борис",
             date=datetime.date(2026, 1, 10),
             text="Борис бежит",

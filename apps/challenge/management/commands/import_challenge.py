@@ -127,6 +127,7 @@ class Command(BaseCommand):
             SourceMessage.objects.update_or_create(
                 msg_id=msg["id"],
                 defaults={
+                    "from_id": msg.get("from_id", ""),
                     "from_name": msg.get("from", ""),
                     "date": msg_date,
                     "datetime": msg_datetime,
