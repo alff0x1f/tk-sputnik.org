@@ -38,7 +38,7 @@ Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproje
 - `config/` — Django project config (settings, urls, wsgi, asgi)
 - `apps/` — all Django apps live here
 - New apps go in `apps/` and are registered in `INSTALLED_APPS` as `apps.<name>`
-- Database: SQLite in development (`db.sqlite3`), PostgreSQL via `psycopg[binary]` in production
+- Database: SQLite in development (`db.sqlite3`), PostgreSQL via `psycopg[binary]` in production. Note: `django.contrib.postgres` is in `INSTALLED_APPS` for the forum's `SearchVectorField` — the forum app requires PostgreSQL even in development; SQLite cannot be used as the database if running with the forum app loaded.
 - Static files: standard Django `STATIC_URL`
 - No custom authentication — uses Django's built-in auth
 
@@ -47,8 +47,8 @@ Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproje
 The site includes a read-only archive of the old phpBB forum (2007–2014), accessible at `/forum/`.
 
 **Apps:**
-- `apps/forum` — models `ForumCategory` and `SubForum` stored in PostgreSQL; view at `/forum/`
-- `apps/forum_import` — import infrastructure; management command `import_phpbb_forums`
+- `apps/forum` — models `ForumCategory`, `SubForum`, `Topic`, `Post`, `ForumUser`, `PostAttachment` stored in PostgreSQL; forum archive at `/forum/`, full-text search at `/forum/search/`; search logic in `apps/forum/search.py`; management command `build_forum_search_index`
+- `apps/forum_import` — import infrastructure; management commands `import_phpbb_forums`, `import_phpbb_attachments`, `reset_forum_sequences`
 
 **Data source:** phpBB 3.x MySQL database, table prefix `vu2_`. The MySQL instance runs as a separate Docker Compose service with `profiles: [phpbb]` — it is not started by default.
 

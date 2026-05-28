@@ -38,7 +38,7 @@ def highlight_snippet(value):
     the sentinel markers with <mark></mark>.
     """
     if not value:
-        return ""
+        return mark_safe("")
     safe = escape(str(value))
     safe = safe.replace(SNIPPET_START_SEL, "<mark>")
     safe = safe.replace(SNIPPET_STOP_SEL, "</mark>")

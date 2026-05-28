@@ -1438,7 +1438,7 @@ class ForumSearchViewTest(TestCase):
         post = self._post(topic, "<p>кавказские горы и тропы</p>")
         self._rebuild()
         response = self.client.get(self.url + "?q=кавказский")
-        self.assertContains(response, f"viewtopic.php?p={post.phpbb_id}")
+        self.assertContains(response, f'href="/forum/viewtopic.php?p={post.phpbb_id}"')
 
     def test_body_match_snippet_contains_mark_tag(self):
         topic = self._topic("Тема со словом")
@@ -1485,5 +1485,4 @@ class ForumSearchViewTest(TestCase):
         self._rebuild()
         response = self.client.get(self.url + "?q=горный", HTTP_HX_REQUEST="true")
         encoded_q = quote("горный")
-        self.assertContains(response, f"q={encoded_q}")
-        self.assertContains(response, "page=2")
+        self.assertContains(response, f'hx-get="?q={encoded_q}&page=2"')

@@ -24,13 +24,11 @@
     </div>
 
     {% if q %}
+    {% if total_count %}
     <div class="feed-sub">
-      {% if total_count %}
-        {{ total_count }} {{ total_count|ru_pluralize:"сообщение,сообщения,сообщений" }} по запросу «{{ q }}»
-      {% else %}
-        Ничего не найдено по запросу «{{ q }}»
-      {% endif %}
+      {{ total_count }} {{ total_count|ru_pluralize:"сообщение,сообщения,сообщений" }} по запросу «{{ q }}»
     </div>
+    {% endif %}
 
     {% if page_obj.paginator.num_pages > 1 %}
     <div class="pagination-sticky">

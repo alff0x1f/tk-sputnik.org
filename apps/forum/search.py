@@ -33,13 +33,14 @@ def rebuild_search_index(queryset=None):
     if batch:
         Post.objects.bulk_update(batch, ["search_text"])
 
-    # Phase 1: body weight B for every post
-    Post.objects.update(
+    # Phase 1: body weight B for every post in the queryset
+    queryset.update(
         search_vector=SearchVector("search_text", weight="B", config="russian")
     )
 
-    # Phase 2: add title weight A to the first post of each topic (by created_at, id)
-    for topic in Topic.objects.only("id", "title"):
+    # Phase 2: add title weight A to the first post of each relevant topic
+    topic_ids = queryset.values_list("topic_id", flat=True).distinct()
+    for topic in Topic.objects.filter(id__in=topic_ids).only("id", "title"):
         first = (
             Post.objects.filter(topic_id=topic.id)
             .order_by("created_at", "id")
