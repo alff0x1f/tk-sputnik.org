@@ -7,7 +7,7 @@
 
 .lb-header {
   display: grid;
-  grid-template-columns: 48px 1fr 80px 100px 32px;
+  grid-template-columns: 48px 1fr 80px 100px;
   padding: 10px 16px;
   background: var(--surface-2);
   border-bottom: 1px solid var(--line);
@@ -25,15 +25,12 @@
 
 .lb-athlete {
   display: grid;
-  grid-template-columns: 48px 1fr 80px 100px 32px;
+  grid-template-columns: 48px 1fr 80px 100px;
   align-items: center;
   padding: 12px 16px;
   background: var(--surface);
   transition: background 0.1s;
 }
-.lb-athlete.expandable { cursor: pointer; }
-.lb-athlete.expandable:hover { background: var(--surface-2); }
-.lb-athlete.open .toggle-icon { transform: rotate(180deg); }
 
 .col-rank { font-size: 13px; font-weight: 700; color: var(--muted); }
 .lb-row:nth-child(-n+5) .col-rank { color: var(--accent); }
@@ -41,25 +38,8 @@
 .col-name { font-size: 15px; font-weight: 600; color: var(--ink); }
 .col-pts { font-size: 16px; font-weight: 700; color: var(--accent); }
 .col-cnt { font-size: 13px; color: var(--muted); }
-.col-toggle { display: flex; align-items: center; justify-content: center; }
-
-.toggle-icon {
-  width: 16px; height: 16px;
-  stroke: var(--muted); fill: none; stroke-width: 2;
-  transition: transform 0.2s;
-}
 
 /* Workout chips */
-.lb-workouts {
-  padding: 8px 16px 12px 64px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  background: var(--surface-2);
-  border-top: 1px solid var(--line);
-}
-.lb-workouts[hidden] { display: none; }
-
 .workout-chip {
   display: inline-flex;
   align-items: center;
@@ -564,8 +544,7 @@
 @media (max-width: 600px) {
   .lb-header,
   .lb-athlete {
-    grid-template-columns: 36px 1fr 60px 0 24px;
+    grid-template-columns: 36px 1fr 60px 0;
   }
   .col-cnt { display: none; }
-  .lb-workouts { padding-left: 16px; }
 }

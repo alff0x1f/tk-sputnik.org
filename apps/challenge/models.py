@@ -41,6 +41,12 @@ class Workout(models.Model):
         verbose_name = "Тренировка"
         verbose_name_plural = "Тренировки"
         ordering = ["athlete", "date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["athlete", "date", "activity"],
+                name="unique_workout_per_athlete_date_activity",
+            )
+        ]
 
     def __str__(self):
         return f"{self.athlete} — {self.activity} {self.date}"

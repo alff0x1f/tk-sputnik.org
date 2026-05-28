@@ -130,6 +130,10 @@ def api_workout_create(request):
             distance_km = float(distance_km)
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid distance_km"}, status=400)
+        if distance_km < 0:
+            return JsonResponse(
+                {"error": "distance_km must be non-negative"}, status=400
+            )
 
     pace_min_per_km = data.get("pace_min_per_km")
     if pace_min_per_km is not None:
@@ -137,6 +141,10 @@ def api_workout_create(request):
             pace_min_per_km = float(pace_min_per_km)
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid pace_min_per_km"}, status=400)
+        if pace_min_per_km < 0:
+            return JsonResponse(
+                {"error": "pace_min_per_km must be non-negative"}, status=400
+            )
 
     workout = Workout.objects.create(
         athlete=athlete,
@@ -189,6 +197,10 @@ def api_workout_detail(request, pk):
                     val = float(val)
                 except (TypeError, ValueError):
                     return JsonResponse({"error": f"Invalid {field}"}, status=400)
+                if val < 0:
+                    return JsonResponse(
+                        {"error": f"{field} must be non-negative"}, status=400
+                    )
             setattr(workout, field, val)
 
     if "msg_id" in data:
