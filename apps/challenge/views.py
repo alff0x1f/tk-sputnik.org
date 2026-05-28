@@ -276,10 +276,8 @@ def member_detail(request, telegram_id):
     for w in athlete_workouts:
         workouts_by_msg.setdefault(w.msg_id, []).append(w)
     groups = _group_messages(messages, workouts_by_msg)
-    total_points = (
-        athlete.workouts.aggregate(Sum("total_points"))["total_points__sum"] or 0
-    )
-    workout_count = athlete.workouts.count()
+    total_points = sum(w.total_points for w in athlete_workouts)
+    workout_count = len(athlete_workouts)
     return render(
         request,
         "challenge/member.html",
