@@ -895,6 +895,57 @@ class ReviewAPITests(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
+class GroupMessagesFunctionTests(TestCase):
+    def _make_msg(self, msg_id, from_id, from_name, text="", dt=None):
+        return SourceMessage(
+            msg_id=msg_id,
+            from_id=from_id,
+            from_name=from_name,
+            date=datetime.date(2026, 1, 1),
+            datetime=dt,
+            text=text,
+            photos=[],
+        )
+
+    def test_own_sender_no_foreign_senders(self):
+        from .views import _group_messages
+
+        msg = self._make_msg(1, "u1", "Анна")
+        groups = _group_messages([msg], {}, athlete_telegram_id="u1")
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["foreign_senders"], [])
+
+    def test_foreign_sender_included(self):
+        from .views import _group_messages
+
+        msg = self._make_msg(1, "user9999", "Сергей")
+        groups = _group_messages([msg], {}, athlete_telegram_id="u1")
+        self.assertEqual(groups[0]["foreign_senders"], ["Сергей"])
+
+    def test_empty_from_id_not_foreign(self):
+        from .views import _group_messages
+
+        msg = self._make_msg(1, "", "Неизвестный")
+        groups = _group_messages([msg], {}, athlete_telegram_id="u1")
+        self.assertEqual(groups[0]["foreign_senders"], [])
+
+    def test_duplicate_foreign_sender_deduplicated(self):
+        from .views import _group_messages
+
+        dt = datetime.datetime(2026, 1, 1, 10, 0, 0)
+        msg1 = self._make_msg(1, "user9999", "Сергей", dt=dt)
+        msg2 = self._make_msg(2, "user9999", "Сергей", dt=dt)
+        groups = _group_messages([msg1, msg2], {}, athlete_telegram_id="u1")
+        self.assertEqual(groups[0]["foreign_senders"], ["Сергей"])
+
+    def test_foreign_senders_key_present_without_athlete_id(self):
+        from .views import _group_messages
+
+        msg = self._make_msg(1, "u1", "Анна")
+        groups = _group_messages([msg], {})
+        self.assertIn("foreign_senders", groups[0])
+
+
 class MemberDetailViewTests(TestCase):
     def setUp(self):
         from django.contrib.auth.models import User
@@ -1047,6 +1098,38 @@ class MemberDetailViewTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Пробежал 5 км", content)
         self.assertIn("has-workout", content)
+
+    def test_foreign_sender_in_context_for_linked_foreign_message(self):
+        unknown = Athlete.objects.create(telegram_id="unknown_abc", name="Неизвестный")
+        SourceMessage.objects.create(
+            msg_id=2001,
+            from_id="user9999",
+            from_name="Другой человек",
+            date=datetime.date(2026, 1, 15),
+            text="Пробежал 5 км",
+            photos=[],
+        )
+        Workout.objects.create(
+            athlete=unknown,
+            date=datetime.date(2026, 1, 15),
+            activity="running",
+            distance_km=5.0,
+            base_points=2,
+            streak_bonus=0,
+            total_points=2,
+            msg_id=2001,
+        )
+        response = self.client.get(self._url("unknown_abc"))
+        self.assertEqual(response.status_code, 200)
+        groups = response.context["groups"]
+        foreign_names = [name for g in groups for name in g["foreign_senders"]]
+        self.assertIn("Другой человек", foreign_names)
+
+    def test_own_messages_have_no_foreign_senders_in_context(self):
+        response = self.client.get(self._url())
+        groups = response.context["groups"]
+        all_foreign = [name for g in groups for name in g["foreign_senders"]]
+        self.assertEqual(all_foreign, [])
 
     def test_multiple_workouts_per_message_shows_multiple_cards(self):
         Workout.objects.create(

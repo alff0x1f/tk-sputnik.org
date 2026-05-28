@@ -36,12 +36,12 @@
 **Files:**
 - Modify: `apps/challenge/views.py`
 
-- [ ] изменить сигнатуру `_group_messages(messages, workouts_by_msg, athlete_telegram_id)` — добавить параметр
-- [ ] в теле функции, при формировании каждого `group`-словаря, вычислить `foreign_senders`: список уникальных `msg.from_name` из сообщений группы, где `msg.from_id` непустой и `msg.from_id != athlete_telegram_id`
-- [ ] в `member_detail` передать `athlete.telegram_id` третьим аргументом в `_group_messages`
-- [ ] написать unit-тесты для `_group_messages` напрямую: группа со своим отправителем → `foreign_senders == []`; группа с чужим → `foreign_senders == ['Имя']`; `from_id` пустой → не считается чужим
-- [ ] написать HTTP-тест в `MemberDetailViewTests`: athlete `unknown_abc` с workout, привязанным к сообщению от `user9999` (Неизвестный) → страница содержит `msg-foreign-badge` и имя отправителя
-- [ ] запустить `uv run pytest apps/challenge/tests.py` — все тесты должны пройти
+- [x] изменить сигнатуру `_group_messages(messages, workouts_by_msg, athlete_telegram_id)` — добавить параметр
+- [x] в теле функции, при формировании каждого `group`-словаря, вычислить `foreign_senders`: список уникальных `msg.from_name` из сообщений группы, где `msg.from_id` непустой и `msg.from_id != athlete_telegram_id`
+- [x] в `member_detail` передать `athlete.telegram_id` третьим аргументом в `_group_messages`
+- [x] написать unit-тесты для `_group_messages` напрямую: группа со своим отправителем → `foreign_senders == []`; группа с чужим → `foreign_senders == ['Имя']`; `from_id` пустой → не считается чужим
+- [x] написать HTTP-тест в `MemberDetailViewTests`: athlete `unknown_abc` с workout, привязанным к сообщению от `user9999` (Неизвестный) → страница содержит `msg-foreign-badge` и имя отправителя
+- [x] запустить `uv run pytest apps/challenge/tests.py` — все тесты должны пройти
 
 ### Task 2: Шаблон и CSS
 

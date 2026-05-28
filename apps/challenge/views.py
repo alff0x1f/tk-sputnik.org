@@ -232,7 +232,7 @@ def api_workout_detail(request, pk):
     return _workout_response(workout, new_athlete)
 
 
-def _group_messages(messages, workouts_by_msg):
+def _group_messages(messages, workouts_by_msg, athlete_telegram_id=""):
     groups = []
     msgs = list(messages)
     i = 0
@@ -254,6 +254,12 @@ def _group_messages(messages, workouts_by_msg):
         for m in group:
             if m.msg_id in workouts_by_msg:
                 workouts.extend(workouts_by_msg[m.msg_id])
+        seen = set()
+        foreign_senders = []
+        for m in group:
+            if m.from_id and m.from_id != athlete_telegram_id and m.from_name not in seen:
+                seen.add(m.from_name)
+                foreign_senders.append(m.from_name)
         groups.append(
             {
                 "msgs": group,
@@ -262,6 +268,7 @@ def _group_messages(messages, workouts_by_msg):
                 "text": text,
                 "workouts": workouts,
                 "date": group[0].date,
+                "foreign_senders": foreign_senders,
             }
         )
         i = j
@@ -279,7 +286,7 @@ def member_detail(request, telegram_id):
     workouts_by_msg = {}
     for w in linked_workouts:
         workouts_by_msg.setdefault(w.msg_id, []).append(w)
-    groups = _group_messages(messages, workouts_by_msg)
+    groups = _group_messages(messages, workouts_by_msg, athlete.telegram_id)
     total_points = sum(w.total_points for w in all_workouts)
     workout_count = len(all_workouts)
     return render(
