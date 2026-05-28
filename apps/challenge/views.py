@@ -124,12 +124,26 @@ def api_workout_create(request):
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid msg_id"}, status=400)
 
+    distance_km = data.get("distance_km")
+    if distance_km is not None:
+        try:
+            distance_km = float(distance_km)
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "Invalid distance_km"}, status=400)
+
+    pace_min_per_km = data.get("pace_min_per_km")
+    if pace_min_per_km is not None:
+        try:
+            pace_min_per_km = float(pace_min_per_km)
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "Invalid pace_min_per_km"}, status=400)
+
     workout = Workout.objects.create(
         athlete=athlete,
         date=date,
         activity=activity,
-        distance_km=data.get("distance_km"),
-        pace_min_per_km=data.get("pace_min_per_km"),
+        distance_km=distance_km,
+        pace_min_per_km=pace_min_per_km,
         msg_id=msg_id_raw,
     )
     recompute_athlete_scores(athlete)
@@ -169,7 +183,13 @@ def api_workout_detail(request, pk):
     updatable = ["distance_km", "pace_min_per_km"]
     for field in updatable:
         if field in data:
-            setattr(workout, field, data[field])
+            val = data[field]
+            if val is not None:
+                try:
+                    val = float(val)
+                except (TypeError, ValueError):
+                    return JsonResponse({"error": f"Invalid {field}"}, status=400)
+            setattr(workout, field, val)
 
     if "msg_id" in data:
         if data["msg_id"] is not None:

@@ -96,7 +96,7 @@ Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
 ```bash
 uv run python manage.py import_challenge \
     --scores scratch/challenge/scores.json \
-    --messages scratch/challenge/messages_clean.json
+    --telegram-export scratch/challenge/ChatExport_2026-04-02/result.json
 # expected output: Imported N athletes, M workouts, K messages
 ```
 

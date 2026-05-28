@@ -36,7 +36,7 @@
 .lb-athlete.open .toggle-icon { transform: rotate(180deg); }
 
 .col-rank { font-size: 13px; font-weight: 700; color: var(--muted); }
-.lb-row:nth-child(-n+4) .col-rank { color: var(--accent); }
+.lb-row:nth-child(-n+5) .col-rank { color: var(--accent); }
 
 .col-name { font-size: 15px; font-weight: 600; color: var(--ink); }
 .col-pts { font-size: 16px; font-weight: 700; color: var(--accent); }
