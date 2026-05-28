@@ -66,7 +66,7 @@ def forum_search(request):
             ),
         )
         .filter(search_vector=query)
-        .order_by("-rank", "-created_at", "id")
+        .order_by("-rank", "-created_at", "-id")
     )
 
     paginator = Paginator(qs, 20)

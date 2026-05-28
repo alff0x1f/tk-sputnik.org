@@ -42,7 +42,7 @@ def rebuild_search_index(queryset=None):
     topic_ids = queryset.values_list("topic_id", flat=True).distinct()
     for topic in Topic.objects.filter(id__in=topic_ids).only("id", "title"):
         first = (
-            Post.objects.filter(topic_id=topic.id)
+            queryset.filter(topic_id=topic.id)
             .order_by("created_at", "id")
             .values("id")
             .first()
