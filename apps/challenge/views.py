@@ -26,7 +26,12 @@ def challenge_photo(request, filename):
         raise Http404
     if not photo_path.is_file():
         raise Http404
-    return FileResponse(open(photo_path, "rb"))
+    f = open(photo_path, "rb")
+    try:
+        return FileResponse(f)
+    except Exception:
+        f.close()
+        raise
 
 
 @staff_member_required
@@ -265,19 +270,18 @@ def _group_messages(messages, workouts_by_msg):
 
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
-    athlete_workouts = list(
-        Workout.objects.filter(athlete=athlete, msg_id__isnull=False)
-    )
-    workout_msg_ids = [w.msg_id for w in athlete_workouts]
+    all_workouts = list(Workout.objects.filter(athlete=athlete))
+    linked_workouts = [w for w in all_workouts if w.msg_id is not None]
+    workout_msg_ids = [w.msg_id for w in linked_workouts]
     messages = SourceMessage.objects.filter(
         Q(from_id=athlete.telegram_id) | Q(msg_id__in=workout_msg_ids)
     ).order_by("date", "msg_id").distinct()
     workouts_by_msg = {}
-    for w in athlete_workouts:
+    for w in linked_workouts:
         workouts_by_msg.setdefault(w.msg_id, []).append(w)
     groups = _group_messages(messages, workouts_by_msg)
-    total_points = sum(w.total_points for w in athlete_workouts)
-    workout_count = len(athlete_workouts)
+    total_points = sum(w.total_points for w in all_workouts)
+    workout_count = len(all_workouts)
     return render(
         request,
         "challenge/member.html",
