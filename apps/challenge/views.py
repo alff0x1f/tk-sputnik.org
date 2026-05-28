@@ -117,13 +117,20 @@ def api_workout_create(request):
     if activity not in valid_activities:
         return JsonResponse({"error": "Invalid activity"}, status=400)
 
+    msg_id_raw = data.get("msg_id")
+    if msg_id_raw is not None:
+        try:
+            msg_id_raw = int(msg_id_raw)
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "Invalid msg_id"}, status=400)
+
     workout = Workout.objects.create(
         athlete=athlete,
         date=date,
         activity=activity,
         distance_km=data.get("distance_km"),
         pace_min_per_km=data.get("pace_min_per_km"),
-        msg_id=data.get("msg_id"),
+        msg_id=msg_id_raw,
     )
     recompute_athlete_scores(athlete)
     workout.refresh_from_db()
@@ -159,10 +166,19 @@ def api_workout_detail(request, pk):
         if data["activity"] not in {k for k, _ in Workout.ACTIVITY_CHOICES}:
             return JsonResponse({"error": "Invalid activity"}, status=400)
         workout.activity = data["activity"]
-    updatable = ["distance_km", "pace_min_per_km", "msg_id"]
+    updatable = ["distance_km", "pace_min_per_km"]
     for field in updatable:
         if field in data:
             setattr(workout, field, data[field])
+
+    if "msg_id" in data:
+        if data["msg_id"] is not None:
+            try:
+                workout.msg_id = int(data["msg_id"])
+            except (TypeError, ValueError):
+                return JsonResponse({"error": "Invalid msg_id"}, status=400)
+        else:
+            workout.msg_id = None
 
     if "date" in data:
         try:
@@ -196,7 +212,7 @@ def _group_messages(messages, workouts_by_msg):
             j += 1
 
         photos = [p for m in group for p in m.photos]
-        text = next((m.text for m in group if m.text), "")
+        text = "\n".join(m.text for m in group if m.text)
         workouts = []
         for m in group:
             if m.msg_id in workouts_by_msg:
