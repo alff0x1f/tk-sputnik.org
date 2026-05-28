@@ -938,6 +938,15 @@ class GroupMessagesFunctionTests(TestCase):
         groups = _group_messages([msg1, msg2], {}, athlete_telegram_id="u1")
         self.assertEqual(groups[0]["foreign_senders"], ["Сергей"])
 
+    def test_distinct_from_id_same_name_both_appear(self):
+        from .views import _group_messages
+
+        dt = datetime.datetime(2026, 1, 1, 10, 0, 0)
+        msg1 = self._make_msg(1, "userA", "Сергей", dt=dt)
+        msg2 = self._make_msg(2, "userB", "Сергей", dt=dt)
+        groups = _group_messages([msg1, msg2], {}, athlete_telegram_id="u1")
+        self.assertEqual(groups[0]["foreign_senders"], ["Сергей", "Сергей"])
+
     def test_foreign_senders_key_present_without_athlete_id(self):
         from .views import _group_messages
 
