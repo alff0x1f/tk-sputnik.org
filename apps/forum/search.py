@@ -1,7 +1,6 @@
 import html as _html
 
 from django.contrib.postgres.search import SearchVector
-from django.db import transaction
 from django.db.models import Value
 from django.utils.html import strip_tags
 
@@ -13,7 +12,6 @@ SNIPPET_STOP_SEL = "@@HLE@@"
 _BATCH_SIZE = 500
 
 
-@transaction.atomic
 def rebuild_search_index(queryset=None):
     """Populate search_text and search_vector for forum posts.
 

@@ -1438,7 +1438,7 @@ class ForumSearchViewTest(TestCase):
         post = self._post(topic, "<p>кавказские горы и тропы</p>")
         self._rebuild()
         response = self.client.get(self.url + "?q=кавказский")
-        self.assertContains(response, f'href="/forum/t/{topic.pk}/#post-{post.pk}"')
+        self.assertContains(response, f'href="/forum/viewtopic.php?p={post.phpbb_id}"')
 
     def test_body_match_snippet_contains_mark_tag(self):
         topic = self._topic("Тема со словом")

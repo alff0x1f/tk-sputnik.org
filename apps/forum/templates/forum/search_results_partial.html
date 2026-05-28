@@ -4,7 +4,7 @@
   {% for post in page_obj %}
   <div class="search-result">
     <div class="sr-title">
-      <a href="{% url 'topic-posts' post.topic.pk %}#post-{{ post.pk }}">{{ post.topic.title }}</a>
+      <a href="{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}">{{ post.topic.title }}</a>
     </div>
     <div class="sr-meta">
       {{ post.topic.subforum.name }}

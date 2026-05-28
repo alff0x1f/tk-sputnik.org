@@ -43,11 +43,12 @@ def _accessible_posts(request):
 
 
 def forum_search(request):
-    q = request.GET.get("q", "").strip()
+    q = request.GET.get("q", "")[:500].strip()
     is_htmx = request.headers.get("HX-Request") == "true"
 
     if not q:
-        response = render(request, "forum/search.html", {"q": q})
+        tmpl = "forum/search_results_partial.html" if is_htmx else "forum/search.html"
+        response = render(request, tmpl, {"q": q})
         patch_vary_headers(response, ["HX-Request"])
         return response
 
