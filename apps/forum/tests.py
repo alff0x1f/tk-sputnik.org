@@ -1433,12 +1433,12 @@ class ForumSearchViewTest(TestCase):
         response = self.client.get(self.url + "?q=штабной")
         self.assertContains(response, "Штабной поход")
 
-    def test_result_link_uses_viewtopic_redirect_with_phpbb_id(self):
+    def test_result_link_uses_topic_url_with_post_anchor(self):
         topic = self._topic("Кавказский маршрут")
         post = self._post(topic, "<p>кавказские горы и тропы</p>")
         self._rebuild()
         response = self.client.get(self.url + "?q=кавказский")
-        self.assertContains(response, f'href="/forum/viewtopic.php?p={post.phpbb_id}"')
+        self.assertContains(response, f'href="/forum/t/{topic.pk}/#post-{post.pk}"')
 
     def test_body_match_snippet_contains_mark_tag(self):
         topic = self._topic("Тема со словом")

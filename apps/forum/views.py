@@ -66,10 +66,10 @@ def forum_search(request):
             ),
         )
         .filter(search_vector=query)
-        .order_by("-rank", "-created_at", "id")
+        .order_by("-rank", F("created_at").desc(nulls_last=True), "id")
     )
 
-    paginator = Paginator(qs, 20)
+    paginator = Paginator(qs, POSTS_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     context = {"q": q, "page_obj": page_obj, "total_count": paginator.count}
