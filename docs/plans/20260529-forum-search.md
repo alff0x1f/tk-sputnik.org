@@ -82,17 +82,17 @@
 - Create: `apps/forum/management/commands/build_forum_search_index.py`
 - Modify: `apps/forum/tests.py`
 
-- [ ] создать `apps/forum/search.py` с `rebuild_search_index(queryset=None)`:
-  - [ ] для постов в `queryset` (по умолчанию все) снять разметку с `text_html` (`strip_tags` + `html.unescape`) → записать в `search_text` пачками через `bulk_update` (батчи, `iterator()`)
-  - [ ] определить первый пост каждой темы (по `created_at, id`) — множество их id
-  - [ ] обновить `search_vector` в две фазы (один `UPDATE` всю таблицу не покроет — заголовок у каждого первого поста свой):
-    - [ ] фаза 1, всем постам: `Post.objects.update(search_vector=SearchVector("search_text", weight="B", config="russian"))`
-    - [ ] фаза 2, только первым постам тем: по каждой теме `Post.objects.filter(id=first_id).update(search_vector=SearchVector("search_text", weight="B", config="russian") + SearchVector(Value(title), weight="A", config="russian"))` (цикл по темам — приемлемо для разовой команды; при желании оптимизировать через `Subquery` с джойном на `Topic`)
-- [ ] создать команду `build_forum_search_index` — тонкая обёртка: вызывает `rebuild_search_index()` и печатает число обновлённых постов
-- [ ] написать тест: после `rebuild_search_index()` `search_text` очищен от BBCode/HTML-тегов
-- [ ] написать тест: `search_vector` заполнен; первый пост темы получает вес заголовка (заголовочное слово находится по первому посту), последующие посты — нет
-- [ ] написать тест (edge): пустой/без текста пост не падает
-- [ ] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 3
+- [x] создать `apps/forum/search.py` с `rebuild_search_index(queryset=None)`:
+  - [x] для постов в `queryset` (по умолчанию все) снять разметку с `text_html` (`strip_tags` + `html.unescape`) → записать в `search_text` пачками через `bulk_update` (батчи, `iterator()`)
+  - [x] определить первый пост каждой темы (по `created_at, id`) — множество их id
+  - [x] обновить `search_vector` в две фазы (один `UPDATE` всю таблицу не покроет — заголовок у каждого первого поста свой):
+    - [x] фаза 1, всем постам: `Post.objects.update(search_vector=SearchVector("search_text", weight="B", config="russian"))`
+    - [x] фаза 2, только первым постам тем: по каждой теме `Post.objects.filter(id=first_id).update(search_vector=SearchVector("search_text", weight="B", config="russian") + SearchVector(Value(title), weight="A", config="russian"))` (цикл по темам — приемлемо для разовой команды; при желании оптимизировать через `Subquery` с джойном на `Topic`)
+- [x] создать команду `build_forum_search_index` — тонкая обёртка: вызывает `rebuild_search_index()` и печатает число обновлённых постов
+- [x] написать тест: после `rebuild_search_index()` `search_text` очищен от BBCode/HTML-тегов
+- [x] написать тест: `search_vector` заполнен; первый пост темы получает вес заголовка (заголовочное слово находится по первому посту), последующие посты — нет
+- [x] написать тест (edge): пустой/без текста пост не падает
+- [x] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 3
 
 ### Task 3: Шаблонный фильтр подсветки сниппета (XSS-safe)
 

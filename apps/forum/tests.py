@@ -305,6 +305,107 @@ class PostSearchFieldsTest(TestCase):
         self.assertIsNone(retrieved.search_vector)
 
 
+class RebuildSearchIndexTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=80001, name="SearchCat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=80010,
+            phpbb_parent_id=80001,
+            category=self.category,
+            name="SearchSub",
+        )
+        self._counter = 80100
+
+    def _next_id(self):
+        self._counter += 1
+        return self._counter
+
+    def _topic(self, title):
+        return Topic.objects.create(
+            phpbb_id=self._next_id(), subforum=self.subforum, title=title
+        )
+
+    def _post(self, topic, text_html, seconds_offset=0):
+        return Post.objects.create(
+            phpbb_id=self._next_id(),
+            topic=topic,
+            text_html=text_html,
+            text_bbcode="",
+            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC)
+            + datetime.timedelta(seconds=seconds_offset),
+        )
+
+    def test_search_text_strips_html_tags(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p><b>Красивый</b> текст &amp; всё</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertNotIn("<p>", post.search_text)
+        self.assertNotIn("<b>", post.search_text)
+        self.assertIn("Красивый", post.search_text)
+        self.assertIn("&", post.search_text)
+
+    def test_search_vector_filled_after_rebuild(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p>слово</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertIsNotNone(post.search_vector)
+
+    def test_first_post_gets_title_weight(self):
+        from django.contrib.postgres.search import SearchQuery
+
+        from .search import rebuild_search_index
+
+        topic = self._topic("Эльбрус")
+        first = self._post(topic, "<p>обычный текст похода</p>", seconds_offset=0)
+        second = self._post(topic, "<p>другой текст похода</p>", seconds_offset=10)
+        rebuild_search_index()
+        query = SearchQuery("Эльбрус", config="russian")
+        matching_ids = set(
+            Post.objects.filter(search_vector=query).values_list("id", flat=True)
+        )
+        self.assertIn(first.id, matching_ids)
+        self.assertNotIn(second.id, matching_ids)
+
+    def test_non_first_post_lacks_title_weight(self):
+        from django.contrib.postgres.search import SearchQuery
+
+        from .search import rebuild_search_index
+
+        topic = self._topic("Байкал")
+        self._post(topic, "<p>озеро вода</p>", seconds_offset=0)
+        second = self._post(topic, "<p>рыбалка рыба</p>", seconds_offset=10)
+        rebuild_search_index()
+        query = SearchQuery("Байкал", config="russian")
+        matching_ids = set(
+            Post.objects.filter(search_vector=query).values_list("id", flat=True)
+        )
+        self.assertNotIn(second.id, matching_ids)
+
+    def test_empty_post_does_not_crash(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "")
+
+    def test_returns_count_of_processed_posts(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        self._post(topic, "<p>раз</p>")
+        self._post(topic, "<p>два</p>")
+        count = rebuild_search_index()
+        self.assertEqual(count, 2)
+
+
 class ForumIndexViewTests(TestCase):
     def setUp(self):
         self.cat1 = ForumCategory.objects.create(
