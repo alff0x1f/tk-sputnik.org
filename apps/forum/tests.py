@@ -250,6 +250,61 @@ class PostAttachmentModelTests(TestCase):
         self.assertEqual(ids, [10, 20, 30])
 
 
+class PostSearchFieldsTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Topic"
+        )
+
+    def test_post_has_search_text_field(self):
+        post = Post.objects.create(
+            phpbb_id=5001,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            search_text="hello",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "hello")
+
+    def test_post_search_text_default_is_empty(self):
+        post = Post.objects.create(
+            phpbb_id=5002,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "")
+
+    def test_post_search_vector_is_nullable(self):
+        post = Post.objects.create(
+            phpbb_id=5003,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertIsNone(post.search_vector)
+
+    def test_post_save_with_both_search_fields(self):
+        post = Post(
+            phpbb_id=5004,
+            topic=self.topic,
+            text_bbcode="test",
+            text_html="<p>test</p>",
+            search_text="test content",
+        )
+        post.save()
+        retrieved = Post.objects.get(phpbb_id=5004)
+        self.assertEqual(retrieved.search_text, "test content")
+        self.assertIsNone(retrieved.search_vector)
+
+
 class ForumIndexViewTests(TestCase):
     def setUp(self):
         self.cat1 = ForumCategory.objects.create(

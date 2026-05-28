@@ -1,3 +1,5 @@
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 
@@ -138,11 +140,16 @@ class Post(models.Model):
     text_html = models.TextField("Текст (HTML)")
     bbcode_uid = models.CharField("phpBB BBCode UID", max_length=20, blank=True)
     created_at = models.DateTimeField("Дата создания", null=True, blank=True)
+    search_text = models.TextField("Текст для поиска", blank=True, default="")
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         ordering = ["created_at"]
         verbose_name = "Сообщение"
         verbose_name_plural = "Сообщения"
+        indexes = [
+            GinIndex(fields=["search_vector"]),
+        ]
 
     def __str__(self):
         return f"Post #{self.phpbb_id} in {self.topic}"

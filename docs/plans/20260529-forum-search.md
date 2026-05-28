@@ -64,14 +64,14 @@
 - Modify: `apps/forum/models.py`
 - Create: `apps/forum/migrations/000X_post_search.py` (через makemigrations)
 
-- [ ] добавить `"django.contrib.postgres"` в `INSTALLED_APPS` (`config/settings.py`)
-- [ ] в `Post` добавить `search_text = models.TextField("Текст для поиска", blank=True, default="")`
-- [ ] в `Post` добавить `search_vector = SearchVectorField(null=True, editable=False)` (импорт из `django.contrib.postgres.search`)
-- [ ] в `Post.Meta.indexes` добавить `GinIndex(fields=["search_vector"])` (импорт из `django.contrib.postgres.indexes`)
-- [ ] `uv run python manage.py makemigrations forum` → проверить сгенерированную миграцию (поля + GIN-индекс)
-- [ ] `uv run python manage.py migrate` — применяется без ошибок
-- [ ] написать тест: после миграции у `Post` есть поля `search_text`/`search_vector`, объект создаётся и сохраняется
-- [ ] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 2
+- [x] добавить `"django.contrib.postgres"` в `INSTALLED_APPS` (`config/settings.py`)
+- [x] в `Post` добавить `search_text = models.TextField("Текст для поиска", blank=True, default="")`
+- [x] в `Post` добавить `search_vector = SearchVectorField(null=True, editable=False)` (импорт из `django.contrib.postgres.search`)
+- [x] в `Post.Meta.indexes` добавить `GinIndex(fields=["search_vector"])` (импорт из `django.contrib.postgres.indexes`)
+- [x] `uv run python manage.py makemigrations forum` → проверить сгенерированную миграцию (поля + GIN-индекс)
+- [x] `uv run python manage.py migrate` — применяется без ошибок
+- [x] написать тест: после миграции у `Post` есть поля `search_text`/`search_vector`, объект создаётся и сохраняется
+- [x] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 2
 
 ### Task 2: Функция rebuild_search_index + management-команда
 
