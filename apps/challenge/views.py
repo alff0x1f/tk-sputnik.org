@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db import IntegrityError
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -151,14 +152,20 @@ def api_workout_create(request):
                 {"error": "pace_min_per_km must be non-negative"}, status=400
             )
 
-    workout = Workout.objects.create(
-        athlete=athlete,
-        date=date,
-        activity=activity,
-        distance_km=distance_km,
-        pace_min_per_km=pace_min_per_km,
-        msg_id=msg_id_raw,
-    )
+    try:
+        workout = Workout.objects.create(
+            athlete=athlete,
+            date=date,
+            activity=activity,
+            distance_km=distance_km,
+            pace_min_per_km=pace_min_per_km,
+            msg_id=msg_id_raw,
+        )
+    except IntegrityError:
+        return JsonResponse(
+            {"error": "Workout already exists for this athlete/date/activity"},
+            status=400,
+        )
     recompute_athlete_scores(athlete)
     workout.refresh_from_db()
     response = _workout_response(workout, athlete)
@@ -258,8 +265,8 @@ def _group_messages(messages, workouts_by_msg, athlete_telegram_id=""):
         foreign_senders = []
         for m in group:
             is_foreign = m.from_id and m.from_id != athlete_telegram_id
-            if is_foreign and m.from_name not in seen:
-                seen.add(m.from_name)
+            if is_foreign and m.from_id not in seen:
+                seen.add(m.from_id)
                 foreign_senders.append(m.from_name)
         groups.append(
             {

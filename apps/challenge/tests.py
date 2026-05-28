@@ -1124,6 +1124,9 @@ class MemberDetailViewTests(TestCase):
         groups = response.context["groups"]
         foreign_names = [name for g in groups for name in g["foreign_senders"]]
         self.assertIn("Другой человек", foreign_names)
+        content = response.content.decode("utf-8")
+        self.assertIn("msg-foreign-badge", content)
+        self.assertIn("Другой человек", content)
 
     def test_own_messages_have_no_foreign_senders_in_context(self):
         response = self.client.get(self._url())

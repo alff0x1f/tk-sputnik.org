@@ -104,7 +104,7 @@ uv run python manage.py import_challenge \
 
 **Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
 
-**Member detail page:** `/challenge/member/<telegram_id>/` — public chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (staff-only UI, PUT/DELETE to the same API as the review page).
+**Member detail page:** `/challenge/member/<telegram_id>/` — public chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (staff-only UI, PUT/DELETE to the same API as the review page). Messages sent by someone other than the athlete (e.g. when staff links a workout to a message from a group chat) display a `.msg-foreign-badge` label. The `_group_messages(messages, workouts_by_msg, athlete_telegram_id="")` helper in `views.py` computes `foreign_senders` (list of display names) per group using `from_id` for deduplication.
 
 ## Branch naming
 
