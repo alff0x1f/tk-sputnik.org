@@ -347,6 +347,34 @@ class RebuildSearchIndexTest(TestCase):
         self.assertIn("Красивый", post.search_text)
         self.assertIn("&", post.search_text)
 
+    def test_search_text_preserves_word_boundaries_across_block_tags(self):
+        # Adjacent block tags must not merge adjacent words into one token.
+        # strip_tags() alone would turn "foo<br>bar" into "foobar".
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p>первое</p><p>второе</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertIn("первое", post.search_text)
+        self.assertIn("второе", post.search_text)
+        # Words must be separated — not merged into "первоевторое"
+        self.assertNotIn("первоевторое", post.search_text)
+
+        post2 = self._post(topic, "один<br>два")
+        rebuild_search_index(Post.objects.filter(id=post2.id))
+        post2.refresh_from_db()
+        self.assertIn("один", post2.search_text)
+        self.assertIn("два", post2.search_text)
+        self.assertNotIn("одиндва", post2.search_text)
+
+        post3 = self._post(topic, "три<br/>четыре")
+        rebuild_search_index(Post.objects.filter(id=post3.id))
+        post3.refresh_from_db()
+        self.assertIn("три", post3.search_text)
+        self.assertIn("четыре", post3.search_text)
+        self.assertNotIn("тричетыре", post3.search_text)
+
     def test_search_vector_filled_after_rebuild(self):
         from .search import rebuild_search_index
 
