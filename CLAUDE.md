@@ -88,7 +88,7 @@ Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
 **Models:**
 - `Athlete` — `telegram_id` (PK CharField), `name`
 - `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `total_points`, `msg_id`
-- `SourceMessage` — `msg_id` (PK), `from_name`, `date`, `text`, `photos` (JSONField)
+- `SourceMessage` — `msg_id` (PK), `from_id` (Telegram sender ID, db_index), `from_name`, `date`, `datetime` (nullable), `text`, `photos` (JSONField)
 
 **Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`
 
@@ -104,7 +104,7 @@ uv run python manage.py import_challenge \
 
 **Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
 
-**Member detail page:** `/challenge/member/<telegram_id>/` — staff-only chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (PUT/DELETE to the same API as the review page).
+**Member detail page:** `/challenge/member/<telegram_id>/` — public chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (staff-only UI, PUT/DELETE to the same API as the review page).
 
 ## Branch naming
 

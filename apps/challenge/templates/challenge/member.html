@@ -62,10 +62,12 @@
           </span>
           <span class="wic-activity">{{ workout.get_activity_display }}</span>
           <span class="wic-date">{{ workout.date|date:"d.m" }}</span>
+          {% if request.user.is_staff %}
           <span class="wic-actions">
             <button class="wic-btn-edit" onclick="editWorkout({{ workout.pk }})">Ред.</button>
             <button class="wic-btn-delete" onclick="deleteWorkout({{ workout.pk }})">Дел.</button>
           </span>
+          {% endif %}
         </div>
         <div class="wic-view">
           <div class="wic-details">
@@ -76,6 +78,7 @@
             </span>
           </div>
         </div>
+        {% if request.user.is_staff %}
         <div class="wic-edit-form" style="display:none">
           <div class="wic-form-row">
             <label>Активность
@@ -104,10 +107,12 @@
             <button class="wic-btn-cancel" onclick="cancelEdit({{ workout.pk }})">Отмена</button>
           </div>
         </div>
+        {% endif %}
       </div>
       {% endif %}
       {% endwith %}
 
+      {% if request.user.is_staff %}
       <div class="wic-create-form" data-create-msg="{{ group.primary_msg_id }}" style="display:none">
         <div class="wic-form-row">
           <label>Активность
@@ -136,12 +141,15 @@
           <button class="wic-btn-cancel" onclick="cancelCreate('{{ group.primary_msg_id }}')">Отмена</button>
         </div>
       </div>
+      {% endif %}
 
       <div class="msg-meta">
         <span>#{{ group.primary_msg_id }}</span>
+        {% if request.user.is_staff %}
         <button class="msg-add-btn" onclick="openCreateForm('{{ group.primary_msg_id }}', '{{ group.date|date:'Y-m-d' }}')" title="Добавить тренировку">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
         </button>
+        {% endif %}
       </div>
     </div>
     {% empty %}
@@ -239,7 +247,6 @@ async function saveWorkout(id) {
     else card.querySelector('.wic-pts').insertAdjacentHTML('beforebegin', `<span class="wic-pace">${fmt} мин/км</span>`);
   } else if (paceEl) paceEl.remove();
 
-  const pts = w.base_points + (w.streak_bonus ? `+${w.streak_bonus}` : '') + ` = ${w.total_points} очков`;
   card.querySelector('.wic-pts').textContent = `${w.base_points}${w.streak_bonus ? '+' + w.streak_bonus : ''} = ${w.total_points} очков`;
 
   cancelEdit(id);

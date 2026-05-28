@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 import tempfile
 from pathlib import Path
@@ -386,7 +387,7 @@ class ImportChallengeCommandTests(TestCase):
                 scores_path,
                 "--telegram-export",
                 messages_path,
-                stdout=open("/dev/null", "w"),
+                stdout=io.StringIO(),
             )
 
         self.assertEqual(Athlete.objects.count(), 2)
@@ -406,7 +407,7 @@ class ImportChallengeCommandTests(TestCase):
                 scores_path,
                 "--telegram-export",
                 messages_path,
-                stdout=open("/dev/null", "w"),
+                stdout=io.StringIO(),
             )
 
         w = Workout.objects.get(
@@ -424,7 +425,7 @@ class ImportChallengeCommandTests(TestCase):
                 scores_path,
                 "--telegram-export",
                 messages_path,
-                stdout=open("/dev/null", "w"),
+                stdout=io.StringIO(),
             )
 
         msg1 = SourceMessage.objects.get(pk=1001)
@@ -437,7 +438,7 @@ class ImportChallengeCommandTests(TestCase):
     def test_idempotent_second_run(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             scores_path, messages_path = self._write_fixtures(tmpdir)
-            devnull = open("/dev/null", "w")
+            devnull = io.StringIO()
             call_command(
                 "import_challenge",
                 "--scores",
@@ -462,8 +463,6 @@ class ImportChallengeCommandTests(TestCase):
     def test_missing_scores_file_continues(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             _, messages_path = self._write_fixtures(tmpdir)
-            import io
-
             out = io.StringIO()
             call_command(
                 "import_challenge",
@@ -481,8 +480,6 @@ class ImportChallengeCommandTests(TestCase):
     def test_missing_messages_file_continues(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             scores_path, _ = self._write_fixtures(tmpdir)
-            import io
-
             out = io.StringIO()
             call_command(
                 "import_challenge",
@@ -506,7 +503,7 @@ class ImportChallengeCommandTests(TestCase):
                 scores_path,
                 "--telegram-export",
                 messages_path,
-                stdout=open("/dev/null", "w"),
+                stdout=io.StringIO(),
             )
 
         # Anna's second workout (skiing, Dec 3) should have streak_bonus=1 (gap=2 days)
@@ -519,8 +516,6 @@ class ImportChallengeCommandTests(TestCase):
     def test_summary_output(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             scores_path, messages_path = self._write_fixtures(tmpdir)
-            import io
-
             out = io.StringIO()
             call_command(
                 "import_challenge",
@@ -926,14 +921,14 @@ class MemberDetailViewTests(TestCase):
     def _url(self, telegram_id="u1"):
         return f"/challenge/member/{telegram_id}/"
 
-    def test_anonymous_redirected(self):
+    def test_anonymous_gets_200(self):
         response = self.client.get(self._url())
-        self.assertIn(response.status_code, [301, 302])
+        self.assertEqual(response.status_code, 200)
 
-    def test_non_staff_redirected(self):
+    def test_non_staff_gets_200(self):
         self.client.login(username="regular", password="password")
         response = self.client.get(self._url())
-        self.assertIn(response.status_code, [301, 302])
+        self.assertEqual(response.status_code, 200)
 
     def test_staff_gets_200(self):
         self.client.login(username="admin", password="password")
@@ -976,6 +971,13 @@ class MemberDetailViewTests(TestCase):
         self.assertIn("Анна", content)
         self.assertIn("3 очков", content)
         self.assertIn("1 активностей", content)
+
+    def test_non_staff_cannot_see_edit_delete_buttons(self):
+        self.client.login(username="regular", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertNotIn("wic-btn-edit", content)
+        self.assertNotIn("wic-btn-delete", content)
 
     def test_workout_card_has_edit_button(self):
         self.client.login(username="admin", password="password")
@@ -1065,11 +1067,11 @@ class LeaderboardViewTests(TestCase):
         self.assertEqual(last.name, "Вова")
         self.assertEqual(last.total_score, 0)
 
-    def test_leaderboard_athlete_has_workout_list(self):
+    def test_leaderboard_athlete_workout_count(self):
         response = self.client.get("/challenge/")
         athletes = response.context["athletes"]
         anna = next(a for a in athletes if a.name == "Анна")
-        self.assertEqual(len(anna.workout_list), 2)
+        self.assertEqual(anna.workout_count, 2)
 
     def test_leaderboard_no_athletes(self):
         Workout.objects.all().delete()

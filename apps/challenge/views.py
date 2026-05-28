@@ -16,7 +16,7 @@ from .scoring import recompute_athlete_scores
 def challenge_photo(request, filename):
     base = Path(settings.CHALLENGE_CHAT_EXPORT_DIR).resolve()
     photo_path = (base / filename).resolve()
-    if not str(photo_path).startswith(str(base)):
+    if not photo_path.is_relative_to(base):
         raise Http404
     if not photo_path.is_file():
         raise Http404
@@ -203,7 +203,6 @@ def _group_messages(messages, workouts_by_msg):
     return groups
 
 
-@staff_member_required
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
     messages = SourceMessage.objects.filter(from_id=athlete.telegram_id).order_by(
@@ -239,7 +238,4 @@ def leaderboard(request):
     )
     for i, athlete in enumerate(athletes, 1):
         athlete.rank = i
-        athlete.workout_list = list(
-            Workout.objects.filter(athlete=athlete).order_by("date")
-        )
     return render(request, "challenge/leaderboard.html", {"athletes": athletes})
