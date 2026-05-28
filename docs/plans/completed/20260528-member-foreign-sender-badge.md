@@ -66,7 +66,7 @@
 **Files:**
 - Move: `docs/plans/20260528-member-foreign-sender-badge.md` → `docs/plans/completed/`
 
-- [ ] переместить этот план в `docs/plans/completed/`
+- [x] переместить этот план в `docs/plans/completed/`
 
 ## Post-Completion
 
