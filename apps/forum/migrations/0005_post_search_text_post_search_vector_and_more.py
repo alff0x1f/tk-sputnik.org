@@ -6,24 +6,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('forum', '0004_post_bbcode_uid'),
+        ("forum", "0004_post_bbcode_uid"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='search_text',
-            field=models.TextField(blank=True, default='', verbose_name='Текст для поиска'),
+            model_name="post",
+            name="search_text",
+            field=models.TextField(
+                blank=True, default="", verbose_name="Текст для поиска"
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='search_vector',
-            field=django.contrib.postgres.search.SearchVectorField(editable=False, null=True),
+            model_name="post",
+            name="search_vector",
+            field=django.contrib.postgres.search.SearchVectorField(
+                editable=False, null=True
+            ),
         ),
         migrations.AddIndex(
-            model_name='post',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['search_vector'], name='forum_post_search__88f3db_gin'),
+            model_name="post",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["search_vector"], name="forum_post_search__88f3db_gin"
+            ),
         ),
     ]
