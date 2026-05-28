@@ -406,6 +406,53 @@ class RebuildSearchIndexTest(TestCase):
         self.assertEqual(count, 2)
 
 
+class HighlightSnippetFilterTest(TestCase):
+    def setUp(self):
+        from apps.forum.search import SNIPPET_START_SEL, SNIPPET_STOP_SEL
+
+        self.start = SNIPPET_START_SEL
+        self.stop = SNIPPET_STOP_SEL
+
+    def _apply(self, text):
+        from apps.forum.templatetags.forum_extras import highlight_snippet
+
+        return highlight_snippet(text)
+
+    def test_sentinels_become_mark_tags(self):
+        text = f"обычный {self.start}матч{self.stop} текст"
+        result = self._apply(text)
+        self.assertIn("<mark>матч</mark>", result)
+        self.assertNotIn(self.start, result)
+        self.assertNotIn(self.stop, result)
+
+    def test_xss_script_tag_is_escaped(self):
+        text = f"до {self.start}слово{self.stop} <script>alert(1)</script> после"
+        result = self._apply(text)
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+        self.assertIn("<mark>слово</mark>", result)
+
+    def test_empty_string_returns_empty(self):
+        self.assertEqual(self._apply(""), "")
+
+    def test_none_returns_empty(self):
+        self.assertEqual(self._apply(None), "")
+
+    def test_no_sentinels_returns_plain_escaped_text(self):
+        result = self._apply("текст без маркеров & символы <b>")
+        self.assertIn("&amp;", result)
+        self.assertIn("&lt;b&gt;", result)
+        self.assertNotIn("<b>", result)
+
+    def test_result_is_mark_safe(self):
+        from django.utils.html import conditional_escape
+
+        text = f"{self.start}слово{self.stop}"
+        result = self._apply(text)
+        # mark_safe means conditional_escape won't double-escape
+        self.assertEqual(conditional_escape(result), result)
+
+
 class ForumIndexViewTests(TestCase):
     def setUp(self):
         self.cat1 = ForumCategory.objects.create(

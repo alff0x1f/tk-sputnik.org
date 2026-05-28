@@ -1,4 +1,7 @@
 from django import template
+from django.utils.html import escape, mark_safe
+
+from ..search import SNIPPET_START_SEL, SNIPPET_STOP_SEL
 
 register = template.Library()
 
@@ -25,3 +28,18 @@ def ru_pluralize(value, arg):
     if 2 <= mod10 <= 4:
         return forms[1]
     return forms[2]
+
+
+@register.filter(is_safe=True)
+def highlight_snippet(value):
+    """Convert SearchHeadline output with sentinels into HTML with <mark> tags.
+
+    Escapes all HTML from the snippet first (XSS-safe), then substitutes
+    the sentinel markers with <mark></mark>.
+    """
+    if not value:
+        return ""
+    safe = escape(str(value))
+    safe = safe.replace(SNIPPET_START_SEL, "<mark>")
+    safe = safe.replace(SNIPPET_STOP_SEL, "</mark>")
+    return mark_safe(safe)
