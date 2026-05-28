@@ -35,15 +35,15 @@
       <div class="pagination-bar">
         <div id="pagination-info" class="pagination-info">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</div>
         <nav id="pagination" class="pagination" data-pages="{{ page_obj.paginator.num_pages }}">
-          <a id="pag-prev" href="{% if page_obj.has_previous %}?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}{% else %}?q={{ q|urlencode }}&page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
+          <a id="pag-prev" href="{% if page_obj.has_previous %}?q={{ q|urlencode }}&amp;page={{ page_obj.previous_page_number }}{% else %}?q={{ q|urlencode }}&amp;page=1{% endif %}"{% if not page_obj.has_previous %} class="disabled"{% endif %}>&lsaquo;</a>
 
           {% for item in elided_pages %}
             {% if item.is_ellipsis %}<span class="pag-ellipsis">…</span>
-            {% else %}<a href="?q={{ q|urlencode }}&page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
+            {% else %}<a href="?q={{ q|urlencode }}&amp;page={{ item.num }}" data-page="{{ item.num }}"{% if item.num == page_obj.number %} class="current"{% endif %}>{{ item.num }}</a>
             {% endif %}
           {% endfor %}
 
-          <a id="pag-next" href="{% if page_obj.has_next %}?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}{% else %}?q={{ q|urlencode }}&page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
+          <a id="pag-next" href="{% if page_obj.has_next %}?q={{ q|urlencode }}&amp;page={{ page_obj.next_page_number }}{% else %}?q={{ q|urlencode }}&amp;page={{ page_obj.paginator.num_pages }}{% endif %}"{% if not page_obj.has_next %} class="disabled"{% endif %}>&rsaquo;</a>
         </nav>
       </div>
     </div>
@@ -55,7 +55,7 @@
 
     {% else %}
     <div class="search-hint">
-      Введите слово или фразу для поиска по архиву форума 2007–2016.
+      Введите слово или фразу для поиска по архиву форума 2007–2014.
     </div>
     {% endif %}
 

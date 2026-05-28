@@ -1485,4 +1485,4 @@ class ForumSearchViewTest(TestCase):
         self._rebuild()
         response = self.client.get(self.url + "?q=горный", HTTP_HX_REQUEST="true")
         encoded_q = quote("горный")
-        self.assertContains(response, f'hx-get="?q={encoded_q}&page=2"')
+        self.assertContains(response, f'hx-get="?q={encoded_q}&amp;page=2"')

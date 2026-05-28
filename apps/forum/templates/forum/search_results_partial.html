@@ -4,7 +4,7 @@
   {% for post in page_obj %}
   <div class="search-result">
     <div class="sr-title">
-      <a href="{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}">{{ post.topic.title }}</a>
+      <a href="{% if post.phpbb_id %}{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}{% else %}{% url 'topic-posts' post.topic_id %}{% endif %}">{{ post.topic.title }}</a>
     </div>
     <div class="sr-meta">
       {{ post.topic.subforum.name }}
@@ -16,7 +16,7 @@
   {% endfor %}
 </div>
 {% if page_obj.has_next %}
-<div class="sentinel" hx-get="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>
+<div class="sentinel" hx-get="?q={{ q|urlencode }}&amp;page={{ page_obj.next_page_number }}" hx-trigger="intersect once" hx-swap="outerHTML"></div>
 {% endif %}
 {% else %}
 <div class="search-empty">Ничего не найдено</div>
