@@ -29,6 +29,9 @@
     {% endifchanged %}
 
     <div class="msg-bubble{% if group.workouts %} has-workout{% endif %}">
+      {% if group.foreign_senders %}
+      <div class="msg-foreign-badge">От: {{ group.foreign_senders|join:", " }}</div>
+      {% endif %}
       {% if group.text %}
       <div class="msg-text">{{ group.text|linebreaksbr }}</div>
       {% endif %}

@@ -49,10 +49,10 @@
 - Modify: `apps/challenge/templates/challenge/member.html`
 - Modify: `apps/challenge/static/challenge/css/challenge.css`
 
-- [ ] в `member.html` — внутри `.msg-bubble`, до `{% if group.text %}`, добавить блок: если `group.foreign_senders` непустой — вывести `<div class="msg-foreign-badge">От: {{ group.foreign_senders|join:", " }}</div>`
-- [ ] в `challenge.css` добавить стиль `.msg-foreign-badge`: маленький шрифт (11–12px), цвет `var(--muted)`, фон `var(--surface-2)`, рамка `1px solid var(--line)`, `border-radius: 4px`, `padding: 2px 8px`, `display: inline-block`, `margin-bottom: 6px`
-- [ ] убедиться, что бейдж не появляется на сообщениях от самого атлета (регрессия)
-- [ ] запустить `uv run pytest apps/challenge/tests.py` — все тесты должны пройти
+- [x] в `member.html` — внутри `.msg-bubble`, до `{% if group.text %}`, добавить блок: если `group.foreign_senders` непустой — вывести `<div class="msg-foreign-badge">От: {{ group.foreign_senders|join:", " }}</div>`
+- [x] в `challenge.css` добавить стиль `.msg-foreign-badge`: маленький шрифт (11–12px), цвет `var(--muted)`, фон `var(--surface-2)`, рамка `1px solid var(--line)`, `border-radius: 4px`, `padding: 2px 8px`, `display: inline-block`, `margin-bottom: 6px`
+- [x] убедиться, что бейдж не появляется на сообщениях от самого атлета (регрессия)
+- [x] запустить `uv run pytest apps/challenge/tests.py` — все тесты должны пройти
 
 ### Task 3: Verify acceptance criteria
 
