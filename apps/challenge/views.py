@@ -230,7 +230,13 @@ def api_workout_detail(request, pk):
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid date"}, status=400)
 
-    workout.save()
+    try:
+        workout.save()
+    except IntegrityError:
+        return JsonResponse(
+            {"error": "Workout already exists for this athlete/date/activity"},
+            status=400,
+        )
     new_athlete = workout.athlete
     recompute_athlete_scores(new_athlete)
     if old_athlete != new_athlete:
