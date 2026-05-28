@@ -65,6 +65,8 @@ cp -r scratch/forum/files/ media/forum/attachments/
 uv run python manage.py import_phpbb_attachments
 # reset PostgreSQL sequences so ORM .create() works after explicit-ID imports:
 uv run python manage.py reset_forum_sequences
+# build full-text search index (one-time, idempotent — re-run after re-import):
+uv run python manage.py build_forum_search_index
 ```
 
 **Django database connection:** `DATABASES['phpbb']` points to MySQL via PyMySQL (`pymysql.install_as_MySQLdb()` in `config/__init__.py`). MySQL env vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`. See `apps/forum_import/README.md` for details.
@@ -77,6 +79,7 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Topics (`Topic`), posts (`Post`) — done
 - [x] Private subforum access control (is_private + allowed_group)
 - [x] Attachments (`PostAttachment`) — done
+- [x] Full-text search index (`Post.search_text` / `Post.search_vector`) — run `build_forum_search_index` after import
 
 ## Branch naming
 

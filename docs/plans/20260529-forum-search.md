@@ -151,9 +151,9 @@
 **Files:**
 - Modify: `CLAUDE.md`
 
-- [ ] дописать шаг `uv run python manage.py build_forum_search_index` в блок «Import workflow» (после импорта постов/вложений)
-- [ ] добавить отметку в «Import status» про поиск (search index)
-- [ ] тесты не требуются (только документация)
+- [x] дописать шаг `uv run python manage.py build_forum_search_index` в блок «Import workflow» (после импорта постов/вложений)
+- [x] добавить отметку в «Import status» про поиск (search index)
+- [x] тесты не требуются (только документация)
 
 ### Task 6: Verify acceptance criteria
 - [ ] проверить, что реализованы все пункты Overview (поиск по темам+сообщениям, список сообщений, подсветка, ссылка на пост)
