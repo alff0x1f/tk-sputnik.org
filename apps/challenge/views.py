@@ -5,7 +5,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Sum
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
@@ -65,8 +65,10 @@ def review(request):
         request,
         "challenge/review.html",
         {
-            "cards_json": json.dumps(cards, ensure_ascii=False),
-            "athletes_json": json.dumps(athletes, ensure_ascii=False),
+            "cards_json": json.dumps(cards, ensure_ascii=False).replace("</", "<\\/"),
+            "athletes_json": json.dumps(athletes, ensure_ascii=False).replace(
+                "</", "<\\/"
+            ),
         },
     )
 
@@ -96,12 +98,12 @@ def api_workout_create(request):
 
     try:
         athlete = Athlete.objects.get(pk=data["athlete_id"])
-    except Athlete.DoesNotExist, KeyError:
+    except (Athlete.DoesNotExist, KeyError):
         return JsonResponse({"error": "Athlete not found"}, status=400)
 
     try:
         date = datetime.date.fromisoformat(data["date"])
-    except KeyError, ValueError:
+    except (KeyError, ValueError):
         return JsonResponse({"error": "Invalid date"}, status=400)
 
     activity = data.get("activity", "")
@@ -133,7 +135,7 @@ def api_workout_detail(request, pk):
     if request.method == "DELETE":
         workout.delete()
         recompute_athlete_scores(old_athlete)
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
 
     # PUT
     try:
@@ -147,7 +149,11 @@ def api_workout_detail(request, pk):
         except Athlete.DoesNotExist:
             return JsonResponse({"error": "Athlete not found"}, status=400)
 
-    updatable = ["activity", "distance_km", "pace_min_per_km", "msg_id"]
+    if "activity" in data:
+        if data["activity"] not in {k for k, _ in Workout.ACTIVITY_CHOICES}:
+            return JsonResponse({"error": "Invalid activity"}, status=400)
+        workout.activity = data["activity"]
+    updatable = ["distance_km", "pace_min_per_km", "msg_id"]
     for field in updatable:
         if field in data:
             setattr(workout, field, data[field])
@@ -155,7 +161,7 @@ def api_workout_detail(request, pk):
     if "date" in data:
         try:
             workout.date = datetime.date.fromisoformat(data["date"])
-        except ValueError:
+        except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid date"}, status=400)
 
     workout.save()

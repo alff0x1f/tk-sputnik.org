@@ -165,7 +165,7 @@
 
 <script>
 const ACT_NAMES = {running: 'Бег', skiing: 'Лыжи', cycling: 'Велосипед', swimming: 'Плавание', hiking: 'Пеший поход'};
-const ATHLETE_ID = '{{ athlete.telegram_id }}';
+const ATHLETE_ID = '{{ athlete.telegram_id|escapejs }}';
 
 function openLightbox(link, e) {
   e.preventDefault();
