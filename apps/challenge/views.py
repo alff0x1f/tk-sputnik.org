@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -12,11 +12,17 @@ from django.views.decorators.http import require_http_methods
 from .models import Athlete, SourceMessage, Workout
 from .scoring import recompute_athlete_scores
 
+_PHOTO_EXTENSIONS = frozenset(
+    {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"}
+)
+
 
 def challenge_photo(request, filename):
     base = Path(settings.CHALLENGE_CHAT_EXPORT_DIR).resolve()
     photo_path = (base / filename).resolve()
-    if not photo_path.is_relative_to(base):
+    if not photo_path.is_relative_to(base / "photos"):
+        raise Http404
+    if photo_path.suffix.lower() not in _PHOTO_EXTENSIONS:
         raise Http404
     if not photo_path.is_file():
         raise Http404
@@ -191,17 +197,17 @@ def _group_messages(messages, workouts_by_msg):
 
         photos = [p for m in group for p in m.photos]
         text = next((m.text for m in group if m.text), "")
-        workout = next(
-            (workouts_by_msg[m.msg_id] for m in group if m.msg_id in workouts_by_msg),
-            None,
-        )
+        workouts = []
+        for m in group:
+            if m.msg_id in workouts_by_msg:
+                workouts.extend(workouts_by_msg[m.msg_id])
         groups.append(
             {
                 "msgs": group,
                 "primary_msg_id": group[0].msg_id,
                 "photos": photos,
                 "text": text,
-                "workout": workout,
+                "workouts": workouts,
                 "date": group[0].date,
             }
         )
@@ -211,13 +217,16 @@ def _group_messages(messages, workouts_by_msg):
 
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
-    messages = SourceMessage.objects.filter(from_id=athlete.telegram_id).order_by(
-        "date", "msg_id"
+    athlete_workouts = list(
+        Workout.objects.filter(athlete=athlete, msg_id__isnull=False)
     )
-    workouts_by_msg = {
-        w.msg_id: w
-        for w in Workout.objects.filter(athlete=athlete, msg_id__isnull=False)
-    }
+    workout_msg_ids = [w.msg_id for w in athlete_workouts]
+    messages = SourceMessage.objects.filter(
+        Q(from_id=athlete.telegram_id) | Q(msg_id__in=workout_msg_ids)
+    ).order_by("date", "msg_id").distinct()
+    workouts_by_msg = {}
+    for w in athlete_workouts:
+        workouts_by_msg.setdefault(w.msg_id, []).append(w)
     groups = _group_messages(messages, workouts_by_msg)
     total_points = (
         athlete.workouts.aggregate(Sum("total_points"))["total_points__sum"] or 0

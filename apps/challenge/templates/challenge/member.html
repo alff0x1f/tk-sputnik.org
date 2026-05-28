@@ -28,7 +28,7 @@
     <div class="msg-date-sep">{{ group.date|date:"d.m.Y" }}</div>
     {% endifchanged %}
 
-    <div class="msg-bubble{% if group.workout %} has-workout{% endif %}">
+    <div class="msg-bubble{% if group.workouts %} has-workout{% endif %}">
       {% if group.text %}
       <div class="msg-text">{{ group.text|linebreaksbr }}</div>
       {% endif %}
@@ -43,8 +43,7 @@
       </div>
       {% endif %}
 
-      {% with workout=group.workout %}
-      {% if workout %}
+      {% for workout in group.workouts %}
       <div class="workout-info-card act-{{ workout.activity }}"
            data-workout-id="{{ workout.pk }}"
            data-workout-date="{{ workout.date|date:'Y-m-d' }}"
@@ -109,8 +108,7 @@
         </div>
         {% endif %}
       </div>
-      {% endif %}
-      {% endwith %}
+      {% endfor %}
 
       {% if request.user.is_staff %}
       <div class="wic-create-form" data-create-msg="{{ group.primary_msg_id }}" style="display:none">
@@ -209,9 +207,12 @@ async function saveWorkout(id) {
   const distance = card.querySelector('.wic-field-distance').value;
   const pace = card.querySelector('.wic-field-pace').value;
 
-  const body = {activity, date};
-  if (distance !== '') body.distance_km = parseFloat(distance);
-  if (pace !== '') body.pace_min_per_km = parseFloat(pace);
+  const body = {
+    activity,
+    date,
+    distance_km: distance !== '' ? parseFloat(distance) : null,
+    pace_min_per_km: pace !== '' ? parseFloat(pace) : null,
+  };
 
   const resp = await fetch(`/challenge/review/api/workout/${id}/`, {
     method: 'PUT',

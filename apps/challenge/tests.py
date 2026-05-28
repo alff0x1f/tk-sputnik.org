@@ -535,11 +535,31 @@ class ImportChallengeCommandTests(TestCase):
 class PhotoViewTests(TestCase):
     def test_valid_photo_returns_200(self):
         with tempfile.TemporaryDirectory() as tmpdir:
+            subdir = Path(tmpdir) / "photos"
+            subdir.mkdir()
+            photo = subdir / "photo_001.jpg"
+            photo.write_bytes(b"FAKEJPEG")
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/photos/photo_001.jpg")
+        self.assertEqual(response.status_code, 200)
+
+    def test_root_level_photo_returns_404(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
             photo = Path(tmpdir) / "photo_001.jpg"
             photo.write_bytes(b"FAKEJPEG")
             with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
                 response = self.client.get("/challenge/photo/photo_001.jpg")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 404)
+
+    def test_video_files_subtree_blocked(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subdir = Path(tmpdir) / "video_files"
+            subdir.mkdir()
+            video = subdir / "clip.mp4"
+            video.write_bytes(b"FAKEVIDEO")
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/video_files/clip.mp4")
+        self.assertEqual(response.status_code, 404)
 
     def test_missing_photo_returns_404(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -562,6 +582,14 @@ class PhotoViewTests(TestCase):
             with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
                 response = self.client.get("/challenge/photo/photos/img.jpg")
         self.assertEqual(response.status_code, 200)
+
+    def test_non_photo_extension_returns_404(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_file = Path(tmpdir) / "result.json"
+            data_file.write_text('{"messages": []}')
+            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
+                response = self.client.get("/challenge/photo/result.json")
+        self.assertEqual(response.status_code, 404)
 
 
 class ReviewViewTests(TestCase):
@@ -993,6 +1021,48 @@ class MemberDetailViewTests(TestCase):
         # msg_plain has no workout — only the one workout bubble should have buttons
         self.assertEqual(content.count("wic-btn-edit"), 1)
         self.assertEqual(content.count("wic-btn-delete"), 1)
+
+    def test_unknown_athlete_shows_messages_via_msg_id(self):
+        unknown = Athlete.objects.create(telegram_id="unknown_abc", name="Неизвестный")
+        SourceMessage.objects.create(
+            msg_id=2001,
+            from_id="user9999",
+            from_name="Неизвестный",
+            date=datetime.date(2026, 1, 15),
+            text="Пробежал 5 км",
+            photos=[],
+        )
+        Workout.objects.create(
+            athlete=unknown,
+            date=datetime.date(2026, 1, 15),
+            activity="running",
+            distance_km=5.0,
+            base_points=2,
+            streak_bonus=0,
+            total_points=2,
+            msg_id=2001,
+        )
+        response = self.client.get(self._url("unknown_abc"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Пробежал 5 км", content)
+        self.assertIn("has-workout", content)
+
+    def test_multiple_workouts_per_message_shows_multiple_cards(self):
+        Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 10),
+            activity="skiing",
+            distance_km=8.0,
+            base_points=2,
+            streak_bonus=0,
+            total_points=2,
+            msg_id=1001,
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertEqual(content.count("wic-header"), 2)
 
 
 class LeaderboardViewTests(TestCase):
