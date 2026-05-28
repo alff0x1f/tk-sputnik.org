@@ -257,7 +257,8 @@ def _group_messages(messages, workouts_by_msg, athlete_telegram_id=""):
         seen = set()
         foreign_senders = []
         for m in group:
-            if m.from_id and m.from_id != athlete_telegram_id and m.from_name not in seen:
+            is_foreign = m.from_id and m.from_id != athlete_telegram_id
+            if is_foreign and m.from_name not in seen:
                 seen.add(m.from_name)
                 foreign_senders.append(m.from_name)
         groups.append(
