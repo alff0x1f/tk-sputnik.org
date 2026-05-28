@@ -40,6 +40,7 @@
 - **Движок:** PostgreSQL full-text search, конфиг `'russian'` (стемминг русских словоформ). Внешние движки и `pg_trgm` отклонены при brainstorm.
 - **Индекс:** денормализованное поле `Post.search_text` (чистый плейнтекст) как источник для вектора и сниппетов; `Post.search_vector` (`SearchVectorField`) под GIN-индексом. Вес `B` — текст сообщения; вес `A` — заголовок темы, добавляется **только в первый пост темы** (первый по `created_at, id`). Значит матч по названию даёт одну строку (первый пост темы) и стоит выше body-матчей.
 - **Запрос:** `SearchQuery(q, config="russian", search_type="websearch")` — устойчив к любому пользовательскому вводу, понимает кавычки/`OR`/`-слово`. Ранжирование `SearchRank`, сниппеты `SearchHeadline`.
+- **Сортировка:** `order_by("-rank", "-created_at", "id")`. Уникальный `id` в конце обязателен: `rank` у `SearchRank` массово совпадает (body-матчи с одинаковой частотой слова), без тотального порядка бесконечная прокрутка даёт дубли/пропуски между страницами. NULL у `created_at` нет (проверено на данных: 0 из 115 954), поэтому `nulls_last` не нужен.
 - **Доступ:** фильтрация на уровне queryset через `topic__subforum` (та же логика, что в `_can_access`) — приватные разделы не утекают в выдачу.
 - **UI:** строка поиска в топбаре всех страниц форума (инклуд), страница выдачи `forum/search.html` + HTMX-партиал для пагинации, в стиле существующего `subforum_topics`.
 
@@ -47,8 +48,8 @@
 - **Веса:** `SearchVector(..., weight="A")` (заголовок) и `weight="B"` (текст). `SearchRank` по умолчанию учитывает веса (A=1.0, B=0.4).
 - **Снятие разметки для `search_text`:** убрать BBCode и HTML-теги из `text_bbcode`/`text_html` → плейнтекст. phpBB хранит BBCode с `bbcode_uid` (теги вида `[b:uid]`), и `text_html` уже отрендерен — берём `text_html` и снимаем теги (`django.utils.html.strip_tags` + `html.unescape`), это надёжнее, чем парсить BBCode.
 - **Безопасность сниппета:** `SearchHeadline` НЕ экранирует исходный текст, а рендерить надо как HTML ради `<mark>`. Решение: задать нестандартные сентинел-маркеры (`start_sel`/`stop_sel`, напр. `"@@HLS@@"` / `"@@HLE@@"`), а в кастомном шаблонном фильтре сначала `escape()` всего сниппета, потом заменить экранированные сентинелы на `<mark>…</mark>` и вернуть `mark_safe`. Любой `<`, `>`, `&` из контента экранируется → защита от XSS.
-- **Пагинация:** `Paginator(qs, 20)`, `get_page(request.GET.get("page"))`, в `hx-get` тащим и `q`, и `page`.
-- **Пустой `q`:** ранний возврат страницы-подсказки без обращения к БД.
+- **Пагинация:** `Paginator(qs, 20)`, `get_page(request.GET.get("page"))`. HTMX-сентинел бесконечной прокрутки **обязан сохранять `q`** — в отличие от существующего партиала (`hx-get="?page=N"`), здесь `hx-get="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"`, иначе следующая страница потеряет запрос.
+- **Пустой `q`:** ранний возврат страницы-подсказки без обращения к БД. `search.html` не должен инклудить партиал результатов при пустом `q` (партиал итерирует `page_obj`, которого в этом случае нет) — оборачиваем включение в `{% if q %}`.
 
 ## What Goes Where
 - **Implementation Steps** (`[ ]`): изменения в этом репозитории — settings, модель, миграция, функция индексации, команда, view, URL, фильтр, шаблоны, CSS, тесты, обновление CLAUDE.md.
@@ -84,7 +85,9 @@
 - [ ] создать `apps/forum/search.py` с `rebuild_search_index(queryset=None)`:
   - [ ] для постов в `queryset` (по умолчанию все) снять разметку с `text_html` (`strip_tags` + `html.unescape`) → записать в `search_text` пачками через `bulk_update` (батчи, `iterator()`)
   - [ ] определить первый пост каждой темы (по `created_at, id`) — множество их id
-  - [ ] обновить `search_vector`: для обычных постов `SearchVector("search_text", weight="B", config="russian")`; для первого поста темы дополнительно `|| SearchVector(Value(topic.title), weight="A", config="russian")`
+  - [ ] обновить `search_vector` в две фазы (один `UPDATE` всю таблицу не покроет — заголовок у каждого первого поста свой):
+    - [ ] фаза 1, всем постам: `Post.objects.update(search_vector=SearchVector("search_text", weight="B", config="russian"))`
+    - [ ] фаза 2, только первым постам тем: по каждой теме `Post.objects.filter(id=first_id).update(search_vector=SearchVector("search_text", weight="B", config="russian") + SearchVector(Value(title), weight="A", config="russian"))` (цикл по темам — приемлемо для разовой команды; при желании оптимизировать через `Subquery` с джойном на `Topic`)
 - [ ] создать команду `build_forum_search_index` — тонкая обёртка: вызывает `rebuild_search_index()` и печатает число обновлённых постов
 - [ ] написать тест: после `rebuild_search_index()` `search_text` очищен от BBCode/HTML-тегов
 - [ ] написать тест: `search_vector` заполнен; первый пост темы получает вес заголовка (заголовочное слово находится по первому посту), последующие посты — нет
@@ -124,21 +127,21 @@
 - [ ] добавить view `forum_search(request)`:
   - [ ] прочитать `q = request.GET.get("q", "").strip()`; пустой `q` → ранний `render` страницы-подсказки без запроса к БД
   - [ ] `query = SearchQuery(q, config="russian", search_type="websearch")`
-  - [ ] queryset: `_accessible_posts(request).select_related("topic", "topic__subforum", "author").annotate(rank=SearchRank(F("search_vector"), query), snippet=SearchHeadline("search_text", query, config="russian", start_sel=<сентинел>, stop_sel=<сентинел>)).filter(search_vector=query).order_by("-rank", "-created_at")`
+  - [ ] queryset: `_accessible_posts(request).select_related("topic", "topic__subforum", "author").annotate(rank=SearchRank(F("search_vector"), query), snippet=SearchHeadline("search_text", query, config="russian", start_sel=<сентинел>, stop_sel=<сентинел>)).filter(search_vector=query).order_by("-rank", "-created_at", "id")` (тай-брейкер `id` обязателен — см. Solution Overview)
   - [ ] `Paginator(qs, 20)`, `get_page`, эледированные страницы — как в `subforum_topics`
   - [ ] HTMX: `is_htmx` → `search_results_partial.html`, иначе `search.html`; `patch_vary_headers(response, ["HX-Request"])`
 - [ ] добавить URL `path("search/", views.forum_search, name="forum-search")` в `apps/forum/urls.py`
 - [ ] создать `_search_box.html` (`<form method="get" action="{% url 'forum-search' %}">` с `<input name="q" value="{{ q|default:'' }}">`)
 - [ ] подключить `_search_box.html` в блок `topbar_action` в `forum.html`, `subforum.html`, `topic.html`
-- [ ] создать `search.html` (extends `demo/base.html`): крошки «Форум / Поиск», строка поиска (предзаполненная), счётчик найденного, состояния пустого `q` и нуля результатов («Ничего не найдено»), `{% include "forum/search_results_partial.html" %}`
-- [ ] создать `search_results_partial.html`: список результатов (заголовок темы — ссылка на `{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}`; мелким — подфорум · автор · дата; сниппет через фильтр `highlight_snippet`) + HTMX-подгрузка следующей страницы (тащит `q` и `page`)
+- [ ] создать `search.html` (extends `demo/base.html`): строку поиска положить в блок `topbar_action` (как на остальных страницах форума), не только в `content`; крошки «Форум / Поиск»; счётчик найденного через существующий фильтр `ru_pluralize:"сообщение,сообщения,сообщений"` (не писать новый код); состояния пустого `q` и нуля результатов («Ничего не найдено»); включение партиала обернуть в `{% if q %}` (иначе на пустом `q` партиал упадёт на отсутствующем `page_obj`)
+- [ ] создать `search_results_partial.html`: список результатов (заголовок темы — ссылка на `{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}`; мелким — подфорум · автор · дата; сниппет через фильтр `highlight_snippet`) + HTMX-сентинел `hx-get="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"` (сохранить `q`, не голый `?page=`)
 - [ ] добавить классы в `forum.css` под строку поиска и строки результатов (в духе существующих токенов, без новых зависимостей)
 - [ ] написать тест: морфология — запрос «поход» находит пост с «походы»
 - [ ] написать тест: ранжирование — title-матч (первый пост темы) выше body-матча
 - [ ] написать тест доступа: аноним не видит результаты из приватного подфорума
 - [ ] написать тест доступа: юзер из `allowed_group` видит приватное; юзер не из группы — нет; staff видит всё
 - [ ] написать тест: ссылка результата ведёт на `viewtopic-redirect?p=<phpbb_id>`
-- [ ] написать тест: сниппет в отрендеренной странице содержит `<mark>`; пост с `<script>` экранирован (XSS)
+- [ ] написать тест: при совпадении **по тексту** сниппет в отрендеренной странице содержит `<mark>`; пост с `<script>` экранирован (XSS). NB: для постов, найденных только по заголовку (вес A), `<mark>` в сниппете может отсутствовать (`SearchHeadline` строится по `search_text`/телу) — не закладываться на `<mark>` в таком кейсе
 - [ ] написать тест (edge): пустой `q` → 200 + подсказка, без падения; ноль результатов → «Ничего не найдено»
 - [ ] написать тест HTMX: `HX-Request: true` → партиал `search_results_partial.html`; обычный запрос → `search.html`
 - [ ] `uv run ruff check . && uv run ruff format .`
