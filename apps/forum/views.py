@@ -2,6 +2,7 @@ import os
 
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
+from django.contrib.postgres.search import SearchHeadline, SearchQuery, SearchRank
 from django.core.paginator import Paginator
 from django.db.models import F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
@@ -11,6 +12,7 @@ from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 
 from .models import ForumCategory, Post, PostAttachment, SubForum, Topic
+from .search import SNIPPET_START_SEL, SNIPPET_STOP_SEL
 
 POSTS_PER_PAGE = 20
 
@@ -25,6 +27,65 @@ def _can_access(request, subforum):
     if subforum.allowed_group_id is None:
         return False
     return request.user.groups.filter(pk=subforum.allowed_group_id).exists()
+
+
+def _accessible_posts(request):
+    qs = Post.objects.select_related("topic__subforum")
+    if request.user.is_staff:
+        return qs
+    if not request.user.is_authenticated:
+        return qs.filter(topic__subforum__is_private=False)
+    group_ids = request.user.groups.values_list("id", flat=True)
+    return qs.filter(
+        Q(topic__subforum__is_private=False)
+        | Q(topic__subforum__allowed_group__in=group_ids)
+    )
+
+
+def forum_search(request):
+    q = request.GET.get("q", "").strip()
+    is_htmx = request.headers.get("HX-Request") == "true"
+
+    if not q:
+        response = render(request, "forum/search.html", {"q": q})
+        patch_vary_headers(response, ["HX-Request"])
+        return response
+
+    query = SearchQuery(q, config="russian", search_type="websearch")
+    qs = (
+        _accessible_posts(request)
+        .select_related("topic", "topic__subforum", "author")
+        .annotate(
+            rank=SearchRank(F("search_vector"), query),
+            snippet=SearchHeadline(
+                "search_text",
+                query,
+                config="russian",
+                start_sel=SNIPPET_START_SEL,
+                stop_sel=SNIPPET_STOP_SEL,
+            ),
+        )
+        .filter(search_vector=query)
+        .order_by("-rank", "-created_at", "id")
+    )
+
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {"q": q, "page_obj": page_obj, "total_count": paginator.count}
+
+    if not is_htmx:
+        page_range = paginator.get_elided_page_range(
+            page_obj.number, on_each_side=2, on_ends=2
+        )
+        context["elided_pages"] = [
+            {"num": n, "is_ellipsis": n == Paginator.ELLIPSIS} for n in page_range
+        ]
+
+    template = "forum/search_results_partial.html" if is_htmx else "forum/search.html"
+    response = render(request, template, context)
+    patch_vary_headers(response, ["HX-Request"])
+    return response
 
 
 def forum_index(request):

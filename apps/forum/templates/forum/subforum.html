@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="{% static 'forum/css/forum.css' %}">
 {% endblock %}
 
-{% block topbar_action %}{% endblock %}
+{% block topbar_action %}{% include "forum/_search_box.html" %}{% endblock %}
 
 {% block content %}
   <main class="feed">

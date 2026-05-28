@@ -1308,3 +1308,182 @@ class ViewtopicRedirectTests(TestCase):
             status_code=301,
             fetch_redirect_response=False,
         )
+
+
+class ForumSearchViewTest(TestCase):
+    def setUp(self):
+        from .search import rebuild_search_index
+
+        self.category = ForumCategory.objects.create(
+            phpbb_id=90001, name="SearchViewCat"
+        )
+        self.subforum = SubForum.objects.create(
+            phpbb_id=90010,
+            phpbb_parent_id=90001,
+            category=self.category,
+            name="SearchViewSub",
+        )
+        self.private_group = Group.objects.create(name="search_private_group")
+        self.private_subforum = SubForum.objects.create(
+            phpbb_id=90011,
+            phpbb_parent_id=90001,
+            category=self.category,
+            name="SearchPrivateSub",
+            is_private=True,
+            allowed_group=self.private_group,
+        )
+        self._counter = 90100
+        self.url = reverse("forum-search")
+        self._rebuild = rebuild_search_index
+
+    def _next_id(self):
+        self._counter += 1
+        return self._counter
+
+    def _topic(self, title, subforum=None):
+        return Topic.objects.create(
+            phpbb_id=self._next_id(),
+            subforum=subforum or self.subforum,
+            title=title,
+        )
+
+    def _post(self, topic, text_html, seconds_offset=0):
+        return Post.objects.create(
+            phpbb_id=self._next_id(),
+            topic=topic,
+            text_html=text_html,
+            text_bbcode="",
+            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC)
+            + datetime.timedelta(seconds=seconds_offset),
+        )
+
+    def test_empty_q_returns_200_with_hint(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "forum/search.html")
+        self.assertContains(response, "Введите слово")
+
+    def test_empty_q_with_whitespace_returns_200_with_hint(self):
+        response = self.client.get(self.url + "?q=   ")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Введите слово")
+
+    def test_zero_results_shows_nothing_found(self):
+        response = self.client.get(self.url + "?q=несуществующееслово12345")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ничего не найдено")
+
+    def test_morphology_pokhod_finds_pokhody(self):
+        topic = self._topic("Летний маршрут")
+        self._post(topic, "<p>Лучшие походы по Кавказу</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=поход")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Летний маршрут")
+
+    def test_title_match_ranks_above_body_match(self):
+        topic_title = self._topic("Эльбрус восхождение маршрут")
+        self._post(topic_title, "<p>обычный текст про горы</p>", seconds_offset=0)
+
+        topic_body = self._topic("Другая тема")
+        self._post(topic_body, "<p>эльбрус — красивая гора</p>", seconds_offset=0)
+
+        self._rebuild()
+        response = self.client.get(self.url + "?q=эльбрус")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        idx_title = content.find("Эльбрус восхождение маршрут")
+        idx_body = content.find("Другая тема")
+        self.assertGreater(idx_title, -1)
+        self.assertGreater(idx_body, -1)
+        self.assertLess(idx_title, idx_body)
+
+    def test_anon_cannot_see_private_subforum_results(self):
+        topic = self._topic("Секретный поход", subforum=self.private_subforum)
+        self._post(topic, "<p>секретные данные экспедиции</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=секретный")
+        self.assertNotContains(response, "Секретный поход")
+
+    def test_user_in_group_sees_private_results(self):
+        topic = self._topic("Закрытый маршрут", subforum=self.private_subforum)
+        self._post(topic, "<p>закрытая экспедиция клуба</p>")
+        self._rebuild()
+        user = User.objects.create_user("member_search", password="x")
+        user.groups.add(self.private_group)
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?q=закрытый")
+        self.assertContains(response, "Закрытый маршрут")
+
+    def test_user_not_in_group_cannot_see_private_results(self):
+        topic = self._topic("Приватный маршрут", subforum=self.private_subforum)
+        self._post(topic, "<p>приватный контент экспедиции</p>")
+        self._rebuild()
+        user = User.objects.create_user("outsider_search", password="x")
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?q=приватный")
+        self.assertNotContains(response, "Приватный маршрут")
+
+    def test_staff_sees_private_results(self):
+        topic = self._topic("Штабной поход", subforum=self.private_subforum)
+        self._post(topic, "<p>штабная информация похода</p>")
+        self._rebuild()
+        staff = User.objects.create_user("staff_search", password="x", is_staff=True)
+        self.client.force_login(staff)
+        response = self.client.get(self.url + "?q=штабной")
+        self.assertContains(response, "Штабной поход")
+
+    def test_result_link_uses_viewtopic_redirect_with_phpbb_id(self):
+        topic = self._topic("Кавказский маршрут")
+        post = self._post(topic, "<p>кавказские горы и тропы</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=кавказский")
+        self.assertContains(response, f"viewtopic.php?p={post.phpbb_id}")
+
+    def test_body_match_snippet_contains_mark_tag(self):
+        topic = self._topic("Тема со словом")
+        self._post(topic, "<p>уникальнейшее слово в тексте сообщения</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=уникальнейшее")
+        self.assertContains(response, "<mark>")
+
+    def test_xss_angle_brackets_are_escaped_in_snippet(self):
+        # search_text can contain angle-bracket content (from html.unescape in
+        # rebuild_search_index), e.g. a<b from &lt;b&gt; in original HTML.
+        # highlight_snippet must escape it so it cannot inject HTML.
+        topic = self._topic("XSS тест")
+        self._post(topic, "<p>уязвимость a&lt;b&gt;c текст</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=уязвимость")
+        # Raw unescaped tag from post content must not appear in snippet
+        self.assertNotContains(response, "<b>c")
+
+    def test_htmx_request_returns_partial_template(self):
+        topic = self._topic("HTMX тема")
+        self._post(topic, "<p>htmx партиал тест</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=партиал", HTTP_HX_REQUEST="true")
+        self.assertTemplateUsed(response, "forum/search_results_partial.html")
+        self.assertTemplateNotUsed(response, "forum/search.html")
+
+    def test_normal_request_returns_full_template(self):
+        response = self.client.get(self.url + "?q=горы")
+        self.assertTemplateUsed(response, "forum/search.html")
+
+    def test_vary_header_set(self):
+        response = self.client.get(self.url + "?q=горы")
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
+    def test_partial_sentinel_preserves_q_parameter(self):
+        from urllib.parse import quote
+
+        for i in range(25):
+            topic = self._topic(f"Горный маршрут {i}")
+            self._post(
+                topic, f"<p>горный туризм маршрут номер {i}</p>", seconds_offset=i
+            )
+        self._rebuild()
+        response = self.client.get(self.url + "?q=горный", HTTP_HX_REQUEST="true")
+        encoded_q = quote("горный")
+        self.assertContains(response, f"q={encoded_q}")
+        self.assertContains(response, "page=2")

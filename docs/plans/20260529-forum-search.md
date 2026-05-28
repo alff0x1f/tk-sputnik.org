@@ -123,29 +123,29 @@
 - Modify: `apps/forum/static/forum/css/forum.css`
 - Modify: `apps/forum/tests.py`
 
-- [ ] добавить хелпер `_accessible_posts(request)` в `views.py`: queryset `Post` с фильтром по `topic__subforum` — аноним → `is_private=False`; staff → без фильтра; обычный юзер → `Q(is_private=False) | Q(allowed_group__in=группы юзера)` (через `topic__subforum__...`)
-- [ ] добавить view `forum_search(request)`:
-  - [ ] прочитать `q = request.GET.get("q", "").strip()`; пустой `q` → ранний `render` страницы-подсказки без запроса к БД
-  - [ ] `query = SearchQuery(q, config="russian", search_type="websearch")`
-  - [ ] queryset: `_accessible_posts(request).select_related("topic", "topic__subforum", "author").annotate(rank=SearchRank(F("search_vector"), query), snippet=SearchHeadline("search_text", query, config="russian", start_sel=<сентинел>, stop_sel=<сентинел>)).filter(search_vector=query).order_by("-rank", "-created_at", "id")` (тай-брейкер `id` обязателен — см. Solution Overview)
-  - [ ] `Paginator(qs, 20)`, `get_page`, эледированные страницы — как в `subforum_topics`
-  - [ ] HTMX: `is_htmx` → `search_results_partial.html`, иначе `search.html`; `patch_vary_headers(response, ["HX-Request"])`
-- [ ] добавить URL `path("search/", views.forum_search, name="forum-search")` в `apps/forum/urls.py`
-- [ ] создать `_search_box.html` (`<form method="get" action="{% url 'forum-search' %}">` с `<input name="q" value="{{ q|default:'' }}">`)
-- [ ] подключить `_search_box.html` в блок `topbar_action` в `forum.html`, `subforum.html`, `topic.html`
-- [ ] создать `search.html` (extends `demo/base.html`): строку поиска положить в блок `topbar_action` (как на остальных страницах форума), не только в `content`; крошки «Форум / Поиск»; счётчик найденного через существующий фильтр `ru_pluralize:"сообщение,сообщения,сообщений"` (не писать новый код); состояния пустого `q` и нуля результатов («Ничего не найдено»); включение партиала обернуть в `{% if q %}` (иначе на пустом `q` партиал упадёт на отсутствующем `page_obj`)
-- [ ] создать `search_results_partial.html`: список результатов (заголовок темы — ссылка на `{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}`; мелким — подфорум · автор · дата; сниппет через фильтр `highlight_snippet`) + HTMX-сентинел `hx-get="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"` (сохранить `q`, не голый `?page=`)
-- [ ] добавить классы в `forum.css` под строку поиска и строки результатов (в духе существующих токенов, без новых зависимостей)
-- [ ] написать тест: морфология — запрос «поход» находит пост с «походы»
-- [ ] написать тест: ранжирование — title-матч (первый пост темы) выше body-матча
-- [ ] написать тест доступа: аноним не видит результаты из приватного подфорума
-- [ ] написать тест доступа: юзер из `allowed_group` видит приватное; юзер не из группы — нет; staff видит всё
-- [ ] написать тест: ссылка результата ведёт на `viewtopic-redirect?p=<phpbb_id>`
-- [ ] написать тест: при совпадении **по тексту** сниппет в отрендеренной странице содержит `<mark>`; пост с `<script>` экранирован (XSS). NB: для постов, найденных только по заголовку (вес A), `<mark>` в сниппете может отсутствовать (`SearchHeadline` строится по `search_text`/телу) — не закладываться на `<mark>` в таком кейсе
-- [ ] написать тест (edge): пустой `q` → 200 + подсказка, без падения; ноль результатов → «Ничего не найдено»
-- [ ] написать тест HTMX: `HX-Request: true` → партиал `search_results_partial.html`; обычный запрос → `search.html`
-- [ ] `uv run ruff check . && uv run ruff format .`
-- [ ] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 5
+- [x] добавить хелпер `_accessible_posts(request)` в `views.py`: queryset `Post` с фильтром по `topic__subforum` — аноним → `is_private=False`; staff → без фильтра; обычный юзер → `Q(is_private=False) | Q(allowed_group__in=группы юзера)` (через `topic__subforum__...`)
+- [x] добавить view `forum_search(request)`:
+  - [x] прочитать `q = request.GET.get("q", "").strip()`; пустой `q` → ранний `render` страницы-подсказки без запроса к БД
+  - [x] `query = SearchQuery(q, config="russian", search_type="websearch")`
+  - [x] queryset: `_accessible_posts(request).select_related("topic", "topic__subforum", "author").annotate(rank=SearchRank(F("search_vector"), query), snippet=SearchHeadline("search_text", query, config="russian", start_sel=<сентинел>, stop_sel=<сентинел>)).filter(search_vector=query).order_by("-rank", "-created_at", "id")` (тай-брейкер `id` обязателен — см. Solution Overview)
+  - [x] `Paginator(qs, 20)`, `get_page`, эледированные страницы — как в `subforum_topics`
+  - [x] HTMX: `is_htmx` → `search_results_partial.html`, иначе `search.html`; `patch_vary_headers(response, ["HX-Request"])`
+- [x] добавить URL `path("search/", views.forum_search, name="forum-search")` в `apps/forum/urls.py`
+- [x] создать `_search_box.html` (`<form method="get" action="{% url 'forum-search' %}">` с `<input name="q" value="{{ q|default:'' }}">`)
+- [x] подключить `_search_box.html` в блок `topbar_action` в `forum.html`, `subforum.html`, `topic.html`
+- [x] создать `search.html` (extends `demo/base.html`): строку поиска положить в блок `topbar_action` (как на остальных страницах форума), не только в `content`; крошки «Форум / Поиск»; счётчик найденного через существующий фильтр `ru_pluralize:"сообщение,сообщения,сообщений"` (не писать новый код); состояния пустого `q` и нуля результатов («Ничего не найдено»); включение партиала обернуть в `{% if q %}` (иначе на пустом `q` партиал упадёт на отсутствующем `page_obj`)
+- [x] создать `search_results_partial.html`: список результатов (заголовок темы — ссылка на `{% url 'viewtopic-redirect' %}?p={{ post.phpbb_id }}`; мелким — подфорум · автор · дата; сниппет через фильтр `highlight_snippet`) + HTMX-сентинел `hx-get="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"` (сохранить `q`, не голый `?page=`)
+- [x] добавить классы в `forum.css` под строку поиска и строки результатов (в духе существующих токенов, без новых зависимостей)
+- [x] написать тест: морфология — запрос «поход» находит пост с «походы»
+- [x] написать тест: ранжирование — title-матч (первый пост темы) выше body-матча
+- [x] написать тест доступа: аноним не видит результаты из приватного подфорума
+- [x] написать тест доступа: юзер из `allowed_group` видит приватное; юзер не из группы — нет; staff видит всё
+- [x] написать тест: ссылка результата ведёт на `viewtopic-redirect?p=<phpbb_id>`
+- [x] написать тест: при совпадении **по тексту** сниппет в отрендеренной странице содержит `<mark>`; пост с `<script>` экранирован (XSS). NB: для постов, найденных только по заголовку (вес A), `<mark>` в сниппете может отсутствовать (`SearchHeadline` строится по `search_text`/телу) — не закладываться на `<mark>` в таком кейсе
+- [x] написать тест (edge): пустой `q` → 200 + подсказка, без падения; ноль результатов → «Ничего не найдено»
+- [x] написать тест HTMX: `HX-Request: true` → партиал `search_results_partial.html`; обычный запрос → `search.html`
+- [x] `uv run ruff check . && uv run ruff format .`
+- [x] `uv run pytest apps/forum/tests.py` — должно пройти перед Task 5
 
 ### Task 5: Обновить воркфлоу импорта в CLAUDE.md
 **Files:**
