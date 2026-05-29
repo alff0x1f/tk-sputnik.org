@@ -29,7 +29,6 @@
   <div class="brand">
     <a href="{% url 'home' %}"><img class="logo" src="{% static 'demo/sputnik.png' %}" alt="Спутник Клуб Туристов" height="32"></a>
   </div>
-  <div class="sub">турклуб · с 1959</div>
   <div class="top-actions">
     {% block topbar_action %}{% endblock %}
     {% if user.is_authenticated %}
