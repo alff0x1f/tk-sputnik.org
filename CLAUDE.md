@@ -38,7 +38,7 @@ Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproje
 - `config/` — Django project config (settings, urls, wsgi, asgi)
 - `apps/` — all Django apps live here
 - New apps go in `apps/` and are registered in `INSTALLED_APPS` as `apps.<name>`
-- Database: SQLite in development (`db.sqlite3`), PostgreSQL via `psycopg[binary]` in production
+- Database: SQLite in development (`db.sqlite3`), PostgreSQL via `psycopg[binary]` in production. Note: `django.contrib.postgres` is in `INSTALLED_APPS` for the forum's `SearchVectorField` — the forum app requires PostgreSQL even in development; SQLite cannot be used as the database if running with the forum app loaded.
 - Static files: standard Django `STATIC_URL`
 - No custom authentication — uses Django's built-in auth
 
@@ -47,8 +47,8 @@ Use `pytest` (not `manage.py test`). `DJANGO_SETTINGS_MODULE` is set in `pyproje
 The site includes a read-only archive of the old phpBB forum (2007–2014), accessible at `/forum/`.
 
 **Apps:**
-- `apps/forum` — models `ForumCategory` and `SubForum` stored in PostgreSQL; view at `/forum/`
-- `apps/forum_import` — import infrastructure; management command `import_phpbb_forums`
+- `apps/forum` — models `ForumCategory`, `SubForum`, `Topic`, `Post`, `ForumUser`, `PostAttachment` stored in PostgreSQL; forum archive at `/forum/`, full-text search at `/forum/search/`; search logic in `apps/forum/search.py`; management command `build_forum_search_index`
+- `apps/forum_import` — import infrastructure; management commands `import_phpbb_forums`, `import_phpbb_attachments`, `reset_forum_sequences`
 
 **Data source:** phpBB 3.x MySQL database, table prefix `vu2_`. The MySQL instance runs as a separate Docker Compose service with `profiles: [phpbb]` — it is not started by default.
 
@@ -65,6 +65,8 @@ cp -r scratch/forum/files/ media/forum/attachments/
 uv run python manage.py import_phpbb_attachments
 # reset PostgreSQL sequences so ORM .create() works after explicit-ID imports:
 uv run python manage.py reset_forum_sequences
+# build full-text search index (one-time, idempotent — re-run after re-import):
+uv run python manage.py build_forum_search_index
 ```
 
 **Django database connection:** `DATABASES['phpbb']` points to MySQL via PyMySQL (`pymysql.install_as_MySQLdb()` in `config/__init__.py`). MySQL env vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT`. See `apps/forum_import/README.md` for details.
@@ -77,6 +79,7 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Topics (`Topic`), posts (`Post`) — done
 - [x] Private subforum access control (is_private + allowed_group)
 - [x] Attachments (`PostAttachment`) — done
+- [x] Full-text search index (`Post.search_text` / `Post.search_vector`) — run `build_forum_search_index` after import
 
 ## Branch naming
 

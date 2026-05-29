@@ -250,6 +250,237 @@ class PostAttachmentModelTests(TestCase):
         self.assertEqual(ids, [10, 20, 30])
 
 
+class PostSearchFieldsTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=1, name="Cat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=10, phpbb_parent_id=1, category=self.category, name="Sub"
+        )
+        self.topic = Topic.objects.create(
+            phpbb_id=100, subforum=self.subforum, title="Topic"
+        )
+
+    def test_post_has_search_text_field(self):
+        post = Post.objects.create(
+            phpbb_id=5001,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+            search_text="hello",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "hello")
+
+    def test_post_search_text_default_is_empty(self):
+        post = Post.objects.create(
+            phpbb_id=5002,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "")
+
+    def test_post_search_vector_is_nullable(self):
+        post = Post.objects.create(
+            phpbb_id=5003,
+            topic=self.topic,
+            text_bbcode="hello",
+            text_html="<p>hello</p>",
+        )
+        post.refresh_from_db()
+        self.assertIsNone(post.search_vector)
+
+    def test_post_save_with_both_search_fields(self):
+        post = Post(
+            phpbb_id=5004,
+            topic=self.topic,
+            text_bbcode="test",
+            text_html="<p>test</p>",
+            search_text="test content",
+        )
+        post.save()
+        retrieved = Post.objects.get(phpbb_id=5004)
+        self.assertEqual(retrieved.search_text, "test content")
+        self.assertIsNone(retrieved.search_vector)
+
+
+class RebuildSearchIndexTest(TestCase):
+    def setUp(self):
+        self.category = ForumCategory.objects.create(phpbb_id=80001, name="SearchCat")
+        self.subforum = SubForum.objects.create(
+            phpbb_id=80010,
+            phpbb_parent_id=80001,
+            category=self.category,
+            name="SearchSub",
+        )
+        self._counter = 80100
+
+    def _next_id(self):
+        self._counter += 1
+        return self._counter
+
+    def _topic(self, title):
+        return Topic.objects.create(
+            phpbb_id=self._next_id(), subforum=self.subforum, title=title
+        )
+
+    def _post(self, topic, text_html, seconds_offset=0):
+        return Post.objects.create(
+            phpbb_id=self._next_id(),
+            topic=topic,
+            text_html=text_html,
+            text_bbcode="",
+            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC)
+            + datetime.timedelta(seconds=seconds_offset),
+        )
+
+    def test_search_text_strips_html_tags(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p><b>Красивый</b> текст &amp; всё</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertNotIn("<p>", post.search_text)
+        self.assertNotIn("<b>", post.search_text)
+        self.assertIn("Красивый", post.search_text)
+        self.assertIn("&", post.search_text)
+
+    def test_search_text_preserves_word_boundaries_across_block_tags(self):
+        # Adjacent block tags must not merge adjacent words into one token.
+        # strip_tags() alone would turn "foo<br>bar" into "foobar".
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p>первое</p><p>второе</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertIn("первое", post.search_text)
+        self.assertIn("второе", post.search_text)
+        # Words must be separated — not merged into "первоевторое"
+        self.assertNotIn("первоевторое", post.search_text)
+
+        post2 = self._post(topic, "один<br>два")
+        rebuild_search_index(Post.objects.filter(id=post2.id))
+        post2.refresh_from_db()
+        self.assertIn("один", post2.search_text)
+        self.assertIn("два", post2.search_text)
+        self.assertNotIn("одиндва", post2.search_text)
+
+        post3 = self._post(topic, "три<br/>четыре")
+        rebuild_search_index(Post.objects.filter(id=post3.id))
+        post3.refresh_from_db()
+        self.assertIn("три", post3.search_text)
+        self.assertIn("четыре", post3.search_text)
+        self.assertNotIn("тричетыре", post3.search_text)
+
+    def test_search_vector_filled_after_rebuild(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "<p>слово</p>")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertIsNotNone(post.search_vector)
+
+    def test_first_post_gets_title_weight(self):
+        from django.contrib.postgres.search import SearchQuery
+
+        from .search import rebuild_search_index
+
+        topic = self._topic("Эльбрус")
+        first = self._post(topic, "<p>обычный текст похода</p>", seconds_offset=0)
+        second = self._post(topic, "<p>другой текст похода</p>", seconds_offset=10)
+        rebuild_search_index()
+        query = SearchQuery("Эльбрус", config="russian")
+        matching_ids = set(
+            Post.objects.filter(search_vector=query).values_list("id", flat=True)
+        )
+        self.assertIn(first.id, matching_ids)
+        self.assertNotIn(second.id, matching_ids)
+
+    def test_non_first_post_lacks_title_weight(self):
+        from django.contrib.postgres.search import SearchQuery
+
+        from .search import rebuild_search_index
+
+        topic = self._topic("Байкал")
+        self._post(topic, "<p>озеро вода</p>", seconds_offset=0)
+        second = self._post(topic, "<p>рыбалка рыба</p>", seconds_offset=10)
+        rebuild_search_index()
+        query = SearchQuery("Байкал", config="russian")
+        matching_ids = set(
+            Post.objects.filter(search_vector=query).values_list("id", flat=True)
+        )
+        self.assertNotIn(second.id, matching_ids)
+
+    def test_empty_post_does_not_crash(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        post = self._post(topic, "")
+        rebuild_search_index()
+        post.refresh_from_db()
+        self.assertEqual(post.search_text, "")
+
+    def test_returns_count_of_processed_posts(self):
+        from .search import rebuild_search_index
+
+        topic = self._topic("Тест")
+        self._post(topic, "<p>раз</p>")
+        self._post(topic, "<p>два</p>")
+        count = rebuild_search_index()
+        self.assertEqual(count, 2)
+
+
+class HighlightSnippetFilterTest(TestCase):
+    def setUp(self):
+        from apps.forum.search import SNIPPET_START_SEL, SNIPPET_STOP_SEL
+
+        self.start = SNIPPET_START_SEL
+        self.stop = SNIPPET_STOP_SEL
+
+    def _apply(self, text):
+        from apps.forum.templatetags.forum_extras import highlight_snippet
+
+        return highlight_snippet(text)
+
+    def test_sentinels_become_mark_tags(self):
+        text = f"обычный {self.start}матч{self.stop} текст"
+        result = self._apply(text)
+        self.assertIn("<mark>матч</mark>", result)
+        self.assertNotIn(self.start, result)
+        self.assertNotIn(self.stop, result)
+
+    def test_xss_script_tag_is_escaped(self):
+        text = f"до {self.start}слово{self.stop} <script>alert(1)</script> после"
+        result = self._apply(text)
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+        self.assertIn("<mark>слово</mark>", result)
+
+    def test_empty_string_returns_empty(self):
+        self.assertEqual(self._apply(""), "")
+
+    def test_none_returns_empty(self):
+        self.assertEqual(self._apply(None), "")
+
+    def test_no_sentinels_returns_plain_escaped_text(self):
+        result = self._apply("текст без маркеров & символы <b>")
+        self.assertIn("&amp;", result)
+        self.assertIn("&lt;b&gt;", result)
+        self.assertNotIn("<b>", result)
+
+    def test_result_is_mark_safe(self):
+        from django.utils.html import conditional_escape
+
+        text = f"{self.start}слово{self.stop}"
+        result = self._apply(text)
+        # mark_safe means conditional_escape won't double-escape
+        self.assertEqual(conditional_escape(result), result)
+
+
 class ForumIndexViewTests(TestCase):
     def setUp(self):
         self.cat1 = ForumCategory.objects.create(
@@ -1105,3 +1336,181 @@ class ViewtopicRedirectTests(TestCase):
             status_code=301,
             fetch_redirect_response=False,
         )
+
+
+class ForumSearchViewTest(TestCase):
+    def setUp(self):
+        from .search import rebuild_search_index
+
+        self.category = ForumCategory.objects.create(
+            phpbb_id=90001, name="SearchViewCat"
+        )
+        self.subforum = SubForum.objects.create(
+            phpbb_id=90010,
+            phpbb_parent_id=90001,
+            category=self.category,
+            name="SearchViewSub",
+        )
+        self.private_group = Group.objects.create(name="search_private_group")
+        self.private_subforum = SubForum.objects.create(
+            phpbb_id=90011,
+            phpbb_parent_id=90001,
+            category=self.category,
+            name="SearchPrivateSub",
+            is_private=True,
+            allowed_group=self.private_group,
+        )
+        self._counter = 90100
+        self.url = reverse("forum-search")
+        self._rebuild = rebuild_search_index
+
+    def _next_id(self):
+        self._counter += 1
+        return self._counter
+
+    def _topic(self, title, subforum=None):
+        return Topic.objects.create(
+            phpbb_id=self._next_id(),
+            subforum=subforum or self.subforum,
+            title=title,
+        )
+
+    def _post(self, topic, text_html, seconds_offset=0):
+        return Post.objects.create(
+            phpbb_id=self._next_id(),
+            topic=topic,
+            text_html=text_html,
+            text_bbcode="",
+            created_at=datetime.datetime(2010, 1, 1, tzinfo=datetime.UTC)
+            + datetime.timedelta(seconds=seconds_offset),
+        )
+
+    def test_empty_q_returns_200_with_hint(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "forum/search.html")
+        self.assertContains(response, "Введите слово")
+
+    def test_empty_q_with_whitespace_returns_200_with_hint(self):
+        response = self.client.get(self.url + "?q=   ")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Введите слово")
+
+    def test_zero_results_shows_nothing_found(self):
+        response = self.client.get(self.url + "?q=несуществующееслово12345")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ничего не найдено")
+
+    def test_morphology_pokhod_finds_pokhody(self):
+        topic = self._topic("Летний маршрут")
+        self._post(topic, "<p>Лучшие походы по Кавказу</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=поход")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Летний маршрут")
+
+    def test_title_match_ranks_above_body_match(self):
+        topic_title = self._topic("Эльбрус восхождение маршрут")
+        self._post(topic_title, "<p>обычный текст про горы</p>", seconds_offset=0)
+
+        topic_body = self._topic("Другая тема")
+        self._post(topic_body, "<p>эльбрус — красивая гора</p>", seconds_offset=0)
+
+        self._rebuild()
+        response = self.client.get(self.url + "?q=эльбрус")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        idx_title = content.find("Эльбрус восхождение маршрут")
+        idx_body = content.find("Другая тема")
+        self.assertGreater(idx_title, -1)
+        self.assertGreater(idx_body, -1)
+        self.assertLess(idx_title, idx_body)
+
+    def test_anon_cannot_see_private_subforum_results(self):
+        topic = self._topic("Секретный поход", subforum=self.private_subforum)
+        self._post(topic, "<p>секретные данные экспедиции</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=секретный")
+        self.assertNotContains(response, "Секретный поход")
+
+    def test_user_in_group_sees_private_results(self):
+        topic = self._topic("Закрытый маршрут", subforum=self.private_subforum)
+        self._post(topic, "<p>закрытая экспедиция клуба</p>")
+        self._rebuild()
+        user = User.objects.create_user("member_search", password="x")
+        user.groups.add(self.private_group)
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?q=закрытый")
+        self.assertContains(response, "Закрытый маршрут")
+
+    def test_user_not_in_group_cannot_see_private_results(self):
+        topic = self._topic("Приватный маршрут", subforum=self.private_subforum)
+        self._post(topic, "<p>приватный контент экспедиции</p>")
+        self._rebuild()
+        user = User.objects.create_user("outsider_search", password="x")
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?q=приватный")
+        self.assertNotContains(response, "Приватный маршрут")
+
+    def test_staff_sees_private_results(self):
+        topic = self._topic("Штабной поход", subforum=self.private_subforum)
+        self._post(topic, "<p>штабная информация похода</p>")
+        self._rebuild()
+        staff = User.objects.create_user("staff_search", password="x", is_staff=True)
+        self.client.force_login(staff)
+        response = self.client.get(self.url + "?q=штабной")
+        self.assertContains(response, "Штабной поход")
+
+    def test_result_link_uses_topic_url_with_post_anchor(self):
+        topic = self._topic("Кавказский маршрут")
+        post = self._post(topic, "<p>кавказские горы и тропы</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=кавказский")
+        self.assertContains(response, f'href="/forum/viewtopic.php?p={post.phpbb_id}"')
+
+    def test_body_match_snippet_contains_mark_tag(self):
+        topic = self._topic("Тема со словом")
+        self._post(topic, "<p>уникальнейшее слово в тексте сообщения</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=уникальнейшее")
+        self.assertContains(response, "<mark>")
+
+    def test_xss_angle_brackets_are_escaped_in_snippet(self):
+        # search_text can contain angle-bracket content (from html.unescape in
+        # rebuild_search_index), e.g. a<b from &lt;b&gt; in original HTML.
+        # highlight_snippet must escape it so it cannot inject HTML.
+        topic = self._topic("XSS тест")
+        self._post(topic, "<p>уязвимость a&lt;b&gt;c текст</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=уязвимость")
+        # Raw unescaped tag from post content must not appear in snippet
+        self.assertNotContains(response, "<b>c")
+
+    def test_htmx_request_returns_partial_template(self):
+        topic = self._topic("HTMX тема")
+        self._post(topic, "<p>htmx партиал тест</p>")
+        self._rebuild()
+        response = self.client.get(self.url + "?q=партиал", HTTP_HX_REQUEST="true")
+        self.assertTemplateUsed(response, "forum/search_results_partial.html")
+        self.assertTemplateNotUsed(response, "forum/search.html")
+
+    def test_normal_request_returns_full_template(self):
+        response = self.client.get(self.url + "?q=горы")
+        self.assertTemplateUsed(response, "forum/search.html")
+
+    def test_vary_header_set(self):
+        response = self.client.get(self.url + "?q=горы")
+        self.assertIn("HX-Request", response.get("Vary", ""))
+
+    def test_partial_sentinel_preserves_q_parameter(self):
+        from urllib.parse import quote
+
+        for i in range(25):
+            topic = self._topic(f"Горный маршрут {i}")
+            self._post(
+                topic, f"<p>горный туризм маршрут номер {i}</p>", seconds_offset=i
+            )
+        self._rebuild()
+        response = self.client.get(self.url + "?q=горный", HTTP_HX_REQUEST="true")
+        encoded_q = quote("горный")
+        self.assertContains(response, f'hx-get="?q={encoded_q}&amp;page=2"')

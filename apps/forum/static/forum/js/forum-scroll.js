@@ -34,6 +34,12 @@
     return result;
   }
 
+  function buildPageUrl(page) {
+    var params = new URLSearchParams(window.location.search);
+    params.set('page', page);
+    return '?' + params.toString();
+  }
+
   function rebuildPaginationLinks(currentPage, total, enteringPage) {
     var nextEl = document.getElementById('pag-next');
     pagination.querySelectorAll('[data-page], .pag-ellipsis').forEach(function (el) { el.remove(); });
@@ -46,7 +52,7 @@
         el.textContent = '…';
       } else {
         el = document.createElement('a');
-        el.href = '?page=' + p;
+        el.href = buildPageUrl(p);
         el.dataset.page = p;
         el.textContent = p;
       }
@@ -85,11 +91,11 @@
     var nextEl = document.getElementById('pag-next');
     if (prevEl) {
       prevEl.classList.toggle('disabled', currentPage <= 1);
-      prevEl.href = '?page=' + Math.max(1, currentPage - 1);
+      prevEl.href = buildPageUrl(Math.max(1, currentPage - 1));
     }
     if (nextEl) {
       nextEl.classList.toggle('disabled', currentPage >= total);
-      nextEl.href = '?page=' + Math.min(total, currentPage + 1);
+      nextEl.href = buildPageUrl(Math.min(total, currentPage + 1));
     }
     if (pageInfo && currentPage) {
       pageInfo.textContent = 'Стр. ' + currentPage + ' из ' + total;

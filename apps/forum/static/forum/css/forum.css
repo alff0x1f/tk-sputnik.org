@@ -422,3 +422,75 @@ details.spoiler > summary:hover::before {
   .post-right{ padding-bottom:14px; }
   .post-avatar{ width:36px; height:36px; border-radius:10px; font-size:13px; }
 }
+
+/* ── Search box (topbar) ──────────────────────────────────── */
+.search-box{
+  display:flex; align-items:center; gap:6px;
+}
+.search-input{
+  height:32px; padding:0 10px;
+  border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); color:var(--ink);
+  font-size:13px; width:220px;
+  transition:border-color .12s, box-shadow .12s;
+  outline:none;
+}
+.search-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(36,112,212,.12);
+}
+.search-btn{
+  height:32px; width:32px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--accent); color:#fff;
+  border:none; border-radius:8px; cursor:pointer;
+  flex-shrink:0;
+  transition:background .12s;
+}
+.search-btn:hover{ background:var(--accent-dark, #1a5cb8); }
+.search-btn svg{
+  width:15px; height:15px;
+  stroke:currentColor; fill:none;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+}
+@media (max-width:720px){
+  .search-input{ width:140px; font-size:12px; }
+}
+
+/* ── Search results ───────────────────────────────────────── */
+.search-result{
+  padding:14px 16px;
+  border-top:1px solid var(--line);
+}
+.search-result:first-child{ border-top:none; }
+.search-result:hover{ background:var(--surface-2); }
+
+.sr-title{
+  font-size:14px; font-weight:600; color:var(--ink);
+  margin-bottom:3px; letter-spacing:-0.005em;
+}
+.sr-title a{ color:inherit; text-decoration:none; }
+.sr-title a:hover{ text-decoration:underline; }
+
+.sr-meta{
+  font-size:12px; color:var(--muted);
+  margin-bottom:5px;
+}
+
+.sr-snippet{
+  font-size:13px; color:var(--ink-2); line-height:1.55;
+}
+.sr-snippet mark{
+  background:rgba(255,208,0,.35);
+  color:var(--ink);
+  border-radius:2px;
+  padding:0 1px;
+}
+
+.search-empty{
+  padding:24px 16px; color:var(--muted); font-size:14px;
+}
+
+.search-hint{
+  padding:20px 0; color:var(--muted); font-size:14px;
+}
