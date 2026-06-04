@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Django 5.2 website for a tourism club (турклуб). Python 3.14+, managed with `uv`.
 
+**Python 3.14 syntax note:** `except A, B:` (no parentheses) is valid — per PEP 758, parentheses are optional in `except`/`except*` clauses when there's no `as` binding, so it means `except (A, B):` and catches both types. This is **not** the old Python 2 `except E, name:` (bind-to-name) syntax, and it is **not** a bug. `apps/challenge/views.py` uses this form (e.g. `except KeyError, ValueError:`). Do not "fix" it by adding parentheses unless an `as` binding is needed.
+
 ## Setup
 
 ```bash
@@ -83,10 +85,11 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
 
 **Apps:**
-- `apps/challenge` — models `Athlete`, `Workout`, `SourceMessage`; leaderboard, review page, photo serving
+- `apps/challenge` — models `Group`, `Athlete`, `Workout`, `SourceMessage`; leaderboard, review page, group assignment page, photo serving
 
 **Models:**
-- `Athlete` — `telegram_id` (PK CharField), `name`
+- `Group` — `name` (unique CharField), `order` (IntegerField, default 0); `Meta.ordering = ["order", "name"]`
+- `Athlete` — `telegram_id` (PK CharField), `name`, `group` (FK to `Group`, `on_delete=SET_NULL`, nullable — deleting a group leaves its athletes ungrouped)
 - `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `total_points`, `msg_id`
 - `SourceMessage` — `msg_id` (PK), `from_id` (Telegram sender ID, db_index), `from_name`, `date`, `datetime` (nullable), `text`, `photos` (JSONField)
 
@@ -103,6 +106,10 @@ uv run python manage.py import_challenge \
 **Photo serving:** `CHALLENGE_CHAT_EXPORT_DIR` in `config/settings.py` (and `.env`) points to the `ChatExport_*` directory. Photos served at `/challenge/photo/<filename>` with path-traversal protection.
 
 **Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
+
+**Leaderboard:** `/challenge/` — public ranking ordered by points. Includes a «Группа» column (`athlete.group.name`, «—» when ungrouped); the queryset uses `.select_related("group")`. Staff see a «Распределение по группам» link to the assignment page.
+
+**Group assignment page:** `/challenge/groups/` — staff-only page listing all athletes, each with a `<select>` (current group or «— без группы —»). Changing a select auto-saves via `PUT /challenge/groups/api/athlete/<telegram_id>/` (route `challenge-api-athlete-group`), body `{"group_id": <id> | null}` → `200 {"ok": true}`; unknown group → `400`, unknown athlete → `404`, invalid JSON → `400`. Groups themselves (CRUD, ordering) are managed in Django admin (`GroupAdmin`); `AthleteAdmin` has a `group` column and `list_filter`.
 
 **Member detail page:** `/challenge/member/<telegram_id>/` — public chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (staff-only UI, PUT/DELETE to the same API as the review page). Messages sent by someone other than the athlete (e.g. when staff links a workout to a message from a group chat) display a `.msg-foreign-badge` label. The `_group_messages(messages, workouts_by_msg, athlete_telegram_id="")` helper in `views.py` computes `foreign_senders` (list of display names) per group using `from_id` for deduplication.
 

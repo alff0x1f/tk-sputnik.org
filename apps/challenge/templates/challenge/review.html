@@ -425,9 +425,9 @@ async function saveWorkout(w, data) {
       },
       body: JSON.stringify(data),
     });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error || resp.statusText);
+    if (!resp.ok || resp.redirected) {
+      const err = !resp.redirected ? await resp.json().catch(() => ({})) : {};
+      throw new Error(err.error || (resp.redirected ? 'Сессия истекла' : resp.statusText));
     }
     const result = await resp.json();
 
@@ -511,9 +511,9 @@ async function addWorkout() {
       },
       body: JSON.stringify(data),
     });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error || resp.statusText);
+    if (!resp.ok || resp.redirected) {
+      const err = !resp.redirected ? await resp.json().catch(() => ({})) : {};
+      throw new Error(err.error || (resp.redirected ? 'Сессия истекла' : resp.statusText));
     }
     const result = await resp.json();
 

@@ -1,11 +1,19 @@
 from django.contrib import admin
 
-from .models import Athlete, SourceMessage, Workout
+from .models import Athlete, Group, SourceMessage, Workout
+
+
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ["name", "order"]
+    list_editable = ["order"]
 
 
 @admin.register(Athlete)
 class AthleteAdmin(admin.ModelAdmin):
-    list_display = ["telegram_id", "name"]
+    list_display = ["telegram_id", "name", "group"]
+    list_filter = ["group"]
+    list_select_related = ["group"]
 
 
 @admin.register(Workout)

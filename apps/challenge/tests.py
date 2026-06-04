@@ -7,7 +7,7 @@ from pathlib import Path
 from django.core.management import call_command
 from django.test import TestCase
 
-from .models import Athlete, SourceMessage, Workout
+from .models import Athlete, Group, SourceMessage, Workout
 from .scoring import compute_base_points, recompute_athlete_scores
 
 
@@ -28,6 +28,34 @@ class AthleteModelTests(TestCase):
 
         with self.assertRaises(IntegrityError):
             Athlete.objects.create(telegram_id="u111", name="Duplicate")
+
+
+class GroupModelTests(TestCase):
+    def test_create_and_str(self):
+        g = Group.objects.create(name="Первая группа", order=1)
+        self.assertEqual(str(g), "Первая группа")
+
+    def test_athlete_created_without_group(self):
+        athlete = Athlete.objects.create(telegram_id="g1", name="Без группы")
+        self.assertIsNone(athlete.group)
+
+    def test_set_null_on_group_delete(self):
+        group = Group.objects.create(name="Вторая группа")
+        athlete = Athlete.objects.create(
+            telegram_id="g2", name="С группой", group=group
+        )
+        self.assertEqual(athlete.group, group)
+
+        group.delete()
+
+        athlete.refresh_from_db()
+        self.assertIsNone(athlete.group)
+        self.assertTrue(Athlete.objects.filter(pk="g2").exists())
+
+    def test_related_name_athletes(self):
+        group = Group.objects.create(name="42")
+        Athlete.objects.create(telegram_id="g3", name="Член", group=group)
+        self.assertEqual(group.athletes.count(), 1)
 
 
 class WorkoutModelTests(TestCase):
@@ -1244,3 +1272,274 @@ class LeaderboardViewTests(TestCase):
         response = self.client.get("/challenge/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["athletes"]), 0)
+
+    def test_leaderboard_shows_group_name(self):
+        group = Group.objects.create(name="Первая группа", order=1)
+        self.anna.group = group
+        self.anna.save()
+        response = self.client.get("/challenge/")
+        content = response.content.decode("utf-8")
+        self.assertIn("Первая группа", content)
+
+    def test_leaderboard_unassigned_shows_dash(self):
+        # Vova has no group → its group cell renders "—"
+        response = self.client.get("/challenge/")
+        content = response.content.decode("utf-8")
+        self.assertIn("col-group", content)
+        self.assertIn("—", content)
+
+    def test_leaderboard_staff_sees_groups_link(self):
+        from django.contrib.auth.models import User
+
+        User.objects.create_user(username="admin", password="password", is_staff=True)
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/")
+        content = response.content.decode("utf-8")
+        self.assertIn("Распределение по группам", content)
+
+    def test_leaderboard_anonymous_no_groups_link(self):
+        response = self.client.get("/challenge/")
+        content = response.content.decode("utf-8")
+        self.assertNotIn("Распределение по группам", content)
+
+    def test_leaderboard_regular_user_no_groups_link(self):
+        from django.contrib.auth.models import User
+
+        User.objects.create_user(username="bob", password="password")
+        self.client.login(username="bob", password="password")
+        response = self.client.get("/challenge/")
+        content = response.content.decode("utf-8")
+        self.assertNotIn("Распределение по группам", content)
+
+
+class GroupsPageViewTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.group1 = Group.objects.create(name="Первая группа", order=1)
+        self.group2 = Group.objects.create(name="Вторая группа", order=2)
+        self.anna = Athlete.objects.create(
+            telegram_id="u1", name="Анна", group=self.group1
+        )
+        self.boris = Athlete.objects.create(telegram_id="u2", name="Борис")
+
+        self.staff = User.objects.create_user(
+            username="admin", password="password", is_staff=True
+        )
+        self.regular = User.objects.create_user(
+            username="regular", password="password", is_staff=False
+        )
+
+    def test_anonymous_redirected(self):
+        response = self.client.get("/challenge/groups/")
+        self.assertIn(response.status_code, [301, 302])
+
+    def test_regular_user_redirected(self):
+        self.client.login(username="regular", password="password")
+        response = self.client.get("/challenge/groups/")
+        self.assertIn(response.status_code, [301, 302])
+
+    def test_staff_can_access(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/groups/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_context_has_all_athletes_and_groups(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/groups/")
+        self.assertEqual(len(response.context["athletes"]), 2)
+        self.assertEqual(len(response.context["groups"]), 2)
+
+    def test_html_has_select_with_options(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/groups/")
+        content = response.content.decode("utf-8")
+        self.assertIn("groups-select", content)
+        self.assertIn("— без группы —", content)
+        self.assertIn("Первая группа", content)
+        self.assertIn("Вторая группа", content)
+
+    def test_selected_option_matches_current_group(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/groups/")
+        content = response.content.decode("utf-8")
+        # Anna is in group1 → that option must be selected
+        self.assertIn(
+            f'<option value="{self.group1.id}" selected>Первая группа</option>',
+            content,
+        )
+
+    def test_unassigned_athlete_has_no_selected_group(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/challenge/groups/")
+        content = response.content.decode("utf-8")
+        # Boris has no group → none of the group options selected for his row;
+        # the empty "no group" option is selected by default (first option).
+        self.assertIn('data-telegram-id="u2"', content)
+        self.assertNotIn(f'<option value="{self.group2.id}" selected>', content)
+
+
+class AthleteGroupAPITests(TestCase):
+    def setUp(self):
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.group = Group.objects.create(name="Первая группа", order=1)
+        from django.contrib.auth.models import User
+
+        self.staff = User.objects.create_user(
+            username="admin", password="password", is_staff=True
+        )
+        self.regular = User.objects.create_user(
+            username="regular", password="password", is_staff=False
+        )
+
+    def _put(self, telegram_id, data, user=None):
+        if user:
+            self.client.force_login(user)
+        return self.client.put(
+            f"/challenge/groups/api/athlete/{telegram_id}/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+
+    # Success
+
+    def test_assign_group_success(self):
+        resp = self._put("u1", {"group_id": self.group.pk}, user=self.staff)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {"ok": True})
+        self.athlete.refresh_from_db()
+        self.assertEqual(self.athlete.group, self.group)
+
+    def test_clear_group_with_null(self):
+        self.athlete.group = self.group
+        self.athlete.save()
+        resp = self._put("u1", {"group_id": None}, user=self.staff)
+        self.assertEqual(resp.status_code, 200)
+        self.athlete.refresh_from_db()
+        self.assertIsNone(self.athlete.group)
+
+    def test_missing_group_id_key_returns_400(self):
+        resp = self._put("u1", {}, user=self.staff)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_non_integer_group_id_returns_400(self):
+        resp = self._put("u1", {"group_id": "abc"}, user=self.staff)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_boolean_group_id_returns_400(self):
+        resp = self._put("u1", {"group_id": True}, user=self.staff)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_list_body_returns_400(self):
+        self.client.force_login(self.staff)
+        resp = self.client.put(
+            "/challenge/groups/api/athlete/u1/",
+            data=json.dumps([1, 2, 3]),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    # Errors
+
+    def test_unknown_group_returns_400(self):
+        resp = self._put("u1", {"group_id": 99999}, user=self.staff)
+        self.assertEqual(resp.status_code, 400)
+        self.athlete.refresh_from_db()
+        self.assertIsNone(self.athlete.group)
+
+    def test_unknown_athlete_returns_404(self):
+        resp = self._put("nope", {"group_id": self.group.pk}, user=self.staff)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_invalid_json_returns_400(self):
+        self.client.force_login(self.staff)
+        resp = self.client.put(
+            "/challenge/groups/api/athlete/u1/",
+            data="not-json",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_utf8_body_returns_400(self):
+        self.client.force_login(self.staff)
+        resp = self.client.put(
+            "/challenge/groups/api/athlete/u1/",
+            data=b"\xff",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    # Auth / method
+
+    def test_unauthenticated_redirects(self):
+        resp = self._put("u1", {"group_id": self.group.pk})
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_non_staff_redirects(self):
+        resp = self._put("u1", {"group_id": self.group.pk}, user=self.regular)
+        self.assertIn(resp.status_code, [301, 302])
+
+    def test_get_not_allowed(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get("/challenge/groups/api/athlete/u1/")
+        self.assertEqual(resp.status_code, 405)
+
+    def test_post_not_allowed(self):
+        self.client.force_login(self.staff)
+        resp = self.client.post(
+            "/challenge/groups/api/athlete/u1/",
+            data=json.dumps({"group_id": self.group.pk}),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 405)
+
+
+class GroupAdminTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.group1 = Group.objects.create(name="Первая группа", order=1)
+        self.group2 = Group.objects.create(name="Вторая группа", order=2)
+        self.anna = Athlete.objects.create(
+            telegram_id="u1", name="Анна", group=self.group1
+        )
+        self.boris = Athlete.objects.create(telegram_id="u2", name="Борис")
+
+        self.superuser = User.objects.create_superuser(
+            username="root", password="password", email="root@example.com"
+        )
+
+    def test_group_changelist_accessible(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get("/admin/challenge/group/")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Первая группа", content)
+        self.assertIn("Вторая группа", content)
+
+    def test_group_changelist_has_order_editable(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get("/admin/challenge/group/")
+        content = response.content.decode("utf-8")
+        # list_editable renders an editable <input> form field for the order column
+        self.assertIn('name="form-0-order"', content)
+
+    def test_athlete_changelist_shows_group_and_filter(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get("/admin/challenge/athlete/")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # group name appears in the row, and the group list_filter sidebar is present
+        self.assertIn("Первая группа", content)
+        self.assertIn(f"group__id__exact={self.group1.pk}", content)
+
+    def test_athlete_changelist_group_filter_query(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get(
+            f"/admin/challenge/athlete/?group__id__exact={self.group1.pk}"
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Filtering by group1 includes Anna but not the unassigned Boris
+        self.assertIn("Анна", content)
+        self.assertNotIn("Борис", content)

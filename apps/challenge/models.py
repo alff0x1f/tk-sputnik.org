@@ -1,9 +1,30 @@
 from django.db import models
 
 
+class Group(models.Model):
+    name = models.CharField("Название", max_length=255, unique=True)
+    order = models.IntegerField("Порядок", default=0)
+
+    class Meta:
+        verbose_name = "Группа"
+        verbose_name_plural = "Группы"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Athlete(models.Model):
     telegram_id = models.CharField("Telegram ID", max_length=64, primary_key=True)
     name = models.CharField("Имя", max_length=255)
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="athletes",
+        verbose_name="Группа",
+    )
 
     class Meta:
         verbose_name = "Участник"

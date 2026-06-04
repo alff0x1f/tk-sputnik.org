@@ -115,11 +115,9 @@ class Command(BaseCommand):
                 if ts
                 else None
             )
-            msg_date = (
-                msg_datetime.date()
-                if msg_datetime
-                else datetime.date.fromisoformat(msg["date"][:10])
-            )
+            # msg["date"] is the local datetime string in the Telegram export.
+            # Using it for date avoids UTC-offset errors near local midnight.
+            msg_date = datetime.date.fromisoformat(msg["date"][:10])
 
             photo = msg.get("photo")
             photos = [photo] if isinstance(photo, str) else []

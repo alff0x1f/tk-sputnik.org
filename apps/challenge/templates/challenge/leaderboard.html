@@ -14,10 +14,17 @@
   </div>
   <div class="feed-sub">Декабрь 2025 — Март 2026</div>
 
+  {% if request.user.is_staff %}
+  <div class="lb-actions">
+    <a class="lb-groups-link" href="{% url 'challenge-groups' %}">Распределение по группам</a>
+  </div>
+  {% endif %}
+
   <div class="lb-table">
     <div class="lb-header">
       <span class="lb-col col-rank">#</span>
       <span class="lb-col col-name">Участник</span>
+      <span class="lb-col col-group">Группа</span>
       <span class="lb-col col-pts">Очки</span>
       <span class="lb-col col-cnt">Активностей</span>
     </div>
@@ -27,6 +34,7 @@
       <div class="lb-athlete">
         <span class="lb-col col-rank">{{ athlete.rank }}</span>
         <span class="lb-col col-name"><a href="{% url 'challenge-member' athlete.telegram_id %}">{{ athlete.name }}</a></span>
+        <span class="lb-col col-group">{{ athlete.group.name|default:"—" }}</span>
         <span class="lb-col col-pts">{{ athlete.total_score }}</span>
         <span class="lb-col col-cnt">{{ athlete.workout_count }}</span>
       </div>

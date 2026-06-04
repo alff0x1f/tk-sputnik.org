@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('challenge', '0002_sourcemessage_datetime'),
+        ("challenge", "0002_sourcemessage_datetime"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='sourcemessage',
-            name='from_id',
-            field=models.CharField(blank=True, db_index=True, max_length=64, verbose_name='Telegram ID отправителя'),
+            model_name="sourcemessage",
+            name="from_id",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                max_length=64,
+                verbose_name="Telegram ID отправителя",
+            ),
         ),
     ]

@@ -10,12 +10,10 @@ from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
-from .models import Athlete, SourceMessage, Workout
+from .models import Athlete, Group, SourceMessage, Workout
 from .scoring import recompute_athlete_scores
 
-_PHOTO_EXTENSIONS = frozenset(
-    {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"}
-)
+_PHOTO_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"})
 
 
 def challenge_photo(request, filename):
@@ -105,17 +103,17 @@ def _workout_response(workout, athlete):
 def api_workout_create(request):
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError, UnicodeDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     try:
         athlete = Athlete.objects.get(pk=data["athlete_id"])
-    except (Athlete.DoesNotExist, KeyError):
+    except Athlete.DoesNotExist, KeyError:
         return JsonResponse({"error": "Athlete not found"}, status=400)
 
     try:
         date = datetime.date.fromisoformat(data["date"])
-    except (KeyError, ValueError):
+    except KeyError, ValueError:
         return JsonResponse({"error": "Invalid date"}, status=400)
 
     activity = data.get("activity", "")
@@ -127,14 +125,14 @@ def api_workout_create(request):
     if msg_id_raw is not None:
         try:
             msg_id_raw = int(msg_id_raw)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return JsonResponse({"error": "Invalid msg_id"}, status=400)
 
     distance_km = data.get("distance_km")
     if distance_km is not None:
         try:
             distance_km = float(distance_km)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return JsonResponse({"error": "Invalid distance_km"}, status=400)
         if distance_km < 0:
             return JsonResponse(
@@ -145,7 +143,7 @@ def api_workout_create(request):
     if pace_min_per_km is not None:
         try:
             pace_min_per_km = float(pace_min_per_km)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return JsonResponse({"error": "Invalid pace_min_per_km"}, status=400)
         if pace_min_per_km < 0:
             return JsonResponse(
@@ -187,7 +185,7 @@ def api_workout_detail(request, pk):
     # PUT
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError, UnicodeDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     if "athlete_id" in data:
@@ -207,7 +205,7 @@ def api_workout_detail(request, pk):
             if val is not None:
                 try:
                     val = float(val)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     return JsonResponse({"error": f"Invalid {field}"}, status=400)
                 if val < 0:
                     return JsonResponse(
@@ -219,7 +217,7 @@ def api_workout_detail(request, pk):
         if data["msg_id"] is not None:
             try:
                 workout.msg_id = int(data["msg_id"])
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return JsonResponse({"error": "Invalid msg_id"}, status=400)
         else:
             workout.msg_id = None
@@ -227,7 +225,7 @@ def api_workout_detail(request, pk):
     if "date" in data:
         try:
             workout.date = datetime.date.fromisoformat(data["date"])
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return JsonResponse({"error": "Invalid date"}, status=400)
 
     try:
@@ -294,9 +292,13 @@ def member_detail(request, telegram_id):
     all_workouts = list(Workout.objects.filter(athlete=athlete))
     linked_workouts = [w for w in all_workouts if w.msg_id is not None]
     workout_msg_ids = [w.msg_id for w in linked_workouts]
-    messages = SourceMessage.objects.filter(
-        Q(from_id=athlete.telegram_id) | Q(msg_id__in=workout_msg_ids)
-    ).order_by("date", "msg_id").distinct()
+    messages = (
+        SourceMessage.objects.filter(
+            Q(from_id=athlete.telegram_id) | Q(msg_id__in=workout_msg_ids)
+        )
+        .order_by("date", "msg_id")
+        .distinct()
+    )
     workouts_by_msg = {}
     for w in linked_workouts:
         workouts_by_msg.setdefault(w.msg_id, []).append(w)
@@ -317,11 +319,52 @@ def member_detail(request, telegram_id):
 
 def leaderboard(request):
     athletes = list(
-        Athlete.objects.annotate(
+        Athlete.objects.select_related("group")
+        .annotate(
             total_score=Sum("workouts__total_points", default=0),
             workout_count=Count("workouts"),
-        ).order_by("-total_score", "name")
+        )
+        .order_by("-total_score", "name")
     )
     for i, athlete in enumerate(athletes, 1):
         athlete.rank = i
     return render(request, "challenge/leaderboard.html", {"athletes": athletes})
+
+
+@staff_member_required
+@require_http_methods(["PUT"])
+def api_athlete_group(request, telegram_id):
+    athlete = get_object_or_404(Athlete, pk=telegram_id)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError, UnicodeDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if not isinstance(data, dict) or "group_id" not in data:
+        return JsonResponse({"error": "group_id required"}, status=400)
+
+    group_id = data["group_id"]
+    if group_id is None:
+        athlete.group = None
+    else:
+        if type(group_id) is not int:
+            return JsonResponse(
+                {"error": "group_id must be an integer or null"}, status=400
+            )
+        try:
+            athlete.group = Group.objects.get(pk=group_id)
+        except Group.DoesNotExist:
+            return JsonResponse({"error": "Group not found"}, status=400)
+    athlete.save(update_fields=["group"])
+    return JsonResponse({"ok": True})
+
+
+@staff_member_required
+def groups(request):
+    athletes = Athlete.objects.select_related("group").order_by("name")
+    all_groups = Group.objects.all()
+    return render(
+        request,
+        "challenge/groups.html",
+        {"athletes": athletes, "groups": all_groups},
+    )

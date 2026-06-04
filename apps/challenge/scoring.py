@@ -54,7 +54,7 @@ def recompute_athlete_scores(athlete):
     gap from the previous qualifying workout (base_points > 0) is ≤ 4 days.
     Same-day deduplication is expected to be handled at import time.
     """
-    workouts = list(athlete.workouts.order_by("date"))
+    workouts = list(athlete.workouts.order_by("date", "pk"))
 
     prev_qualifying_date = None
     for workout in workouts:

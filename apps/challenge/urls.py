@@ -15,6 +15,12 @@ urlpatterns = [
         views.api_workout_detail,
         name="challenge-api-workout-detail",
     ),
+    path("groups/", views.groups, name="challenge-groups"),
+    path(
+        "groups/api/athlete/<str:telegram_id>/",
+        views.api_athlete_group,
+        name="challenge-api-athlete-group",
+    ),
     path("photo/<path:filename>", views.challenge_photo, name="challenge-photo"),
     path("member/<str:telegram_id>/", views.member_detail, name="challenge-member"),
 ]

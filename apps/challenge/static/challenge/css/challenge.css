@@ -5,9 +5,22 @@
   overflow: hidden;
 }
 
+.lb-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.lb-groups-link {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.lb-groups-link:hover { text-decoration: underline; }
+
 .lb-header {
   display: grid;
-  grid-template-columns: 48px 1fr 80px 100px;
+  grid-template-columns: 48px 1fr 120px 80px 100px;
   padding: 10px 16px;
   background: var(--surface-2);
   border-bottom: 1px solid var(--line);
@@ -25,7 +38,7 @@
 
 .lb-athlete {
   display: grid;
-  grid-template-columns: 48px 1fr 80px 100px;
+  grid-template-columns: 48px 1fr 120px 80px 100px;
   align-items: center;
   padding: 12px 16px;
   background: var(--surface);
@@ -36,6 +49,7 @@
 .lb-row:nth-child(-n+5) .col-rank { color: var(--accent); }
 
 .col-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+.col-group { font-size: 13px; color: var(--muted); }
 .col-pts { font-size: 16px; font-weight: 700; color: var(--accent); }
 .col-cnt { font-size: 13px; color: var(--muted); }
 
@@ -555,7 +569,7 @@
 @media (max-width: 600px) {
   .lb-header,
   .lb-athlete {
-    grid-template-columns: 36px 1fr 60px 0;
+    grid-template-columns: 36px 1fr 80px 60px 0;
   }
   .col-cnt { display: none; }
 }

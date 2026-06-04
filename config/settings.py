@@ -178,4 +178,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-CHALLENGE_CHAT_EXPORT_DIR = BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"
+_challenge_export_raw = os.getenv(
+    "CHALLENGE_CHAT_EXPORT_DIR",
+    str(BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"),
+)
+_challenge_export_path = Path(_challenge_export_raw)
+CHALLENGE_CHAT_EXPORT_DIR = (
+    _challenge_export_path
+    if _challenge_export_path.is_absolute()
+    else BASE_DIR / _challenge_export_path
+)
