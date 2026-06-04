@@ -489,6 +489,17 @@
   justify-content: space-between;
 }
 
+.msg-meta-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
 .msg-add-btn {
   display: inline-flex;
   align-items: center;

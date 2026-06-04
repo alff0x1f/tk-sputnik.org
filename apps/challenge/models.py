@@ -55,6 +55,9 @@ class Workout(models.Model):
     pace_min_per_km = models.FloatField("Темп (мин/км)", null=True, blank=True)
     base_points = models.IntegerField("Базовые очки", default=0)
     streak_bonus = models.IntegerField("Бонус серии", default=0)
+    streak_prev_date = models.DateField(
+        "Дата предыдущей тренировки серии", null=True, blank=True
+    )
     total_points = models.IntegerField("Итого очков", default=0)
     msg_id = models.IntegerField("ID сообщения", null=True, blank=True, db_index=True)
 

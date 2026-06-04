@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from apps.challenge.models import Athlete, SourceMessage, Workout
 from apps.challenge.scoring import recompute_athlete_scores
@@ -115,9 +116,14 @@ class Command(BaseCommand):
                 if ts
                 else None
             )
-            # msg["date"] is the local datetime string in the Telegram export.
-            # Using it for date avoids UTC-offset errors near local midnight.
-            msg_date = datetime.date.fromisoformat(msg["date"][:10])
+            # The Telegram export's "date" string is in the local timezone of the
+            # machine that produced it (São Paulo, UTC-3), not Ufa. Derive the
+            # date from the absolute unixtime localized to the project timezone
+            # (Asia/Yekaterinburg) so workouts land on the correct Ufa day.
+            if msg_datetime is not None:
+                msg_date = timezone.localtime(msg_datetime).date()
+            else:
+                msg_date = datetime.date.fromisoformat(msg["date"][:10])
 
             photo = msg.get("photo")
             photos = [photo] if isinstance(photo, str) else []

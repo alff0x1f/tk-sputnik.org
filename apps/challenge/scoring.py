@@ -7,9 +7,12 @@ def compute_base_points(activity, distance_km, pace_min_per_km):
         return 2
 
     if activity == "running":
-        if distance_km is None or pace_min_per_km is None:
+        if distance_km is None:
             return 0
-        if pace_min_per_km >= 10:
+        # Темп указывают не всегда; если он отсутствует, считаем его
+        # достаточным (<10 мин/км) и начисляем по дистанции. Ноль ставим
+        # только когда темп задан явно и он 10 мин/км или хуже.
+        if pace_min_per_km is not None and pace_min_per_km >= 10:
             return 0
         if distance_km >= 10:
             return 3
@@ -64,17 +67,23 @@ def recompute_athlete_scores(athlete):
         workout.base_points = base
 
         if base > 0:
-            if prev_qualifying_date is not None:
-                gap = (workout.date - prev_qualifying_date).days
-                workout.streak_bonus = 1 if gap <= 4 else 0
+            if (
+                prev_qualifying_date is not None
+                and (workout.date - prev_qualifying_date).days <= 4
+            ):
+                workout.streak_bonus = 1
+                workout.streak_prev_date = prev_qualifying_date
             else:
                 workout.streak_bonus = 0
+                workout.streak_prev_date = None
             prev_qualifying_date = workout.date
         else:
             workout.streak_bonus = 0
+            workout.streak_prev_date = None
 
         workout.total_points = workout.base_points + workout.streak_bonus
 
     Workout.objects.bulk_update(
-        workouts, ["base_points", "streak_bonus", "total_points"]
+        workouts,
+        ["base_points", "streak_bonus", "streak_prev_date", "total_points"],
     )

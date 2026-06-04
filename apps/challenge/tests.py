@@ -147,9 +147,14 @@ class ComputeBasePointsTests(TestCase):
         self.assertEqual(compute_base_points("hiking", None, None), 2)
         self.assertEqual(compute_base_points("hiking", 0.0, None), 2)
 
-    def test_running_none_inputs(self):
+    def test_running_none_distance(self):
         self.assertEqual(compute_base_points("running", None, 5.0), 0)
-        self.assertEqual(compute_base_points("running", 10.0, None), 0)
+
+    def test_running_missing_pace_assumed_sufficient(self):
+        # Темп не указан → считаем достаточным и начисляем по дистанции.
+        self.assertEqual(compute_base_points("running", 10.0, None), 3)
+        self.assertEqual(compute_base_points("running", 5.0, None), 2)
+        self.assertEqual(compute_base_points("running", 4.9, None), 0)
 
     def test_running_pace_too_slow(self):
         self.assertEqual(compute_base_points("running", 10.0, 10.0), 0)
@@ -239,14 +244,17 @@ class RecomputeAthleteScoresTests(TestCase):
         self.assertEqual(w1.base_points, 2)
         self.assertEqual(w1.streak_bonus, 0)
         self.assertEqual(w1.total_points, 2)
+        self.assertIsNone(w1.streak_prev_date)
 
         self.assertEqual(w2.base_points, 2)
         self.assertEqual(w2.streak_bonus, 1)
         self.assertEqual(w2.total_points, 3)
+        self.assertEqual(w2.streak_prev_date, d1)
 
         self.assertEqual(w3.base_points, 2)
         self.assertEqual(w3.streak_bonus, 1)
         self.assertEqual(w3.total_points, 3)
+        self.assertEqual(w3.streak_prev_date, d2)
 
     def test_gap_over_four_days_resets_bonus(self):
         d1 = datetime.date(2026, 1, 1)
@@ -262,6 +270,8 @@ class RecomputeAthleteScoresTests(TestCase):
         self.assertEqual(w1.streak_bonus, 0)
         self.assertEqual(w2.streak_bonus, 0)
         self.assertEqual(w2.total_points, 2)
+        self.assertIsNone(w1.streak_prev_date)
+        self.assertIsNone(w2.streak_prev_date)
 
     def test_zero_point_workout_does_not_count_for_streak(self):
         # A zero-point workout in the middle should not continue the streak chain.
@@ -280,8 +290,11 @@ class RecomputeAthleteScoresTests(TestCase):
 
         self.assertEqual(w2.base_points, 0)
         self.assertEqual(w2.streak_bonus, 0)
+        self.assertIsNone(w2.streak_prev_date)
         # w3 gap from last qualifying (w1, Jan 1) = 4 days → streak
         self.assertEqual(w3.streak_bonus, 1)
+        # bonus references the last qualifying workout (w1), not the zero-point w2
+        self.assertEqual(w3.streak_prev_date, d1)
 
     def test_no_workouts(self):
         # Should not raise with empty workout list.
@@ -294,6 +307,23 @@ class RecomputeAthleteScoresTests(TestCase):
         self.assertEqual(w.base_points, 2)
         self.assertEqual(w.streak_bonus, 0)
         self.assertEqual(w.total_points, 2)
+        self.assertIsNone(w.streak_prev_date)
+
+    def test_recompute_clears_stale_streak_prev_date(self):
+        # A workout that loses its bonus must also clear streak_prev_date.
+        w = Workout.objects.create(
+            athlete=self.athlete,
+            date=datetime.date(2026, 1, 1),
+            activity="skiing",
+            distance_km=8.0,
+            streak_bonus=1,
+            streak_prev_date=datetime.date(2025, 12, 30),
+            total_points=3,
+        )
+        recompute_athlete_scores(self.athlete)
+        w.refresh_from_db()
+        self.assertEqual(w.streak_bonus, 0)
+        self.assertIsNone(w.streak_prev_date)
 
     def test_recompute_updates_existing_wrong_values(self):
         # Simulate stale DB values that need correction.

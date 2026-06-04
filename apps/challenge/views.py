@@ -91,6 +91,11 @@ def _workout_response(workout, athlete):
                 "id": workout.pk,
                 "base_points": workout.base_points,
                 "streak_bonus": workout.streak_bonus,
+                "streak_prev_date": (
+                    workout.streak_prev_date.isoformat()
+                    if workout.streak_prev_date
+                    else None
+                ),
                 "total_points": workout.total_points,
             },
             "athlete_total": total,
