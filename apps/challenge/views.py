@@ -1,12 +1,10 @@
 import datetime
 import json
-from pathlib import Path
 
-from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
-from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
@@ -14,26 +12,7 @@ from django.views.decorators.http import require_http_methods
 from .models import Athlete, Group, Report, SourceMessage, Workout
 from .scoring import recompute_athlete_scores
 
-_PHOTO_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"})
-
 MAX_REPORT_LEN = 2000
-
-
-def challenge_photo(request, filename):
-    base = Path(settings.CHALLENGE_CHAT_EXPORT_DIR).resolve()
-    photo_path = (base / filename).resolve()
-    if not photo_path.is_relative_to(base / "photos"):
-        raise Http404
-    if photo_path.suffix.lower() not in _PHOTO_EXTENSIONS:
-        raise Http404
-    if not photo_path.is_file():
-        raise Http404
-    f = open(photo_path, "rb")
-    try:
-        return FileResponse(f)
-    except Exception:
-        f.close()
-        raise
 
 
 @staff_member_required

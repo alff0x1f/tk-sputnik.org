@@ -669,66 +669,6 @@ class ImportChallengeCommandTests(TestCase):
         self.assertIn("2 messages", output)
 
 
-class PhotoViewTests(TestCase):
-    def test_valid_photo_returns_200(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subdir = Path(tmpdir) / "photos"
-            subdir.mkdir()
-            photo = subdir / "photo_001.jpg"
-            photo.write_bytes(b"FAKEJPEG")
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/photos/photo_001.jpg")
-        self.assertEqual(response.status_code, 200)
-
-    def test_root_level_photo_returns_404(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            photo = Path(tmpdir) / "photo_001.jpg"
-            photo.write_bytes(b"FAKEJPEG")
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/photo_001.jpg")
-        self.assertEqual(response.status_code, 404)
-
-    def test_video_files_subtree_blocked(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subdir = Path(tmpdir) / "video_files"
-            subdir.mkdir()
-            video = subdir / "clip.mp4"
-            video.write_bytes(b"FAKEVIDEO")
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/video_files/clip.mp4")
-        self.assertEqual(response.status_code, 404)
-
-    def test_missing_photo_returns_404(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/nonexistent.jpg")
-        self.assertEqual(response.status_code, 404)
-
-    def test_path_traversal_returns_404(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/../../etc/passwd")
-        self.assertEqual(response.status_code, 404)
-
-    def test_nested_path_valid(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subdir = Path(tmpdir) / "photos"
-            subdir.mkdir()
-            photo = subdir / "img.jpg"
-            photo.write_bytes(b"FAKEJPEG")
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/photos/img.jpg")
-        self.assertEqual(response.status_code, 200)
-
-    def test_non_photo_extension_returns_404(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            data_file = Path(tmpdir) / "result.json"
-            data_file.write_text('{"messages": []}')
-            with self.settings(CHALLENGE_CHAT_EXPORT_DIR=tmpdir):
-                response = self.client.get("/challenge/photo/result.json")
-        self.assertEqual(response.status_code, 404)
-
-
 class ReviewViewTests(TestCase):
     def setUp(self):
         self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")

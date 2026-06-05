@@ -110,7 +110,9 @@ uv run python manage.py import_challenge \
 # expected output: Imported N athletes, M workouts, K messages
 ```
 
-**Photo serving:** `CHALLENGE_CHAT_EXPORT_DIR` in `config/settings.py` (and `.env`) points to the `ChatExport_*` directory. Photos served at `/challenge/photo/<filename>` with path-traversal protection.
+**Photo serving:** photos live in `media/challenge/photos/` and are served as plain media files at `/media/challenge/...` — by Django's `static(MEDIA_URL, …)` in dev (`config/urls.py`) and by nginx in production. There is no Python view in the path. `SourceMessage.photos` stores the export-relative paths unchanged (e.g. `photos/photo_123….jpg`), and templates prepend `/media/challenge/`. Copy the files into place manually after an import:
+
+`CHALLENGE_CHAT_EXPORT_DIR` in `config/settings.py` (and `.env`) still points to the `ChatExport_*` directory — `import_challenge` reads `result.json` from there.
 
 **Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
 

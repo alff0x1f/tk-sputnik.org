@@ -39,8 +39,8 @@
       {% if group.photos %}
       <div class="msg-photos">
         {% for photo in group.photos %}
-        <a href="{% url 'challenge-photo' photo %}" class="msg-photo-link" onclick="openLightbox(this, event)">
-          <img class="msg-photo-img" src="{% url 'challenge-photo' photo %}" alt="фото">
+        <a href="/media/challenge/{{ photo }}" class="msg-photo-link" onclick="openLightbox(this, event)">
+          <img class="msg-photo-img" src="/media/challenge/{{ photo }}" alt="фото">
         </a>
         {% endfor %}
       </div>
