@@ -253,9 +253,9 @@ for g in groups:
 **Files:**
 - Modify: `apps/challenge/static/challenge/css/challenge.css`
 
-- [ ] добавить стили `.msg-report-btn`, `.report-form`, `.report-text`, `.report-actions`, `.msg-report-badge`, `.report-list`, `.report-item` в стиле существующих классов
-- [ ] проверить визуально, что элементы не ломают раскладку пузырей (ручная проверка в Post-Completion)
-- [ ] (нет нового кода с логикой — отдельных тестов не требуется; функциональность покрыта Task 6–7)
+- [x] добавить стили `.msg-report-btn`, `.report-form`, `.report-text`, `.report-actions`, `.msg-report-badge`, `.report-list`, `.report-item` в стиле существующих классов
+- [x] проверить визуально, что элементы не ломают раскладку пузырей (ручная проверка в Post-Completion)
+- [x] (нет нового кода с логикой — отдельных тестов не требуется; функциональность покрыта Task 6–7)
 
 ### Task 9: Verify acceptance criteria
 - [ ] проверить, что все требования из Overview реализованы (анонимная жалоба, привязка к сообщению, обязательный текст, кнопка на всех пузырях, бейдж/резолв для staff, admin)
