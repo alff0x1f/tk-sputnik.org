@@ -231,11 +231,11 @@ for g in groups:
 - Modify: `apps/challenge/templates/challenge/member.html`
 - Modify: `apps/challenge/tests.py`
 
-- [ ] добавить кнопку `.msg-report-btn` в `.msg-meta` каждого пузыря (SVG-флажок, `openReportForm`)
-- [ ] добавить скрытую форму `.report-form[data-report-msg]` с `<textarea.report-text maxlength="2000">` и кнопками Отправить/Отмена
-- [ ] добавить JS `openReportForm`, `cancelReport`, `submitReport` (POST с `getCsrfToken()`, пустой текст блокируется; при успехе кнопка → «Отправлено ✓» + `disabled`, textarea очищается — без повторной отправки)
-- [ ] написать тест: на странице участника (аноним) присутствует разметка кнопки/формы жалобы на всех пузырях
-- [ ] запустить тесты — должны пройти перед Task 7
+- [x] добавить кнопку `.msg-report-btn` в `.msg-meta` каждого пузыря (SVG-флажок, `openReportForm`)
+- [x] добавить скрытую форму `.report-form[data-report-msg]` с `<textarea.report-text maxlength="2000">` и кнопками Отправить/Отмена
+- [x] добавить JS `openReportForm`, `cancelReport`, `submitReport` (POST с `getCsrfToken()`, пустой текст блокируется; при успехе кнопка → «Отправлено ✓» + `disabled`, textarea очищается — без повторной отправки)
+- [x] написать тест: на странице участника (аноним) присутствует разметка кнопки/формы жалобы на всех пузырях
+- [x] запустить тесты — должны пройти перед Task 7
 
 ### Task 7: Шаблон — бейдж и резолв (для staff)
 

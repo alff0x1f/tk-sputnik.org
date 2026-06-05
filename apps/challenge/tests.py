@@ -1343,6 +1343,27 @@ class MemberDetailViewTests(TestCase):
         for g in groups:
             self.assertNotIn("reports", g)
 
+    def test_report_button_and_form_present_for_anonymous(self):
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("msg-report-btn", content)
+        self.assertIn("report-form", content)
+        self.assertIn("report-text", content)
+        self.assertIn("submitReport", content)
+
+    def test_report_button_on_every_bubble(self):
+        # Two bubbles for Анна (1001 with workout, 1002 plain) → two report buttons.
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertEqual(content.count('class="msg-report-btn"'), 2)
+        self.assertEqual(content.count('class="report-form"'), 2)
+
+    def test_report_button_visible_to_staff_too(self):
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("msg-report-btn", content)
+
 
 class LeaderboardViewTests(TestCase):
     def setUp(self):

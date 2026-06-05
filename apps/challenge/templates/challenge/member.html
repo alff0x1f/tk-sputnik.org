@@ -149,11 +149,22 @@
           {% if group.msgs.0.datetime %}<span class="msg-time">{{ group.msgs.0.datetime|date:"H:i" }}</span>{% endif %}
           <span>#{{ group.primary_msg_id }}</span>
         </span>
+        <button class="msg-report-btn" data-report-btn="{{ group.primary_msg_id }}" onclick="openReportForm('{{ group.primary_msg_id }}')" title="Сообщить об ошибке">
+          <svg viewBox="0 0 24 24"><path d="M4 21V4M4 4h11l-2 4 2 4H4"/></svg>
+        </button>
         {% if request.user.is_staff %}
         <button class="msg-add-btn" onclick="openCreateForm('{{ group.primary_msg_id }}', '{{ group.date|date:'Y-m-d' }}')" title="Добавить тренировку">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         {% endif %}
+      </div>
+
+      <div class="report-form" data-report-msg="{{ group.primary_msg_id }}" style="display:none">
+        <textarea class="report-text" maxlength="2000" placeholder="Опишите ошибку: неверная или отсутствующая тренировка…"></textarea>
+        <div class="report-actions">
+          <button class="report-btn-send" onclick="submitReport('{{ group.primary_msg_id }}')">Отправить</button>
+          <button class="report-btn-cancel" onclick="cancelReport('{{ group.primary_msg_id }}')">Отмена</button>
+        </div>
       </div>
     </div>
     {% empty %}
@@ -305,6 +316,39 @@ async function deleteWorkout(id) {
   });
   if (resp.status !== 204) { alert('Ошибка удаления'); return; }
   location.reload();
+}
+
+function openReportForm(msgId) {
+  const form = document.querySelector(`.report-form[data-report-msg="${msgId}"]`);
+  form.style.display = '';
+  form.querySelector('.report-text').focus();
+}
+
+function cancelReport(msgId) {
+  document.querySelector(`.report-form[data-report-msg="${msgId}"]`).style.display = 'none';
+}
+
+async function submitReport(msgId) {
+  const form = document.querySelector(`.report-form[data-report-msg="${msgId}"]`);
+  const textarea = form.querySelector('.report-text');
+  const text = textarea.value.trim();
+  if (!text) { alert('Опишите ошибку'); return; }
+
+  const resp = await fetch(`/challenge/member/${ATHLETE_ID}/api/report/`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+    body: JSON.stringify({msg_id: parseInt(msgId), text}),
+  });
+  if (!resp.ok || resp.redirected) { alert('Ошибка отправки'); return; }
+
+  form.style.display = 'none';
+  textarea.value = '';
+  const btn = document.querySelector(`.msg-report-btn[data-report-btn="${msgId}"]`);
+  if (btn) {
+    btn.disabled = true;
+    btn.title = 'Отправлено';
+    btn.innerHTML = '<span class="msg-report-sent">Отправлено ✓</span>';
+  }
 }
 </script>
 {% endblock %}
