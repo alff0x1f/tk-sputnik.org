@@ -90,7 +90,7 @@ Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
 **Models:**
 - `Group` — `name` (unique CharField), `order` (IntegerField, default 0); `Meta.ordering = ["order", "name"]`
 - `Athlete` — `telegram_id` (PK CharField), `name`, `group` (FK to `Group`, `on_delete=SET_NULL`, nullable — deleting a group leaves its athletes ungrouped)
-- `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `total_points`, `msg_id`
+- `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `streak_prev_date` (nullable DateField — date of previous qualifying workout in the streak chain), `total_points`, `msg_id`; `UniqueConstraint` on `(athlete, date, activity)` — CRUD API returns 400 on duplicate
 - `SourceMessage` — `msg_id` (PK), `from_id` (Telegram sender ID, db_index), `from_name`, `date`, `datetime` (nullable), `text`, `photos` (JSONField)
 
 **Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`. Hiking (`activity == "hiking"`, «Пеший поход» — also covers тренировочный выезд с ГШ) scores a flat **2** base points and is excluded from the streak: it earns no `streak_bonus` and does not advance the streak chain, so neighbouring workouts measure their gap across it as if it were not there.

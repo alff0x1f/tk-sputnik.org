@@ -168,7 +168,7 @@
       </div>
 
       {% if request.user.is_staff and group.reports %}
-      <div class="msg-report-badge">⚠ {{ group.reports|length }} жалоб</div>
+      {% with cnt=group.reports|length %}<div class="msg-report-badge">⚠ {{ cnt }} {% if cnt == 1 %}жалоба{% elif cnt <= 4 %}жалобы{% else %}жалоб{% endif %}</div>{% endwith %}
       <div class="report-list">
         {% for report in group.reports %}
         <div class="report-item" data-report-id="{{ report.pk }}">
@@ -369,7 +369,23 @@ async function resolveReport(pk) {
     headers: {'X-CSRFToken': getCsrfToken()},
   });
   if (!resp.ok || resp.redirected) { alert('Ошибка'); return; }
-  document.querySelector(`.report-item[data-report-id="${pk}"]`)?.remove();
+  const item = document.querySelector(`.report-item[data-report-id="${pk}"]`);
+  if (!item) return;
+  const list = item.closest('.report-list');
+  item.remove();
+  if (list) {
+    const remaining = list.querySelectorAll('.report-item').length;
+    if (remaining === 0) {
+      list.previousElementSibling?.remove();
+      list.remove();
+    } else {
+      const badge = list.previousElementSibling;
+      if (badge && badge.classList.contains('msg-report-badge')) {
+        const word = remaining === 1 ? 'жалоба' : remaining <= 4 ? 'жалобы' : 'жалоб';
+        badge.textContent = `⚠ ${remaining} ${word}`;
+      }
+    }
+  }
 }
 </script>
 {% endblock %}

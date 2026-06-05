@@ -1387,7 +1387,7 @@ class MemberDetailViewTests(TestCase):
         )
         response = self.client.get(self._url())
         content = response.content.decode("utf-8")
-        self.assertNotIn("msg-report-badge", content)
+        self.assertNotIn('class="msg-report-badge"', content)
         self.assertNotIn('class="report-item"', content)
         self.assertNotIn("Эта тренировка неверная", content)
 
