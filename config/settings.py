@@ -180,7 +180,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 _challenge_export_raw = os.getenv(
     "CHALLENGE_CHAT_EXPORT_DIR",
-    str(BASE_DIR / "scratch/ChatExport_2026-04-02"),
+    str(BASE_DIR / "scratch/challenge/ChatExport_2026-04-02"),
 )
 _challenge_export_path = Path(_challenge_export_raw)
 CHALLENGE_CHAT_EXPORT_DIR = (

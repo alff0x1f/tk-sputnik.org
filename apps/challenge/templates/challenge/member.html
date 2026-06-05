@@ -1,5 +1,5 @@
 {% extends "demo/base.html" %}
-{% load static %}
+{% load static challenge_extras %}
 
 {% block title %}{{ athlete.name }} — Челлендж{% endblock %}
 
@@ -18,7 +18,7 @@
     <div class="member-stats">
       <span class="member-stat-pts">{{ total_points }} очков</span>
       <span class="member-stat-sep">·</span>
-      <span class="member-stat-cnt">{{ workout_count }} активностей</span>
+      <span class="member-stat-cnt">{{ workout_count }} {{ workout_count|pluralize_ru:"активность,активности,активностей" }}</span>
     </div>
   </div>
 

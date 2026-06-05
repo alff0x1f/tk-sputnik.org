@@ -1195,7 +1195,7 @@ class MemberDetailViewTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Анна", content)
         self.assertIn("3 очков", content)
-        self.assertIn("1 активностей", content)
+        self.assertIn("1 активность", content)
 
     def test_non_staff_cannot_see_edit_delete_buttons(self):
         self.client.login(username="regular", password="password")
