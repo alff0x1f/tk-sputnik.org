@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
 from .models import Athlete, Group, Report, SourceMessage, Workout
@@ -294,6 +295,7 @@ def _group_messages(messages, workouts_by_msg, athlete_telegram_id=""):
     return groups
 
 
+@ensure_csrf_cookie
 def member_detail(request, telegram_id):
     athlete = get_object_or_404(Athlete, pk=telegram_id)
     all_workouts = list(Workout.objects.filter(athlete=athlete))
@@ -310,6 +312,15 @@ def member_detail(request, telegram_id):
     for w in linked_workouts:
         workouts_by_msg.setdefault(w.msg_id, []).append(w)
     groups = _group_messages(messages, workouts_by_msg, athlete.telegram_id)
+    if request.user.is_staff:
+        primary_ids = [g["primary_msg_id"] for g in groups]
+        reports_by_msg = {}
+        for r in Report.objects.filter(
+            message_id__in=primary_ids, resolved=False
+        ).order_by("created_at"):
+            reports_by_msg.setdefault(r.message_id, []).append(r)
+        for g in groups:
+            g["reports"] = reports_by_msg.get(g["primary_msg_id"], [])
     total_points = sum(w.total_points for w in all_workouts)
     workout_count = len(all_workouts)
     return render(

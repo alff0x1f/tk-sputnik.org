@@ -1296,6 +1296,53 @@ class MemberDetailViewTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertEqual(content.count("wic-header"), 2)
 
+    def test_anonymous_response_sets_csrf_cookie(self):
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("csrftoken", response.cookies)
+
+    def test_staff_sees_reports_for_message(self):
+        Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Эта тренировка неверная",
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        groups = response.context["groups"]
+        reports = [r for g in groups for r in g.get("reports", [])]
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(reports[0].text, "Эта тренировка неверная")
+        for g in groups:
+            if g["primary_msg_id"] == self.msg_with_workout.msg_id:
+                self.assertEqual(len(g["reports"]), 1)
+            else:
+                self.assertEqual(g["reports"], [])
+
+    def test_resolved_reports_excluded(self):
+        Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Уже закрыта",
+            resolved=True,
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        groups = response.context["groups"]
+        reports = [r for g in groups for r in g.get("reports", [])]
+        self.assertEqual(reports, [])
+
+    def test_anonymous_groups_have_no_reports_key(self):
+        Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Жалоба",
+        )
+        response = self.client.get(self._url())
+        groups = response.context["groups"]
+        for g in groups:
+            self.assertNotIn("reports", g)
+
 
 class LeaderboardViewTests(TestCase):
     def setUp(self):
