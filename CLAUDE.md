@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Django 5.2 website for a tourism club (турклуб). Python 3.14+, managed with `uv`.
 
+**Python 3.14 syntax note:** `except A, B:` (no parentheses) is valid — per PEP 758, parentheses are optional in `except`/`except*` clauses when there's no `as` binding, so it means `except (A, B):` and catches both types. This is **not** the old Python 2 `except E, name:` (bind-to-name) syntax, and it is **not** a bug. `apps/challenge/views.py` uses this form (e.g. `except KeyError, ValueError:`). Do not "fix" it by adding parentheses unless an `as` binding is needed.
+
 ## Setup
 
 ```bash
@@ -80,6 +82,50 @@ After import, MySQL is no longer needed at runtime — all data lives in Postgre
 - [x] Private subforum access control (is_private + allowed_group)
 - [x] Attachments (`PostAttachment`) — done
 - [x] Full-text search index (`Post.search_text` / `Post.search_vector`) — run `build_forum_search_index` after import
+
+## Challenge app
+
+Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
+
+**Apps:**
+- `apps/challenge` — models `Group`, `Athlete`, `Workout`, `SourceMessage`; leaderboard, review page, group assignment page, photo serving
+
+**Models:**
+- `Group` — `name` (unique CharField), `order` (IntegerField, default 0); `Meta.ordering = ["order", "name"]`
+- `Athlete` — `telegram_id` (PK CharField), `name`, `group` (FK to `Group`, `on_delete=SET_NULL`, nullable — deleting a group leaves its athletes ungrouped)
+- `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `streak_prev_date` (nullable DateField — date of previous qualifying workout in the streak chain), `total_points`, `msg_id`; `UniqueConstraint` on `(athlete, date, activity)` — CRUD API returns 400 on duplicate
+- `SourceMessage` — `msg_id` (PK), `from_id` (Telegram sender ID, db_index), `from_name`, `date`, `datetime` (nullable), `text`, `photos` (JSONField)
+
+**Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`. Hiking (`activity == "hiking"`, «Пеший поход» — also covers тренировочный выезд с ГШ) scores a flat **2** base points and is excluded from the streak: it earns no `streak_bonus` and does not advance the streak chain, so neighbouring workouts measure their gap across it as if it were not there.
+
+**Recompute command (refresh stored scores after a scoring rule change):**
+```bash
+uv run python manage.py recompute_scores
+# expected output: Recomputed scores for N athletes
+```
+Re-runs `recompute_athlete_scores()` for every athlete in place. Needed because import and the review page only recompute on write — a scoring-logic change leaves stored `base_points`/`streak_bonus`/`total_points` stale until this runs.
+
+**Import command (one-time or re-run to refresh):**
+```bash
+uv run python manage.py import_challenge \
+    --scores scratch/challenge/scores.json \
+    --telegram-export scratch/challenge/ChatExport_2026-04-02/result.json
+# expected output: Imported N athletes, M workouts, K messages
+```
+
+**Photo serving:** photos live in `media/challenge/photos/` and are served as plain media files at `/media/challenge/...` — by Django's `static(MEDIA_URL, …)` in dev (`config/urls.py`) and by nginx in production. There is no Python view in the path. `SourceMessage.photos` stores the export-relative paths unchanged (e.g. `photos/photo_123….jpg`), and templates prepend `/media/challenge/`. Copy the files into place manually after an import:
+
+`CHALLENGE_CHAT_EXPORT_DIR` in `config/settings.py` (and `.env`) still points to the `ChatExport_*` directory — `import_challenge` reads `result.json` from there.
+
+**Review page:** `/challenge/review/` — staff-only split panel (photo + message text on the left, editable workout forms with auto-save on the right). CRUD API under `/challenge/review/api/workout/`.
+
+**Leaderboard:** `/challenge/` — public ranking ordered by points. Includes a «Группа» column (`athlete.group.name`, «—» when ungrouped); the queryset uses `.select_related("group")`. Staff see a «Распределение по группам» link to the assignment page.
+
+**Group assignment page:** `/challenge/groups/` — staff-only page listing all athletes, each with a `<select>` (current group or «— без группы —»). Changing a select auto-saves via `PUT /challenge/groups/api/athlete/<telegram_id>/` (route `challenge-api-athlete-group`), body `{"group_id": <id> | null}` → `200 {"ok": true}`; unknown group → `400`, unknown athlete → `404`, invalid JSON → `400`. Groups themselves (CRUD, ordering) are managed in Django admin (`GroupAdmin`); `AthleteAdmin` has a `group` column and `list_filter`.
+
+**Member detail page:** `/challenge/member/<telegram_id>/` — public chat view of all messages from one athlete; messages linked to a workout show an embedded info card with inline edit/delete buttons (staff-only UI, PUT/DELETE to the same API as the review page). Messages sent by someone other than the athlete (e.g. when staff links a workout to a message from a group chat) display a `.msg-foreign-badge` label. The `_group_messages(messages, workouts_by_msg, athlete_telegram_id="")` helper in `views.py` computes `foreign_senders` (list of display names) per group using `from_id` for deduplication.
+
+**Anonymous reports (жалобы):** `Report` model (FK to `SourceMessage` and `Athlete`, `text`, `created_at`, `resolved`) lets anyone flag a wrong or missing workout, tied to a message group's `primary_msg_id` rather than a specific workout. Every message bubble shows a «сообщить об ошибке» button + hidden form for all users. Anonymous create: `POST /challenge/member/<telegram_id>/api/report/` (route `challenge-api-report-create`, no `staff_member_required`), body `{"msg_id": <int>, "text": <str>}` → `201 {"ok": true}`; empty/too-long text (`MAX_REPORT_LEN = 2000`) → `400`, unknown/non-numeric `msg_id` → `400`, unknown athlete → `404`. `member_detail` carries `@ensure_csrf_cookie` so anonymous POSTs have a `csrftoken` cookie. Staff see a `.msg-report-badge` with the count of unresolved reports and a list with «Закрыть» buttons; resolve/delete via `PUT|DELETE /challenge/review/api/report/<pk>/` (route `challenge-api-report-detail`, `@staff_member_required`; PUT sets `resolved=True`, DELETE removes). For staff, `member_detail` loads unresolved reports into each group's `g["reports"]`. Reports are managed in Django admin (`ReportAdmin`, with `list_editable = ["resolved"]`).
 
 ## Branch naming
 

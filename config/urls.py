@@ -28,4 +28,5 @@ urlpatterns = [
     path("contributors/", include("apps.contributors.urls")),
     path("accounts/", include("apps.accounts.urls")),
     path("forum/", include("apps.forum.urls")),
+    path("challenge/", include("apps.challenge.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

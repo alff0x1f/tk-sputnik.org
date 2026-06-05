@@ -28,9 +28,7 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
-    raise ImproperlyConfigured(
-        "DJANGO_SECRET_KEY environment variable is required when DEBUG is False."
-    )
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY environment variable is required.")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
@@ -62,6 +60,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.forum",
     "apps.forum_import",
+    "apps.challenge",
 ]
 
 MIDDLEWARE = [
@@ -177,3 +176,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+_challenge_export_raw = os.getenv(
+    "CHALLENGE_CHAT_EXPORT_DIR",
+    str(BASE_DIR / "scratch/ChatExport_2026-04-02"),
+)
+_challenge_export_path = Path(_challenge_export_raw)
+CHALLENGE_CHAT_EXPORT_DIR = (
+    _challenge_export_path
+    if _challenge_export_path.is_absolute()
+    else BASE_DIR / _challenge_export_path
+)

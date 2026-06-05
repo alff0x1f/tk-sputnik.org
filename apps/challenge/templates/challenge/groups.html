@@ -1,0 +1,170 @@
+{% extends "demo/base.html" %}
+{% load static %}
+
+{% block title %}Распределение по группам — Челлендж — Турклуб Спутник{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'challenge/css/challenge.css' %}">
+<style>
+.groups-page { max-width: 680px; }
+
+.groups-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.groups-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.groups-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.groups-back:hover { color: var(--accent); }
+
+.groups-status {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  margin-left: auto;
+  transition: opacity 0.3s;
+}
+.groups-status.saving { color: var(--muted); }
+.groups-status.saved { color: #2d7a36; }
+.groups-status.error { color: #c0392b; }
+.groups-status.hidden { opacity: 0; }
+
+.groups-table {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.groups-row {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.groups-row:last-child { border-bottom: none; }
+
+.groups-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.groups-select {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  width: 100%;
+}
+.groups-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.groups-empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="feed groups-page">
+  {% csrf_token %}
+  <div class="groups-head">
+    <a class="groups-back" href="{% url 'challenge-leaderboard' %}">&#8592; К лидерборду</a>
+    <h1 class="groups-title">Распределение по группам</h1>
+    <span class="groups-status hidden" id="groups-status"></span>
+  </div>
+
+  <div class="groups-table">
+    {% for athlete in athletes %}
+    <div class="groups-row" id="athlete-{{ athlete.telegram_id }}">
+      <span class="groups-name">{{ athlete.name }}</span>
+      <select class="groups-select" data-telegram-id="{{ athlete.telegram_id }}">
+        <option value="">— без группы —</option>
+        {% for group in groups %}
+        <option value="{{ group.id }}"{% if athlete.group_id == group.id %} selected{% endif %}>{{ group.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% empty %}
+    <div class="groups-empty">Нет участников</div>
+    {% endfor %}
+  </div>
+</main>
+
+<script>
+function getCsrfToken() {
+  return document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+}
+
+let statusTimer = null;
+function showStatus(msg, type) {
+  const el = document.getElementById('groups-status');
+  el.textContent = msg;
+  el.className = 'groups-status ' + type;
+  clearTimeout(statusTimer);
+  if (type === 'saved') {
+    statusTimer = setTimeout(() => { el.className = 'groups-status hidden'; }, 2000);
+  }
+}
+
+async function saveGroup(sel) {
+  const telegramId = sel.dataset.telegramId;
+  const groupId = sel.value === '' ? null : parseInt(sel.value, 10);
+  sel.disabled = true;
+  showStatus('Сохранение…', 'saving');
+  try {
+    const resp = await fetch(
+      '/challenge/groups/api/athlete/' + encodeURIComponent(telegramId) + '/',
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({group_id: groupId}),
+      }
+    );
+    if (!resp.ok || resp.redirected) {
+      const err = !resp.redirected ? await resp.json().catch(() => ({})) : {};
+      throw new Error(err.error || (resp.redirected ? 'Сессия истекла' : resp.statusText));
+    }
+    showStatus('Сохранено ✓', 'saved');
+  } catch (err) {
+    showStatus('Ошибка: ' + err.message, 'error');
+  } finally {
+    sel.disabled = false;
+  }
+}
+
+document.querySelectorAll('.groups-select').forEach(sel => {
+  sel.addEventListener('change', () => saveGroup(sel));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+from django.db import models
+
+
+class Group(models.Model):
+    name = models.CharField("Название", max_length=255, unique=True)
+    order = models.IntegerField("Порядок", default=0)
+
+    class Meta:
+        verbose_name = "Группа"
+        verbose_name_plural = "Группы"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Athlete(models.Model):
+    telegram_id = models.CharField("Telegram ID", max_length=64, primary_key=True)
+    name = models.CharField("Имя", max_length=255)
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="athletes",
+        verbose_name="Группа",
+    )
+
+    class Meta:
+        verbose_name = "Участник"
+        verbose_name_plural = "Участники"
+
+    def __str__(self):
+        return self.name
+
+
+class Workout(models.Model):
+    ACTIVITY_CHOICES = [
+        ("running", "Бег"),
+        ("skiing", "Лыжи"),
+        ("cycling", "Велосипед"),
+        ("swimming", "Плавание"),
+        ("hiking", "Пеший поход"),
+    ]
+
+    athlete = models.ForeignKey(
+        Athlete,
+        on_delete=models.CASCADE,
+        related_name="workouts",
+        verbose_name="Участник",
+    )
+    date = models.DateField("Дата")
+    activity = models.CharField("Активность", max_length=32, choices=ACTIVITY_CHOICES)
+    distance_km = models.FloatField("Расстояние (км)", null=True, blank=True)
+    pace_min_per_km = models.FloatField("Темп (мин/км)", null=True, blank=True)
+    base_points = models.IntegerField("Базовые очки", default=0)
+    streak_bonus = models.IntegerField("Бонус серии", default=0)
+    streak_prev_date = models.DateField(
+        "Дата предыдущей тренировки серии", null=True, blank=True
+    )
+    total_points = models.IntegerField("Итого очков", default=0)
+    msg_id = models.IntegerField("ID сообщения", null=True, blank=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Тренировка"
+        verbose_name_plural = "Тренировки"
+        ordering = ["athlete", "date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["athlete", "date", "activity"],
+                name="unique_workout_per_athlete_date_activity",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.athlete} — {self.activity} {self.date}"
+
+
+class SourceMessage(models.Model):
+    msg_id = models.IntegerField("ID сообщения", primary_key=True)
+    from_id = models.CharField(
+        "Telegram ID отправителя", max_length=64, blank=True, db_index=True
+    )
+    from_name = models.CharField("Отправитель", max_length=255)
+    date = models.DateField("Дата")
+    datetime = models.DateTimeField("Дата и время", null=True, blank=True)
+    text = models.TextField("Текст", blank=True)
+    photos = models.JSONField("Фото", default=list)
+
+    class Meta:
+        verbose_name = "Исходное сообщение"
+        verbose_name_plural = "Исходные сообщения"
+        ordering = ["date", "msg_id"]
+
+    def __str__(self):
+        return f"Сообщение #{self.msg_id} от {self.from_name} ({self.date})"
+
+
+class Report(models.Model):
+    message = models.ForeignKey(
+        SourceMessage,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name="Сообщение",
+    )
+    athlete = models.ForeignKey(
+        Athlete,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name="Участник",
+    )
+    text = models.TextField("Текст жалобы")
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    resolved = models.BooleanField("Обработана", default=False)
+
+    class Meta:
+        verbose_name = "Жалоба"
+        verbose_name_plural = "Жалобы"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Жалоба на #{self.message_id} ({self.created_at:%d.%m.%Y})"
