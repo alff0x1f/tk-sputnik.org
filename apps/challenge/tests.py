@@ -1760,6 +1760,20 @@ class ReportCreateAPITests(TestCase):
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(Report.objects.count(), 0)
 
+    def test_report_create_foreign_message(self):
+        # Message belongs to another athlete with no linked workout for u1 → 400
+        Athlete.objects.create(telegram_id="u2", name="Борис")
+        foreign_msg = SourceMessage.objects.create(
+            msg_id=2001,
+            from_id="u2",
+            from_name="Борис",
+            date=datetime.date(2026, 1, 6),
+            text="Пробежал 5 км",
+        )
+        resp = self._post("u1", {"msg_id": foreign_msg.msg_id, "text": "Ошибка"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
     def test_report_create_invalid_json(self):
         resp = self.client.post(
             self._url("u1"),

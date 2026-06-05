@@ -359,9 +359,10 @@ def api_report_create(request, telegram_id):
     except SourceMessage.DoesNotExist:
         return JsonResponse({"error": "message not found"}, status=400)
 
-    if message.from_id != athlete.telegram_id and not athlete.workouts.filter(
-        msg_id=raw_msg_id
-    ).exists():
+    if (
+        message.from_id != athlete.telegram_id
+        and not athlete.workouts.filter(msg_id=raw_msg_id).exists()
+    ):
         return JsonResponse({"error": "message not found"}, status=400)
 
     Report.objects.create(message=message, athlete=athlete, text=text)
