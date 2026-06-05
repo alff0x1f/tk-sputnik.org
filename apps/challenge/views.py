@@ -78,10 +78,14 @@ def review(request):
         request,
         "challenge/review.html",
         {
-            "cards_json": json.dumps(cards, ensure_ascii=False).replace("</", "<\\/"),
-            "athletes_json": json.dumps(athletes, ensure_ascii=False).replace(
-                "</", "<\\/"
-            ),
+            "cards_json": json.dumps(cards, ensure_ascii=False)
+            .replace("</", "<\\/")
+            .replace(" ", "\\u2028")
+            .replace(" ", "\\u2029"),
+            "athletes_json": json.dumps(athletes, ensure_ascii=False)
+            .replace("</", "<\\/")
+            .replace(" ", "\\u2028")
+            .replace(" ", "\\u2029"),
         },
     )
 
