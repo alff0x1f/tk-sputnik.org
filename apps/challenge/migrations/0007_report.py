@@ -5,26 +5,55 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('challenge', '0006_workout_streak_prev_date'),
+        ("challenge", "0006_workout_streak_prev_date"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Report',
+            name="Report",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.TextField(verbose_name='Текст жалобы')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Создана')),
-                ('resolved', models.BooleanField(default=False, verbose_name='Обработана')),
-                ('athlete', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reports', to='challenge.athlete', verbose_name='Участник')),
-                ('message', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reports', to='challenge.sourcemessage', verbose_name='Сообщение')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("text", models.TextField(verbose_name="Текст жалобы")),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Создана"),
+                ),
+                (
+                    "resolved",
+                    models.BooleanField(default=False, verbose_name="Обработана"),
+                ),
+                (
+                    "athlete",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reports",
+                        to="challenge.athlete",
+                        verbose_name="Участник",
+                    ),
+                ),
+                (
+                    "message",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reports",
+                        to="challenge.sourcemessage",
+                        verbose_name="Сообщение",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Жалоба',
-                'verbose_name_plural': 'Жалобы',
-                'ordering': ['-created_at'],
+                "verbose_name": "Жалоба",
+                "verbose_name_plural": "Жалобы",
+                "ordering": ["-created_at"],
             },
         ),
     ]
