@@ -189,13 +189,13 @@ for g in groups:
 - Modify: `apps/challenge/urls.py`
 - Modify: `apps/challenge/tests.py`
 
-- [ ] добавить константу `MAX_REPORT_LEN = 2000` и импорт `Report` в `views.py`
-- [ ] реализовать `api_report_create(request, telegram_id)` (валидация атлета, JSON, текста; `int(msg_id)` до lookup с ловлей `ValueError`; создание)
-- [ ] добавить маршрут `challenge-api-report-create` в `urls.py`
-- [ ] написать тест `test_report_create_anonymous` → 201, запись создана, `resolved=False`
-- [ ] написать тесты ошибок: `test_report_create_empty_text` → 400, `test_report_create_too_long` → 400, `test_report_create_unknown_msg` → 400, `test_report_create_bad_msg_id` (нечисловой `msg_id`) → 400, `test_report_create_unknown_athlete` → 404
-- [ ] написать тест `test_report_create_csrf_enforced` — `Client(enforce_csrf_checks=True)`: с валидным токеном → 201
-- [ ] запустить тесты — должны пройти перед Task 4
+- [x] добавить константу `MAX_REPORT_LEN = 2000` и импорт `Report` в `views.py`
+- [x] реализовать `api_report_create(request, telegram_id)` (валидация атлета, JSON, текста; `int(msg_id)` до lookup с ловлей `ValueError`; создание)
+- [x] добавить маршрут `challenge-api-report-create` в `urls.py`
+- [x] написать тест `test_report_create_anonymous` → 201, запись создана, `resolved=False`
+- [x] написать тесты ошибок: `test_report_create_empty_text` → 400, `test_report_create_too_long` → 400, `test_report_create_unknown_msg` → 400, `test_report_create_bad_msg_id` (нечисловой `msg_id`) → 400, `test_report_create_unknown_athlete` → 404
+- [x] написать тест `test_report_create_csrf_enforced` — `Client(enforce_csrf_checks=True)`: с валидным токеном → 201
+- [x] запустить тесты — должны пройти перед Task 4
 
 ### Task 4: Эндпоинт резолва жалобы (staff)
 

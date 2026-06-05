@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from .models import Athlete, Group, Report, SourceMessage, Workout
 from .scoring import compute_base_points, recompute_athlete_scores
@@ -1601,6 +1601,96 @@ class AthleteGroupAPITests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 405)
+
+
+class ReportCreateAPITests(TestCase):
+    def setUp(self):
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.message = SourceMessage.objects.create(
+            msg_id=1001,
+            from_id="u1",
+            from_name="Анна",
+            date=datetime.date(2026, 1, 5),
+            text="Пробежала 10 км",
+        )
+
+    def _url(self, telegram_id="u1"):
+        return f"/challenge/member/{telegram_id}/api/report/"
+
+    def _post(self, telegram_id, data):
+        return self.client.post(
+            self._url(telegram_id),
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+
+    def test_report_create_anonymous(self):
+        resp = self._post("u1", {"msg_id": 1001, "text": "Тренировка неверная"})
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(json.loads(resp.content), {"ok": True})
+        self.assertEqual(Report.objects.count(), 1)
+        report = Report.objects.get()
+        self.assertEqual(report.message, self.message)
+        self.assertEqual(report.athlete, self.athlete)
+        self.assertEqual(report.text, "Тренировка неверная")
+        self.assertFalse(report.resolved)
+
+    def test_report_create_empty_text(self):
+        resp = self._post("u1", {"msg_id": 1001, "text": "   "})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_too_long(self):
+        resp = self._post("u1", {"msg_id": 1001, "text": "x" * 2001})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_unknown_msg(self):
+        resp = self._post("u1", {"msg_id": 99999, "text": "Ошибка"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_bad_msg_id(self):
+        resp = self._post("u1", {"msg_id": "not-a-number", "text": "Ошибка"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_missing_msg_id(self):
+        resp = self._post("u1", {"text": "Ошибка"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_unknown_athlete(self):
+        resp = self._post("no_such_id", {"msg_id": 1001, "text": "Ошибка"})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_invalid_json(self):
+        resp = self.client.post(
+            self._url("u1"),
+            data="not-json",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_get_not_allowed(self):
+        resp = self.client.get(self._url("u1"))
+        self.assertEqual(resp.status_code, 405)
+
+    def test_report_create_csrf_enforced(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        # Hit a page that renders {% csrf_token %} to obtain a csrftoken cookie.
+        csrf_client.get("/admin/login/")
+        token = csrf_client.cookies["csrftoken"].value
+        resp = csrf_client.post(
+            self._url("u1"),
+            data=json.dumps({"msg_id": 1001, "text": "Через CSRF"}),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(Report.objects.count(), 1)
 
 
 class ReportAdminTests(TestCase):

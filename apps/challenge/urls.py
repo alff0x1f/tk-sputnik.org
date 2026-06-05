@@ -23,4 +23,9 @@ urlpatterns = [
     ),
     path("photo/<path:filename>", views.challenge_photo, name="challenge-photo"),
     path("member/<str:telegram_id>/", views.member_detail, name="challenge-member"),
+    path(
+        "member/<str:telegram_id>/api/report/",
+        views.api_report_create,
+        name="challenge-api-report-create",
+    ),
 ]

@@ -10,10 +10,12 @@ from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
-from .models import Athlete, Group, SourceMessage, Workout
+from .models import Athlete, Group, Report, SourceMessage, Workout
 from .scoring import recompute_athlete_scores
 
 _PHOTO_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"})
+
+MAX_REPORT_LEN = 2000
 
 
 def challenge_photo(request, filename):
@@ -320,6 +322,31 @@ def member_detail(request, telegram_id):
             "workout_count": workout_count,
         },
     )
+
+
+@require_http_methods(["POST"])
+def api_report_create(request, telegram_id):
+    athlete = get_object_or_404(Athlete, pk=telegram_id)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError, UnicodeDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    text = (data.get("text") or "").strip()
+    if not text:
+        return JsonResponse({"error": "text required"}, status=400)
+    if len(text) > MAX_REPORT_LEN:
+        return JsonResponse({"error": "text too long"}, status=400)
+
+    try:
+        msg_id = int(data["msg_id"])
+        message = SourceMessage.objects.get(pk=msg_id)
+    except SourceMessage.DoesNotExist, KeyError, TypeError, ValueError:
+        return JsonResponse({"error": "message not found"}, status=400)
+
+    Report.objects.create(message=message, athlete=athlete, text=text)
+    return JsonResponse({"ok": True}, status=201)
 
 
 def leaderboard(request):
