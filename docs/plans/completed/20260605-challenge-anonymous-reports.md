@@ -265,8 +265,8 @@ for g in groups:
 - [x] убедиться, что миграции применяются: `uv run python manage.py migrate`
 
 ### Task 10: [Final] Документация
-- [ ] добавить в `CLAUDE.md` в раздел «Challenge app» заметку про модель `Report` и эндпоинты жалоб (создание анонимом, резолв staff, бейдж на member-странице)
-- [ ] переместить этот план в `docs/plans/completed/`
+- [x] добавить в `CLAUDE.md` в раздел «Challenge app» заметку про модель `Report` и эндпоинты жалоб (создание анонимом, резолв staff, бейдж на member-странице)
+- [x] переместить этот план в `docs/plans/completed/`
 
 ## Post-Completion
 *Items requiring manual intervention or external systems — informational only*
