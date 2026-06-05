@@ -1693,6 +1693,59 @@ class ReportCreateAPITests(TestCase):
         self.assertEqual(Report.objects.count(), 1)
 
 
+class ReportDetailAPITests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.message = SourceMessage.objects.create(
+            msg_id=1001,
+            from_id="u1",
+            from_name="Анна",
+            date=datetime.date(2026, 1, 5),
+        )
+        self.report = Report.objects.create(
+            message=self.message, athlete=self.athlete, text="Ошибка"
+        )
+        self.staff = User.objects.create_user(
+            username="staff", password="password", is_staff=True
+        )
+
+    def _url(self, pk=None):
+        return f"/challenge/review/api/report/{pk or self.report.pk}/"
+
+    def test_report_resolve_requires_staff(self):
+        resp = self.client.put(self._url())
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/login/", resp["Location"])
+        self.report.refresh_from_db()
+        self.assertFalse(self.report.resolved)
+
+    def test_report_resolve_sets_resolved(self):
+        self.client.login(username="staff", password="password")
+        resp = self.client.put(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {"ok": True})
+        self.report.refresh_from_db()
+        self.assertTrue(self.report.resolved)
+
+    def test_report_delete(self):
+        self.client.login(username="staff", password="password")
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_detail_unknown_pk(self):
+        self.client.login(username="staff", password="password")
+        resp = self.client.put(self._url(pk=999999))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_report_detail_get_not_allowed(self):
+        self.client.login(username="staff", password="password")
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 405)
+
+
 class ReportAdminTests(TestCase):
     def setUp(self):
         from django.contrib.auth.models import User

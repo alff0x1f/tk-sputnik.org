@@ -204,12 +204,12 @@ for g in groups:
 - Modify: `apps/challenge/urls.py`
 - Modify: `apps/challenge/tests.py`
 
-- [ ] реализовать `api_report_detail(request, pk)` (`@staff_member_required`, PUT → resolved, DELETE → удаление)
-- [ ] добавить маршрут `challenge-api-report-detail` в `urls.py`
-- [ ] написать тест `test_report_resolve_requires_staff` → аноним PUT редиректит на логин
-- [ ] написать тест `test_report_resolve_sets_resolved` → staff PUT → `resolved=True`
-- [ ] написать тест `test_report_delete` → staff DELETE → 204, запись удалена
-- [ ] запустить тесты — должны пройти перед Task 5
+- [x] реализовать `api_report_detail(request, pk)` (`@staff_member_required`, PUT → resolved, DELETE → удаление)
+- [x] добавить маршрут `challenge-api-report-detail` в `urls.py`
+- [x] написать тест `test_report_resolve_requires_staff` → аноним PUT редиректит на логин
+- [x] написать тест `test_report_resolve_sets_resolved` → staff PUT → `resolved=True`
+- [x] написать тест `test_report_delete` → staff DELETE → 204, запись удалена
+- [x] запустить тесты — должны пройти перед Task 5
 
 ### Task 5: Подгрузка жалоб в member_detail
 

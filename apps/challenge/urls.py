@@ -28,4 +28,9 @@ urlpatterns = [
         views.api_report_create,
         name="challenge-api-report-create",
     ),
+    path(
+        "review/api/report/<int:pk>/",
+        views.api_report_detail,
+        name="challenge-api-report-detail",
+    ),
 ]

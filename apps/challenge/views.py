@@ -349,6 +349,19 @@ def api_report_create(request, telegram_id):
     return JsonResponse({"ok": True}, status=201)
 
 
+@staff_member_required
+@require_http_methods(["PUT", "DELETE"])
+def api_report_detail(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    if request.method == "DELETE":
+        report.delete()
+        return HttpResponse(status=204)
+    # PUT
+    report.resolved = True
+    report.save(update_fields=["resolved"])
+    return JsonResponse({"ok": True})
+
+
 def leaderboard(request):
     athletes = list(
         Athlete.objects.select_related("group")
