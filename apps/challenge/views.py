@@ -350,10 +350,18 @@ def api_report_create(request, telegram_id):
     if len(text) > MAX_REPORT_LEN:
         return JsonResponse({"error": "text too long"}, status=400)
 
+    raw_msg_id = data.get("msg_id")
+    # Use type() not isinstance() to reject bool (True/False subclasses int).
+    if type(raw_msg_id) is not int:
+        return JsonResponse({"error": "message not found"}, status=400)
     try:
-        msg_id = int(data["msg_id"])
-        message = SourceMessage.objects.get(pk=msg_id)
-    except SourceMessage.DoesNotExist, KeyError, TypeError, ValueError:
+        message = SourceMessage.objects.get(pk=raw_msg_id)
+    except SourceMessage.DoesNotExist:
+        return JsonResponse({"error": "message not found"}, status=400)
+
+    if message.from_id != athlete.telegram_id and not athlete.workouts.filter(
+        msg_id=raw_msg_id
+    ).exists():
         return JsonResponse({"error": "message not found"}, status=400)
 
     Report.objects.create(message=message, athlete=athlete, text=text)
