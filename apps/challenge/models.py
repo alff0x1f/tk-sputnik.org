@@ -94,3 +94,29 @@ class SourceMessage(models.Model):
 
     def __str__(self):
         return f"Сообщение #{self.msg_id} от {self.from_name} ({self.date})"
+
+
+class Report(models.Model):
+    message = models.ForeignKey(
+        SourceMessage,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name="Сообщение",
+    )
+    athlete = models.ForeignKey(
+        Athlete,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name="Участник",
+    )
+    text = models.TextField("Текст жалобы")
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    resolved = models.BooleanField("Обработана", default=False)
+
+    class Meta:
+        verbose_name = "Жалоба"
+        verbose_name_plural = "Жалобы"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Жалоба на #{self.message_id} ({self.created_at:%d.%m.%Y})"

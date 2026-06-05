@@ -7,7 +7,7 @@ from pathlib import Path
 from django.core.management import call_command
 from django.test import TestCase
 
-from .models import Athlete, Group, SourceMessage, Workout
+from .models import Athlete, Group, Report, SourceMessage, Workout
 from .scoring import compute_base_points, recompute_athlete_scores
 
 
@@ -56,6 +56,31 @@ class GroupModelTests(TestCase):
         group = Group.objects.create(name="42")
         Athlete.objects.create(telegram_id="g3", name="Член", group=group)
         self.assertEqual(group.athletes.count(), 1)
+
+
+class ReportModelTests(TestCase):
+    def setUp(self):
+        self.athlete = Athlete.objects.create(telegram_id="r1", name="Жалобщик")
+        self.message = SourceMessage.objects.create(
+            msg_id=500,
+            from_id="r1",
+            from_name="Жалобщик",
+            date=datetime.date(2026, 1, 5),
+        )
+
+    def test_create_defaults(self):
+        report = Report.objects.create(
+            message=self.message, athlete=self.athlete, text="Тренировка неверная"
+        )
+        self.assertFalse(report.resolved)
+        self.assertIsNotNone(report.created_at)
+        self.assertEqual(Report.objects.count(), 1)
+
+    def test_str_contains_msg_id(self):
+        report = Report.objects.create(
+            message=self.message, athlete=self.athlete, text="Ошибка"
+        )
+        self.assertIn("#500", str(report))
 
 
 class WorkoutModelTests(TestCase):

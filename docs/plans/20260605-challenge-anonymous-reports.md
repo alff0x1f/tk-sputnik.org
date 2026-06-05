@@ -165,11 +165,11 @@ for g in groups:
 - Create: `apps/challenge/migrations/0007_report.py`
 - Modify: `apps/challenge/tests.py`
 
-- [ ] добавить модель `Report` в `apps/challenge/models.py` (поля, `Meta`, `__str__` как в Technical Details)
-- [ ] сгенерировать миграцию: `uv run python manage.py makemigrations challenge` (ожидается `0007_report.py`)
-- [ ] написать тест: создание `Report` через ORM, проверка дефолтов (`resolved is False`, `created_at` заполнен)
-- [ ] написать тест: `__str__` возвращает строку с `#<msg_id>`
-- [ ] запустить тесты: `uv run pytest apps/challenge/tests.py` — должны пройти перед Task 2
+- [x] добавить модель `Report` в `apps/challenge/models.py` (поля, `Meta`, `__str__` как в Technical Details)
+- [x] сгенерировать миграцию: `uv run python manage.py makemigrations challenge` (ожидается `0007_report.py`)
+- [x] написать тест: создание `Report` через ORM, проверка дефолтов (`resolved is False`, `created_at` заполнен)
+- [x] написать тест: `__str__` возвращает строку с `#<msg_id>`
+- [x] запустить тесты: `uv run pytest apps/challenge/tests.py` — должны пройти перед Task 2
 
 ### Task 2: Регистрация Report в admin
 
