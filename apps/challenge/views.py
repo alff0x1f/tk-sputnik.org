@@ -316,7 +316,7 @@ def member_detail(request, telegram_id):
         primary_ids = [g["primary_msg_id"] for g in groups]
         reports_by_msg = {}
         for r in Report.objects.filter(
-            message_id__in=primary_ids, resolved=False
+            message_id__in=primary_ids, resolved=False, athlete=athlete
         ).order_by("created_at"):
             reports_by_msg.setdefault(r.message_id, []).append(r)
         for g in groups:
@@ -344,7 +344,11 @@ def api_report_create(request, telegram_id):
     except json.JSONDecodeError, UnicodeDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    text = (data.get("text") or "").strip()
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_text = data.get("text")
+    text = (raw_text.strip() if isinstance(raw_text, str) else "")
     if not text:
         return JsonResponse({"error": "text required"}, status=400)
     if len(text) > MAX_REPORT_LEN:

@@ -1332,6 +1332,35 @@ class MemberDetailViewTests(TestCase):
         reports = [r for g in groups for r in g.get("reports", [])]
         self.assertEqual(reports, [])
 
+    def test_report_not_shown_on_other_athlete_page(self):
+        # msg_with_workout is linked to self.athlete's workout; link it to
+        # other_athlete's workout too so it appears on both pages.
+        Workout.objects.create(
+            athlete=self.other_athlete,
+            date=datetime.date(2026, 1, 10),
+            activity="running",
+            distance_km=5.0,
+            pace_min_per_km=6.0,
+            base_points=3,
+            streak_bonus=0,
+            total_points=3,
+            msg_id=self.msg_with_workout.msg_id,
+        )
+        # Report filed in the context of self.athlete.
+        Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Жалоба для Анны",
+        )
+        self.client.login(username="admin", password="password")
+        def _all_reports(resp):
+            return [r for g in resp.context["groups"] for r in g.get("reports", [])]
+
+        # Should appear on self.athlete's page.
+        self.assertEqual(len(_all_reports(self.client.get(self._url("u1")))), 1)
+        # Must NOT appear on other_athlete's page.
+        self.assertEqual(_all_reports(self.client.get(self._url("u2"))), [])
+
     def test_anonymous_groups_have_no_reports_key(self):
         Report.objects.create(
             message=self.msg_with_workout,
@@ -1780,6 +1809,29 @@ class ReportCreateAPITests(TestCase):
             data="not-json",
             content_type="application/json",
         )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_null_json(self):
+        resp = self.client.post(
+            self._url("u1"),
+            data="null",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_list_json(self):
+        resp = self.client.post(
+            self._url("u1"),
+            data="[]",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Report.objects.count(), 0)
+
+    def test_report_create_numeric_text(self):
+        resp = self._post("u1", {"msg_id": 1001, "text": 123})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(Report.objects.count(), 0)
 
