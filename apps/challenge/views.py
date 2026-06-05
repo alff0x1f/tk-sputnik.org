@@ -334,7 +334,7 @@ def api_report_create(request, telegram_id):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     raw_text = data.get("text")
-    text = (raw_text.strip() if isinstance(raw_text, str) else "")
+    text = raw_text.strip() if isinstance(raw_text, str) else ""
     if not text:
         return JsonResponse({"error": "text required"}, status=400)
     if len(text) > MAX_REPORT_LEN:

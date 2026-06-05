@@ -1293,6 +1293,7 @@ class MemberDetailViewTests(TestCase):
             text="Жалоба для Анны",
         )
         self.client.login(username="admin", password="password")
+
         def _all_reports(resp):
             return [r for g in resp.context["groups"] for r in g.get("reports", [])]
 
