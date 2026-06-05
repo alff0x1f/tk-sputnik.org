@@ -1603,6 +1603,41 @@ class AthleteGroupAPITests(TestCase):
         self.assertEqual(resp.status_code, 405)
 
 
+class ReportAdminTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.athlete = Athlete.objects.create(telegram_id="u1", name="Анна")
+        self.message = SourceMessage.objects.create(
+            msg_id=700,
+            from_id="u1",
+            from_name="Анна",
+            date=datetime.date(2026, 1, 5),
+        )
+        Report.objects.create(
+            message=self.message,
+            athlete=self.athlete,
+            text="Тренировка указана неверно, дистанция другая " * 3,
+        )
+        self.superuser = User.objects.create_superuser(
+            username="root", password="password", email="root@example.com"
+        )
+
+    def test_report_changelist_accessible(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get("/admin/challenge/report/")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Анна", content)
+
+    def test_report_changelist_truncates_text(self):
+        self.client.login(username="root", password="password")
+        response = self.client.get("/admin/challenge/report/")
+        content = response.content.decode("utf-8")
+        # short_text truncates with an ellipsis
+        self.assertIn("…", content)
+
+
 class GroupAdminTests(TestCase):
     def setUp(self):
         from django.contrib.auth.models import User

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Athlete, Group, SourceMessage, Workout
+from .models import Athlete, Group, Report, SourceMessage, Workout
 
 
 @admin.register(Group)
@@ -35,3 +35,17 @@ class WorkoutAdmin(admin.ModelAdmin):
 class SourceMessageAdmin(admin.ModelAdmin):
     list_display = ["msg_id", "from_name", "date"]
     list_filter = ["date"]
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ["message", "athlete", "short_text", "created_at", "resolved"]
+    list_filter = ["resolved", "created_at"]
+    list_editable = ["resolved"]
+    list_select_related = ["message", "athlete"]
+
+    @admin.display(description="Текст")
+    def short_text(self, obj):
+        if len(obj.text) > 60:
+            return obj.text[:60] + "…"
+        return obj.text

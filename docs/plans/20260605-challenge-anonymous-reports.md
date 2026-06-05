@@ -176,11 +176,11 @@ for g in groups:
 **Files:**
 - Modify: `apps/challenge/admin.py`
 
-- [ ] зарегистрировать `ReportAdmin` с `list_display = ["message", "athlete", "short_text", "created_at", "resolved"]`
-- [ ] добавить `list_filter = ["resolved", "created_at"]`, `list_editable = ["resolved"]`, `list_select_related = ["message", "athlete"]`
-- [ ] реализовать метод `short_text` (обрезка `text` до ~60 символов, с `@admin.display(description=...)`)
-- [ ] написать тест: admin-страница списка `Report` открывается staff-пользователем (200)
-- [ ] запустить тесты — должны пройти перед Task 3
+- [x] зарегистрировать `ReportAdmin` с `list_display = ["message", "athlete", "short_text", "created_at", "resolved"]`
+- [x] добавить `list_filter = ["resolved", "created_at"]`, `list_editable = ["resolved"]`, `list_select_related = ["message", "athlete"]`
+- [x] реализовать метод `short_text` (обрезка `text` до ~60 символов, с `@admin.display(description=...)`)
+- [x] написать тест: admin-страница списка `Report` открывается staff-пользователем (200)
+- [x] запустить тесты — должны пройти перед Task 3
 
 ### Task 3: Эндпоинт создания жалобы (анонимный)
 
