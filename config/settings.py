@@ -29,7 +29,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise ImproperlyConfigured(
-        "DJANGO_SECRET_KEY environment variable is required when DEBUG is False."
+        "DJANGO_SECRET_KEY environment variable is required."
     )
 
 # SECURITY WARNING: don't run with debug turned on in production!

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -162,21 +162,22 @@ def api_workout_create(request):
                 {"error": "pace_min_per_km must be non-negative"}, status=400
             )
 
-    try:
-        workout = Workout.objects.create(
-            athlete=athlete,
-            date=date,
-            activity=activity,
-            distance_km=distance_km,
-            pace_min_per_km=pace_min_per_km,
-            msg_id=msg_id_raw,
-        )
-    except IntegrityError:
-        return JsonResponse(
-            {"error": "Workout already exists for this athlete/date/activity"},
-            status=400,
-        )
-    recompute_athlete_scores(athlete)
+    with transaction.atomic():
+        try:
+            workout = Workout.objects.create(
+                athlete=athlete,
+                date=date,
+                activity=activity,
+                distance_km=distance_km,
+                pace_min_per_km=pace_min_per_km,
+                msg_id=msg_id_raw,
+            )
+        except IntegrityError:
+            return JsonResponse(
+                {"error": "Workout already exists for this athlete/date/activity"},
+                status=400,
+            )
+        recompute_athlete_scores(athlete)
     workout.refresh_from_db()
     response = _workout_response(workout, athlete)
     response.status_code = 201
@@ -190,8 +191,9 @@ def api_workout_detail(request, pk):
     old_athlete = workout.athlete
 
     if request.method == "DELETE":
-        workout.delete()
-        recompute_athlete_scores(old_athlete)
+        with transaction.atomic():
+            workout.delete()
+            recompute_athlete_scores(old_athlete)
         return HttpResponse(status=204)
 
     # PUT
@@ -240,17 +242,18 @@ def api_workout_detail(request, pk):
         except TypeError, ValueError:
             return JsonResponse({"error": "Invalid date"}, status=400)
 
-    try:
-        workout.save()
-    except IntegrityError:
-        return JsonResponse(
-            {"error": "Workout already exists for this athlete/date/activity"},
-            status=400,
-        )
-    new_athlete = workout.athlete
-    recompute_athlete_scores(new_athlete)
-    if old_athlete != new_athlete:
-        recompute_athlete_scores(old_athlete)
+    with transaction.atomic():
+        try:
+            workout.save()
+        except IntegrityError:
+            return JsonResponse(
+                {"error": "Workout already exists for this athlete/date/activity"},
+                status=400,
+            )
+        new_athlete = workout.athlete
+        recompute_athlete_scores(new_athlete)
+        if old_athlete != new_athlete:
+            recompute_athlete_scores(old_athlete)
     workout.refresh_from_db()
     return _workout_response(workout, new_athlete)
 
