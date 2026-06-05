@@ -166,6 +166,18 @@
           <button class="report-btn-cancel" onclick="cancelReport('{{ group.primary_msg_id }}')">Отмена</button>
         </div>
       </div>
+
+      {% if request.user.is_staff and group.reports %}
+      <div class="msg-report-badge">⚠ {{ group.reports|length }} жалоб</div>
+      <div class="report-list">
+        {% for report in group.reports %}
+        <div class="report-item" data-report-id="{{ report.pk }}">
+          <div class="report-item-text">{{ report.text|linebreaksbr }}</div>
+          <button class="report-item-close" onclick="resolveReport({{ report.pk }})">Закрыть</button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
     {% empty %}
     <div class="msg-empty">Нет сообщений</div>
@@ -349,6 +361,15 @@ async function submitReport(msgId) {
     btn.title = 'Отправлено';
     btn.innerHTML = '<span class="msg-report-sent">Отправлено ✓</span>';
   }
+}
+
+async function resolveReport(pk) {
+  const resp = await fetch(`/challenge/review/api/report/${pk}/`, {
+    method: 'PUT',
+    headers: {'X-CSRFToken': getCsrfToken()},
+  });
+  if (!resp.ok || resp.redirected) { alert('Ошибка'); return; }
+  document.querySelector(`.report-item[data-report-id="${pk}"]`)?.remove();
 }
 </script>
 {% endblock %}

@@ -1364,6 +1364,33 @@ class MemberDetailViewTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("msg-report-btn", content)
 
+    def test_member_page_shows_badge_for_staff(self):
+        report = Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Эта тренировка неверная",
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertIn("msg-report-badge", content)
+        self.assertIn("жалоб", content)
+        self.assertIn("report-item", content)
+        self.assertIn("Эта тренировка неверная", content)
+        self.assertIn(f"resolveReport({report.pk})", content)
+
+    def test_member_page_no_badge_for_anonymous(self):
+        Report.objects.create(
+            message=self.msg_with_workout,
+            athlete=self.athlete,
+            text="Эта тренировка неверная",
+        )
+        response = self.client.get(self._url())
+        content = response.content.decode("utf-8")
+        self.assertNotIn("msg-report-badge", content)
+        self.assertNotIn('class="report-item"', content)
+        self.assertNotIn("Эта тренировка неверная", content)
+
 
 class LeaderboardViewTests(TestCase):
     def setUp(self):

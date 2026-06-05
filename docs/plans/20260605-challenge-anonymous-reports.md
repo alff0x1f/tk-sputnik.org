@@ -243,10 +243,10 @@ for g in groups:
 - Modify: `apps/challenge/templates/challenge/member.html`
 - Modify: `apps/challenge/tests.py`
 
-- [ ] добавить под `{% if request.user.is_staff and group.reports %}` бейдж `.msg-report-badge` и список `.report-list`/`.report-item`
-- [ ] добавить JS `resolveReport(pk)` (PUT, удаление `.report-item` из DOM)
-- [ ] написать тест `test_member_page_shows_badge_for_staff` → staff видит «жалоб» в HTML, аноним не видит
-- [ ] запустить тесты — должны пройти перед Task 8
+- [x] добавить под `{% if request.user.is_staff and group.reports %}` бейдж `.msg-report-badge` и список `.report-list`/`.report-item`
+- [x] добавить JS `resolveReport(pk)` (PUT, удаление `.report-item` из DOM)
+- [x] написать тест `test_member_page_shows_badge_for_staff` → staff видит «жалоб» в HTML, аноним не видит
+- [x] запустить тесты — должны пройти перед Task 8
 
 ### Task 8: Стили CSS
 
