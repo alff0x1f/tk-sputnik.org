@@ -66,7 +66,10 @@ def recompute_athlete_scores(athlete):
         )
         workout.base_points = base
 
-        if base > 0:
+        # Походы и тренировочные выезды (hiking) дают фиксированные 2 балла и
+        # полностью прозрачны для страйка: сами бонус не получают и не являются
+        # звеном цепочки для соседних тренировок.
+        if base > 0 and workout.activity != "hiking":
             if (
                 prev_qualifying_date is not None
                 and (workout.date - prev_qualifying_date).days <= 4

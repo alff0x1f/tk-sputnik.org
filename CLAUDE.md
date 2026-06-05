@@ -93,7 +93,14 @@ Winter sports challenge (Dec 2025 – Mar 2026) at `/challenge/`.
 - `Workout` — FK to `Athlete`, `date`, `activity`, `distance_km`, `pace_min_per_km`, `base_points`, `streak_bonus`, `total_points`, `msg_id`
 - `SourceMessage` — `msg_id` (PK), `from_id` (Telegram sender ID, db_index), `from_name`, `date`, `datetime` (nullable), `text`, `photos` (JSONField)
 
-**Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`
+**Scoring logic:** `apps/challenge/scoring.py` — `compute_base_points()` and `recompute_athlete_scores()`. Hiking (`activity == "hiking"`, «Пеший поход» — also covers тренировочный выезд с ГШ) scores a flat **2** base points and is excluded from the streak: it earns no `streak_bonus` and does not advance the streak chain, so neighbouring workouts measure their gap across it as if it were not there.
+
+**Recompute command (refresh stored scores after a scoring rule change):**
+```bash
+uv run python manage.py recompute_scores
+# expected output: Recomputed scores for N athletes
+```
+Re-runs `recompute_athlete_scores()` for every athlete in place. Needed because import and the review page only recompute on write — a scoring-logic change leaves stored `base_points`/`streak_bonus`/`total_points` stale until this runs.
 
 **Import command (one-time or re-run to refresh):**
 ```bash

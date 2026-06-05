@@ -296,6 +296,60 @@ class RecomputeAthleteScoresTests(TestCase):
         # bonus references the last qualifying workout (w1), not the zero-point w2
         self.assertEqual(w3.streak_prev_date, d1)
 
+    def test_hiking_does_not_bridge_streak_chain(self):
+        # A hike between two runs is transparent: it must not link them.
+        d1 = datetime.date(2026, 1, 1)
+        d2 = datetime.date(2026, 1, 3)  # hike
+        d3 = datetime.date(2026, 1, 6)  # gap from d1 = 5 days → no streak
+        w1 = self._make_workout(d1, "running", distance_km=8.0)
+        w2 = self._make_workout(d2, "hiking")
+        w3 = self._make_workout(d3, "running", distance_km=8.0)
+
+        recompute_athlete_scores(self.athlete)
+
+        w1.refresh_from_db()
+        w2.refresh_from_db()
+        w3.refresh_from_db()
+
+        self.assertEqual(w1.streak_bonus, 0)
+        self.assertEqual(w2.base_points, 2)
+        self.assertEqual(w2.streak_bonus, 0)
+        self.assertEqual(w2.total_points, 2)
+        self.assertIsNone(w2.streak_prev_date)
+        # w3 measures its gap from w1 (5 days), as if the hike were not there.
+        self.assertEqual(w3.streak_bonus, 0)
+        self.assertEqual(w3.total_points, 2)
+        self.assertIsNone(w3.streak_prev_date)
+
+    def test_hiking_earns_no_streak_bonus_next_to_qualifying(self):
+        # A hike right after a qualifying run gets no bonus of its own.
+        d1 = datetime.date(2026, 1, 1)
+        d2 = datetime.date(2026, 1, 2)  # hike, 1 day later
+        self._make_workout(d1, "running", distance_km=8.0)
+        w2 = self._make_workout(d2, "hiking")
+
+        recompute_athlete_scores(self.athlete)
+
+        w2.refresh_from_db()
+        self.assertEqual(w2.base_points, 2)
+        self.assertEqual(w2.streak_bonus, 0)
+        self.assertEqual(w2.total_points, 2)
+        self.assertIsNone(w2.streak_prev_date)
+
+    def test_hiking_does_not_start_streak_chain(self):
+        # A lone hike must not seed the chain for a later run.
+        d1 = datetime.date(2026, 1, 1)  # hike
+        d2 = datetime.date(2026, 1, 3)  # run, 2 days later → still no streak
+        self._make_workout(d1, "hiking")
+        w2 = self._make_workout(d2, "running", distance_km=8.0)
+
+        recompute_athlete_scores(self.athlete)
+
+        w2.refresh_from_db()
+        self.assertEqual(w2.streak_bonus, 0)
+        self.assertEqual(w2.total_points, 2)  # 8 km run = 2 base, no bonus
+        self.assertIsNone(w2.streak_prev_date)
+
     def test_no_workouts(self):
         # Should not raise with empty workout list.
         recompute_athlete_scores(self.athlete)
